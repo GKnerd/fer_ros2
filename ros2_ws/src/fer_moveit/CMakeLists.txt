@@ -1,10 +1,19 @@
 cmake_minimum_required(VERSION 3.10)
 project(panda_moveit_config)
 
-find_package(catkin REQUIRED)
 
-catkin_package()
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
 
-install(DIRECTORY launch DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-  PATTERN "setup_assistant.launch" EXCLUDE)
-install(DIRECTORY config DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+find_package(ament_cmake REQUIRED)
+find_package(franka_description REQUIRED)
+
+install(DIRECTORY
+  config
+  launch
+  rviz
+  DESTINATION share/${PROJECT_NAME}
+)
+
+ament_package()
