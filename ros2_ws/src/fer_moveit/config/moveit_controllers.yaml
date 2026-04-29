@@ -1,11 +1,14 @@
 controller_names:
-  - joint_trajectory_controller
-  - hand_controller
+  - joint_effort_traj_controller
+  - joint_pos_traj_controller
+  - gripper_effort_controller
+  - gripper_position_controller
 
-joint_trajectory_controller:
+
+joint_effort_traj_controller:
   type: FollowJointTrajectory
   action_ns: follow_joint_trajectory
-  default: true
+  default: true              
   joints:
     - fer_joint1
     - fer_joint2
@@ -15,9 +18,29 @@ joint_trajectory_controller:
     - fer_joint6
     - fer_joint7
 
-hand_controller:
+joint_pos_traj_controller:
+  type: FollowJointTrajectory
+  action_ns: follow_joint_trajectory
+  default: false             
+  joints:
+    - fer_joint1
+    - fer_joint2
+    - fer_joint3
+    - fer_joint4
+    - fer_joint5
+    - fer_joint6
+    - fer_joint7
+
+gripper_effort_controller:
   type: GripperCommand
   action_ns: gripper_cmd
-  default: true
+  default: true              
+  joints:
+    - fer_finger_joint1
+
+gripper_position_controller:
+  type: GripperCommand
+  action_ns: gripper_cmd
+  default: false
   joints:
     - fer_finger_joint1

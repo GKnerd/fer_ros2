@@ -49,7 +49,6 @@ def load_yaml(package_name, file_path):
 
 
 def moveit_launch_setup(context, *args, **kwargs):
-    
     # Launch Config
     use_sim_time = LaunchConfiguration("use_sim_time")
     use_rviz = LaunchConfiguration("use_rviz")
@@ -61,6 +60,7 @@ def moveit_launch_setup(context, *args, **kwargs):
     namespace = LaunchConfiguration("namespace")
     load_gripper = LaunchConfiguration("load_gripper")
     ee_id = LaunchConfiguration("ee_id")
+
 
     # Package Shares
     franka_description_share    = get_package_share_directory("franka_description")
@@ -193,8 +193,8 @@ def moveit_launch_setup(context, *args, **kwargs):
     rviz_node = Node(
         package='rviz2',
         executable='rviz2',
-        name='rviz2',
-        output='log',
+        name='moveit_rviz2',
+        output='both',
         arguments=['-d', rviz_full_config,
                    "--ros-args", "--log-level", log_level],
         parameters=[
