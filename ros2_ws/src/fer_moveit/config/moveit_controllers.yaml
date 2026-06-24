@@ -34,7 +34,7 @@ joint_pos_traj_controller:
 gripper_effort_controller:
   type: GripperCommand
   action_ns: gripper_cmd
-  default: true              
+  default: true
   joints:
     - fer_finger_joint1
 
