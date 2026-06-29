@@ -96,7 +96,7 @@ def moveit_launch_setup(context, *args, **kwargs):
 
     # Package Shares
     franka_description_share    = get_package_share_directory("franka_description")
-    franka_moveit_config_share  = get_package_share_directory("panda_moveit_config")
+    fer_moveit_config_share  = get_package_share_directory("fer_moveit_config")
 
 
     # FER description
@@ -129,7 +129,7 @@ def moveit_launch_setup(context, *args, **kwargs):
 
     # Kinematics 
     kinematics_yaml = load_yaml(
-        "panda_moveit_config", "config/kinematics.yaml"
+        "fer_moveit_config", "config/kinematics.yaml"
     )
     kinematics = {
         "robot_description_kinematics": kinematics_yaml
@@ -137,7 +137,7 @@ def moveit_launch_setup(context, *args, **kwargs):
 
     # Cartesian Limits
     cartesian_limits_yaml = load_yaml(
-        "panda_moveit_config", "config/cartesian_limits.yaml"
+        "fer_moveit_config", "config/cartesian_limits.yaml"
     )
     cartesian_limits = {
         "robot_description_cartesian_limits": cartesian_limits_yaml
@@ -145,7 +145,7 @@ def moveit_launch_setup(context, *args, **kwargs):
 
     # Joint Limits
     joint_limits_yaml = load_yaml(
-        "panda_moveit_config", "config/joint_limits.yaml"
+        "fer_moveit_config", "config/joint_limits.yaml"
     )
     joint_limits = {
         'robot_description_planning': joint_limits_yaml
@@ -170,7 +170,7 @@ def moveit_launch_setup(context, *args, **kwargs):
         }
     }
     ompl_planning_yaml = load_yaml(
-        "panda_moveit_config", 'config/ompl_planning.yaml'
+        "fer_moveit_config", 'config/ompl_planning.yaml'
     )
     ompl_planning_pipeline_config['move_group'].update(ompl_planning_yaml)
     
@@ -183,7 +183,7 @@ def moveit_launch_setup(context, *args, **kwargs):
     # of truth for "which controller is active" — the launch arg — without
     # editing the YAML for every switch.
     moveit_simple_controllers_yaml = load_yaml(
-        "panda_moveit_config", 'config/moveit_controllers.yaml'
+        "fer_moveit_config", 'config/moveit_controllers.yaml'
     )
     select_default_controllers(
         moveit_simple_controllers_yaml, arm_control_type, hand_control_type
@@ -236,7 +236,7 @@ def moveit_launch_setup(context, *args, **kwargs):
     )
 
     # RViz
-    rviz_base = os.path.join(franka_moveit_config_share, 'rviz')
+    rviz_base = os.path.join(fer_moveit_config_share, 'rviz')
     rviz_full_config = os.path.join(rviz_base, 'moveit_conf.rviz')
 
     rviz_node = Node(

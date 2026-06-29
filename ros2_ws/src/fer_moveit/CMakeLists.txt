@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(panda_moveit_config)
+project(fer_moveit_config)
 
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
