@@ -48,28 +48,16 @@ def load_yaml(package_name, file_path):
         return None
 
 
-# Maps the high-level launch arg (effort/position) to the controller name
-# defined in moveit_controllers.yaml. Update if you rename controllers.
-ARM_CONTROLLER_NAME = {
-    "effort":   "joint_effort_traj_controller",
-    "position": "joint_pos_traj_controller",
-}
-HAND_CONTROLLER_NAME = {
-    "effort":   "gripper_effort_controller",
-    "position": "gripper_position_controller",
-}
+def select_default_controllers(controllers_yaml, selection_yaml, arm_type, hand_type):
+    """Mutate moveit_controllers dict so the chosen controllers are flagged default.
 
-
-def select_default_controllers(controllers_yaml, arm_type, hand_type):
-    """Mutate the moveit_controllers dict so the chosen controllers are the defaults.
-
-    Keeps moveit_controllers.yaml as the single source of truth for controller
-    *definitions* (type, action_ns, joints). The `default` flags are derived
-    from the same launch args that drive the URDF and ros2_control choices.
+    The (arm_type, hand_type) -> controller-name mapping lives in
+    config/controller_selection.yaml so it can be edited without touching
+    Python.
     """
     chosen = {
-        ARM_CONTROLLER_NAME[arm_type],
-        HAND_CONTROLLER_NAME[hand_type],
+        selection_yaml["arm"][arm_type],
+        selection_yaml["hand"][hand_type],
     }
     for name in controllers_yaml.get("controller_names", []):
         entry = controllers_yaml.get(name)
@@ -177,16 +165,20 @@ def moveit_launch_setup(context, *args, **kwargs):
 
     # Trajectory Execution Functionality
     #
-    # The YAML defines every controller MoveIt may need to route to. The
-    # `default: true|false` flag in the YAML is overridden here based on the
-    # arm_control_type / hand_control_type launch args, so we have ONE source
-    # of truth for "which controller is active" — the launch arg — without
-    # editing the YAML for every switch.
+    # moveit_controllers.yaml *defines* the controllers MoveIt may route to;
+    # controller_selection.yaml *maps* the high-level launch args
+    # (arm_control_type / hand_control_type) to which of those controllers
+    # is currently the default. The `default:` flags inside
+    # moveit_controllers.yaml are overridden at launch time accordingly.
     moveit_simple_controllers_yaml = load_yaml(
         "fer_moveit_config", 'config/moveit_controllers.yaml'
     )
+    controller_selection_yaml = load_yaml(
+        "fer_moveit_config", 'config/controller_selection.yaml'
+    )
     select_default_controllers(
-        moveit_simple_controllers_yaml, arm_control_type, hand_control_type
+        moveit_simple_controllers_yaml, controller_selection_yaml,
+        arm_control_type, hand_control_type,
     )
     moveit_controllers = {
         'moveit_simple_controller_manager': moveit_simple_controllers_yaml,
@@ -207,8 +199,6 @@ def moveit_launch_setup(context, *args, **kwargs):
         'publish_transforms_updates': True,
     }
 
-    # Load the MTC capability so task_.execute(solution) has its action server
-    # ('execute_task_solution') available inside move_group.
     move_group_capabilities = {
         'capabilities': 'move_group/ExecuteTaskSolutionCapability',
     }

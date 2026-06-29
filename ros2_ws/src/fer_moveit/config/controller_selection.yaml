@@ -1,0 +1,18 @@
+# Maps the high-level launch arguments arm_control_type / hand_control_type
+# to the actual controller names declared in moveit_controllers.yaml.
+#
+# Edit here when you rename a controller, add a new control mode, or want
+# to point a mode at a different controller. The launch file reads this
+# file and sets `default: true` on the chosen controllers at launch time;
+# the `default` flags in moveit_controllers.yaml are therefore overridden.
+#
+# To add a new mode, add a new key under `arm:` or `hand:` and pass that
+# key as the value of arm_control_type / hand_control_type on the CLI.
+
+arm:
+  effort:   joint_effort_traj_controller
+  position: joint_pos_traj_controller
+
+hand:
+  effort:   gripper_effort_controller
+  position: gripper_position_controller
