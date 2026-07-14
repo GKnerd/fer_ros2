@@ -1,0 +1,8 @@
+<root BTCPP_format="4" main_tree_to_execute="TestTree">
+  <BehaviorTree ID="TestTree">
+    <Sequence>
+      <GoHome/>
+      <ControlGripper position="0.04" max_effort="20.0"/>
+    </Sequence>
+  </BehaviorTree>
+</root>
