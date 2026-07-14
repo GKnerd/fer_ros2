@@ -11,10 +11,6 @@ GoHomeSkill::GoHomeSkill(const std::string& name,
         // Constructor Init
     };
 
-// Called once, at the first tick, to fill the goal before it is sent.
-// GoHome.action has NO goal fields (the skill reads the "ready" pose from the
-// SRDF), so there is nothing to set. Returning true == "go ahead and send it";
-// returning false would short-circuit to onFailure(INVALID_GOAL).
 bool GoHomeSkill::setGoal(Goal& goal)
 {
   (void)goal;  // empty goal — silence -Wunused-parameter

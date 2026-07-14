@@ -10,10 +10,6 @@ MoveToPoseSkill::MoveToPoseSkill(const std::string& name,
 {
 }
 
-// providedBasicPorts() re-adds the inherited "action_name" port, then merges in
-// our own. The PoseStamped port has no string default: it is meant to be fed
-// from the blackboard (e.g. {target_pose}), typically written by a perception
-// or planning node upstream. The scalars carry the same defaults as the .action.
 BT::PortsList MoveToPoseSkill::providedPorts()
 {
   return providedBasicPorts({

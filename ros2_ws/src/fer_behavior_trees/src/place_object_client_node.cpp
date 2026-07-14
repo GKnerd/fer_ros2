@@ -8,11 +8,7 @@ PlaceObjectSkill::PlaceObjectSkill(const std::string& name,
 {
 }
 
-// PlaceObject.action goal: `geometry_msgs/PoseStamped place_pose` + `string
-// object_id`. There is no string parser for a whole PoseStamped, so the pose is
-// exposed as scalar ports (frame_id + position + quaternion). This lets a static
-// XML write the target directly, while an upstream node can still override any
-// component through the blackboard.
+
 BT::PortsList PlaceObjectSkill::providedPorts()
 {
   return providedBasicPorts({

@@ -8,9 +8,7 @@ PickObjectSkill::PickObjectSkill(const std::string& name,
 {
 }
 
-// PickObject.action has a single goal field: `string object_id`. The skill
-// resolves that id against the planning scene, so the BT only needs to name
-// the object to grasp.
+
 BT::PortsList PickObjectSkill::providedPorts()
 {
   return providedBasicPorts({

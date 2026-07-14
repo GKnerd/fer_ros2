@@ -8,9 +8,6 @@ ControlGripperSkill::ControlGripperSkill(const std::string& name,
 {
 }
 
-// ControlGripper.action goal: `control_msgs/GripperCommand gripper_command`,
-// i.e. a target finger `position` (m) and a `max_effort` (N). Both are exposed
-// as ports so an open/close command can be written straight into the XML.
 BT::PortsList ControlGripperSkill::providedPorts()
 {
   return providedBasicPorts({
