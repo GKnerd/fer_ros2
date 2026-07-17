@@ -1,0 +1,35 @@
+<root BTCPP_format="4" main_tree_to_execute="MockPickPlace">
+  <!--
+    Mock-perception pick&place: the mock camera (fer_world_model mock_camera)
+    has published the four objects from scene_objects.yaml once; this tree
+    moves every one of them to the predefined drop zone — the y = +0.30 row,
+    spaced 0.08 m apart in x so nothing collides, z at each object's resting
+    half-height (box 0.025, sphere 0.03, cylinder 0.05).
+
+    Initial poses live in fer_world_model/config/scene_objects.yaml and must
+    stay clear of this row. The Sequence stops at the first failure.
+  -->
+  <BehaviorTree ID="MockPickPlace">
+    <Sequence name="mock_pick_place">
+      <PickObject  object_id="box_1"/>
+      <PlaceObject object_id="box_1" frame_id="base" x="0.42" y="0.30" z="0.025"
+                   qx="0.0" qy="0.0" qz="0.0" qw="1.0"/>
+      <GoHome/>
+
+      <PickObject  object_id="box_2"/>
+      <PlaceObject object_id="box_2" frame_id="base" x="0.50" y="0.30" z="0.025"
+                   qx="0.0" qy="0.0" qz="0.0" qw="1.0"/>
+      <GoHome/>
+
+      <PickObject  object_id="sphere_1"/>
+      <PlaceObject object_id="sphere_1" frame_id="base" x="0.58" y="0.30" z="0.03"
+                   qx="0.0" qy="0.0" qz="0.0" qw="1.0"/>
+      <GoHome/>
+
+      <PickObject  object_id="cylinder_1"/>
+      <PlaceObject object_id="cylinder_1" frame_id="base" x="0.34" y="0.30" z="0.05"
+                   qx="0.0" qy="0.0" qz="0.0" qw="1.0"/>
+      <GoHome/>
+    </Sequence>
+  </BehaviorTree>
+</root>
