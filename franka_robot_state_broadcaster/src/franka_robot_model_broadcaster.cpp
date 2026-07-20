@@ -1,21 +1,13 @@
 #include "franka_robot_state_broadcaster/franka_robot_model_broadcaster.hpp"
 
 #include <stddef.h>
-#include <limits>
 #include <memory>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
-#include "hardware_interface/types/hardware_interface_return_values.hpp"
-#include "hardware_interface/types/hardware_interface_type_values.hpp"
-#include "rclcpp/clock.hpp"
+
 #include "rclcpp/qos.hpp"
-#include "rclcpp/qos_event.hpp"
 #include "rclcpp/time.hpp"
-#include "rclcpp_lifecycle/lifecycle_node.hpp"
-#include "rcpputils/split.hpp"
-#include "rcutils/logging_macros.h"
 #include "std_msgs/msg/header.hpp"
 
 namespace {
@@ -33,7 +25,7 @@ namespace franka_robot_state_broadcaster {
 
 controller_interface::CallbackReturn FrankaRobotModelBroadcaster::on_init() {
   try {
-    auto_declare<std::string>("arm_id", "panda");
+    auto_declare<std::string>("arm_id", "fer");
     auto_declare<int>("frequency", 30);
 
   } catch (const std::exception& e) {
