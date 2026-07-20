@@ -15,7 +15,6 @@
 #include "franka_semantic_components/franka_robot_model.hpp"
 
 #include <cstring>
-#include <iostream>
 #include "rclcpp/logging.hpp"
 namespace {
 
@@ -49,8 +48,8 @@ FrankaRobotModel::FrankaRobotModel(const std::string& model_name,
               "Initialized FrankaRobotModel with params %s, %s", arm_id_.c_str(), model_name.c_str());
 }
 
-
-bool FrankaRobotModel::update_state_and_model(){
+bool FrankaRobotModel::update_state_and_model()
+{
   auto franka_state_interface =
       std::find_if(state_interfaces_.begin(), state_interfaces_.end(), [&](const auto& interface) {
         return interface.get().get_name() == arm_id_ + "/" + robot_state_interface_name_;
@@ -61,16 +60,32 @@ bool FrankaRobotModel::update_state_and_model(){
         return interface.get().get_name() == arm_id_ + "/" + robot_model_interface_name_;
       });
 
-  if (franka_state_interface != state_interfaces_.end() &&
-      franka_model_interface != state_interfaces_.end()) {
-    robot_model = bit_cast<franka_hardware::ModelBase*>((*franka_model_interface).get().get_value());
-    robot_state = bit_cast<franka::RobotState*>((*franka_state_interface).get().get_value());
-  } else {
+  if (franka_state_interface == state_interfaces_.cend() ||
+      franka_model_interface == state_interfaces_.cend())
+  {
     RCLCPP_ERROR(rclcpp::get_logger("franka_model_semantic_component"),
-                 "Franka interface does not exist! Did you assign the loaned state in the "
-                 "controller? %s", arm_id_.c_str());
+      "Franka interface does not exist! Did you assign the loaned state in the "
+      "controller? %s", arm_id_.c_str());
     return false;
   }
+  const auto opt_value_model = (*franka_model_interface).get().get_optional();
+  if (!opt_value_model.has_value())
+  {
+    RCLCPP_ERROR(rclcpp::get_logger("franka_model_semantic_component"),
+                 "Failed to read Franka model interface! %s", arm_id_.c_str());
+    return false;
+  }
+  robot_model = bit_cast<franka_hardware::ModelBase*>(*opt_value_model);
+
+  const auto opt_value_state = (*franka_state_interface).get().get_optional();
+  if (!opt_value_state.has_value())
+  {
+    RCLCPP_ERROR(rclcpp::get_logger("franka_model_semantic_component"),
+                 "Failed to read Franka state interface! %s", arm_id_.c_str());
+    return false;
+  }
+  robot_state = bit_cast<franka::RobotState*>(*opt_value_state);
+  
   return true;
 };
 

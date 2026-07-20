@@ -44,7 +44,7 @@ target_include_directories(
 )
 
 
-generate_parameter_library(franka_robot_state_broadcaster_parameters src/franka_robot_state_broadcaster_parameters.yaml)
+generate_parameter_library(franka_robot_state_broadcaster_parameters config/franka_robot_state_broadcaster_parameters.yaml)
 
 target_link_libraries(franka_robot_state_broadcaster
                       PUBLIC franka_robot_state_broadcaster_parameters)
