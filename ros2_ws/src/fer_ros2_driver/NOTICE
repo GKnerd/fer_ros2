@@ -1,0 +1,44 @@
+fer_ros2
+
+This project is a ROS 2 Jazzy port of the real-robot Franka Emika Robot (FER /
+"Panda") driver stack, derived from multipanda_ros2:
+
+    https://github.com/tenfoldpaper/multipanda_ros2
+    branch: humble, commit: ad741e3ffcbe44cf47f7138ac8659802a3c9e43b
+
+multipanda_ros2 is itself a fork and extension of franka_ros2, originally
+ported to ROS 2 Humble by Maciej Bednarczyk (mcbed):
+
+    https://github.com/mcbed/franka_ros2/tree/humble
+
+franka_ros2 was originally authored by Franka Emika GmbH:
+
+    Copyright 2021 Franka Emika GmbH
+
+The initial commit of this repository is a verbatim, unmodified import of
+the packages listed below, taken from multipanda_ros2 at the commit pinned
+above. All subsequent modifications (ROS 2 Jazzy compatibility, removal of
+simulation/MuJoCo/multi-arm code, bug fixes, renaming) are recorded as
+separate commits on top of that import, so the diff against upstream stays
+inspectable and upstream fixes remain cherry-pickable.
+
+Packages imported: franka_bringup, franka_example_controllers,
+franka_gripper, franka_hardware, franka_msgs, franka_multi_mode_controller,
+franka_robot_state_broadcaster, franka_semantic_components.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+---
+
+Modifications for ROS 2 Jazzy compatibility and real-robot-only scope:
+Copyright 2026 Georgios Katranis
