@@ -155,3 +155,53 @@ from `${robot_type}` (`robots/common/utils.xacro:202`,
 `params="robot_type:=fer root:=fer_joint1 tip:=fer_joint7"`). `arm_id` and
 `robot_type` are two independent knobs that both happened to be `panda`. Confirm the
 bringup passes a consistent value to both rather than assuming.
+
+**2026-07-22 — surfaced in `fer_bringup`.** The joint_states wiring in
+`fer_bringup/launch/fer_bringup.launch.py` now hardcodes `fer`: the `ros2_control_node`
+remaps `joint_states -> fer/joint_states`, and `joint_state_publisher`'s `source_list` is
+`['fer/joint_states', 'fer_gripper/joint_states']`. The gripper node name
+(`franka_gripper/launch/gripper.launch.py`) is `[arm_id, '_gripper']`, so it is
+`fer_gripper` only because `arm_id` defaults to `fer`. This is the "dynamic naming" pain
+point: the namespace should be derived from a single arm-id knob, not string-literal `fer`
+scattered across launch files. Parked by user decision — revisit and make it dynamic.
+
+---
+
+## 6. franka runtime safety params (collision / impedance) do not come from the URDF
+
+**Status:** OPEN. Decide during the bringup migration to the upstream `franka_description`.
+
+Context: migrating to build the URDF from the upstream `franka_description` xacros, whose
+joint/collision/impedance defaults are community-recommended and accurate. But only *some*
+of those reach the arm.
+
+**Two buckets:**
+
+- **Bucket A — kinematics/dynamics + joint limits** (link masses, inertias, `<limit>`
+  position/velocity/effort). Consumed by `robot_state_publisher`, MoveIt, and
+  ros2_control joint-limit enforcement / controllers via `/robot_description`. These flow
+  correctly from the URDF. No action needed.
+- **Bucket B — franka runtime safety params** (joint impedance, cartesian impedance,
+  collision thresholds). **NOT read from the URDF anywhere.** `franka_hardware`'s
+  `on_init` only reads `robot_count`, `ns*`, `robot_ip*`, and joint names/interface types
+  from `info_` (verified by grep of `franka_multi_hardware_interface.cpp`). The actual
+  values are **hardcoded** in `Robot::setDefaultParams()`
+  (`franka_hardware/src/real/robot.cpp:428`), called from the `Robot` constructor at
+  connect time — so any collision/impedance defaults placed in the URDF are silently
+  overwritten by these C++ literals.
+
+**The trap:** carefully-chosen URDF collision/impedance values just don't take effect, with
+no warning.
+
+**Options to actually apply Bucket B values:**
+1. Edit the literals in `setDefaultParams()` to match the upstream numbers (crude, but it's
+   what runs today).
+2. Call the existing `Set{Joint,Cartesian}Stiffness` / `Set…CollisionBehavior` services
+   (`robot.cpp:325-421`) at bringup — must happen *after* connect, or `setDefaultParams()`
+   in the constructor clobbers them.
+3. Wire `setDefaultParams()` to read from `info_.hardware_parameters` and add matching
+   `<param>`s to the URDF (the "correct" fix, most work).
+
+Also note: `<param name="initial_value">` on state interfaces is consumed only by
+ros2_control mock/fake hardware, not by the real franka plugin — don't expect it to do
+anything on the real arm.

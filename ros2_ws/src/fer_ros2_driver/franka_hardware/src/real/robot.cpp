@@ -17,7 +17,6 @@
 #include <cassert>
 #include <mutex>
 
-#include <stdio.h>
 #include <iostream>
 #include <franka/control_tools.h>
 #include <rclcpp/logging.hpp>
