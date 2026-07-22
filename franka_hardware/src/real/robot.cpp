@@ -104,13 +104,21 @@ franka_hardware::ModelFranka* Robot::getModel() {
 }
 
 void Robot::stopRobot() {
-  if (!stopped_) {
+  if (!stopped_) 
+  {
     finish_ = true;
-    control_thread_->join();
+    if (control_thread_ && control_thread_->joinable()) 
+    {
+      control_thread_->join();
+    }
     robot_->stop();
     finish_ = false;
     stopped_ = true;
     std::cout << "Stopping" << std::endl;
+  } 
+  else if (control_thread_ && control_thread_->joinable()) 
+  {
+    control_thread_->join();
   }
 }
 
@@ -153,6 +161,7 @@ void Robot::initializeTorqueControl() {
     catch(franka::ControlException& e){
       std::cout <<  e.what() << std::endl;
       setError(true);
+      stopped_ = true;
     }
   };
   control_thread_ = std::make_unique<std::thread>(kTorqueControl);
@@ -180,6 +189,7 @@ void Robot::initializeJointPositionControl() {
     catch(franka::ControlException& e){
       std::cout <<  e.what() << std::endl;
       setError(true);
+      stopped_ = true;
     }
       
   };
@@ -207,6 +217,7 @@ void Robot::initializeJointVelocityControl() {
     catch(franka::ControlException& e){
       std::cout <<  e.what() << std::endl;
       setError(true);
+      stopped_ = true;
     }
   };
   control_thread_ = std::make_unique<std::thread>(kJointVelocityControl);
@@ -234,6 +245,7 @@ void Robot::initializeCartesianVelocityControl() {
     catch(franka::ControlException& e){
       std::cout <<  e.what() << std::endl;
       setError(true);
+      stopped_ = true;
     }
   };
   control_thread_ = std::make_unique<std::thread>(kCartesianVelocityControl);
@@ -260,6 +272,7 @@ void Robot::initializeCartesianPositionControl() {
     catch(franka::ControlException& e){
       std::cout <<  e.what() << std::endl;
       setError(true);
+      stopped_ = true;
     }
   };
   control_thread_ = std::make_unique<std::thread>(kCartesianPositionControl);
@@ -287,10 +300,12 @@ void Robot::initializeContinuousReading() {
     catch(franka::ControlException& e){
       std::cout << "Control Exception: " << e.what() << std::endl;
       setError(true);
+      stopped_ = true;  
     }
     catch(franka::InvalidOperationException& e){
       std::cout << "Invalid Operation Exception: " << e.what() << std::endl;
       setError(true);
+      stopped_ = true;  
     }
     
     return;

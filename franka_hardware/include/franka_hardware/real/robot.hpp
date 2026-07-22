@@ -315,7 +315,7 @@ class Robot {
   std::mutex write_mutex_;
   std::mutex robot_mutex_;
   std::atomic_bool finish_{false};
-  bool stopped_ = true;
+  std::atomic_bool stopped_{true};
   std::mutex error_mutex_;
   bool has_error_ = false;
   bool init_params_set = false;
