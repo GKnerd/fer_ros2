@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <exception>
 
 #include <franka/exception.h>
 #include <hardware_interface/handle.hpp>
