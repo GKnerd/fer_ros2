@@ -6,7 +6,7 @@ Known issues and parked decisions for this project.
 
 ## 1. Re-apply: broadcaster deactivates after ~2.7 s (`trylock()` failure returns ERROR)
 
-**Status:** NOT APPLIED in this tree.
+**Status:** DONE 2026-07-22 (both broadcasters). Builds clean.
 
 **Files:**
 - `franka_robot_state_broadcaster/src/franka_robot_state_broadcaster.cpp` — `update()`, `else` branch
@@ -24,6 +24,9 @@ normal backpressure, not an error; skip this cycle and publish on the next one.
 **Applies to both broadcasters** — the original fix covered only the state broadcaster.
 
 ### 1a. Related risk introduced by the 2026-07-20 `get_optional()` migration
+
+**Status:** DONE 2026-07-22. Read-failure branch now returns `OK` + throttled WARN in
+both broadcasters, matching the trylock decision below.
 
 Both `update()` methods have a *second* `return ERROR`, on
 `get_values_as_message()` returning false. That path changed meaning today:
@@ -65,7 +68,10 @@ generated parameter library, so this only bites once one does.
 
 ## 3. Re-apply: `robot.cpp` thread/state handling after `ControlException`
 
-**Status:** NOT APPLIED in this tree.
+**Status:** DONE 2026-07-22 (all three fixes + `stopped_` made `std::atomic_bool`).
+Builds clean. **NOT YET VERIFIED ON HARDWARE** — force a timing violation on the real
+arm and confirm clean recovery instead of Reflex. `read()` ordering (`readOnce()` before
+`stopRobot()`) was deliberately left unchanged; revisit if a cascade still appears.
 
 **File:** `franka_hardware/src/real/robot.cpp`
 

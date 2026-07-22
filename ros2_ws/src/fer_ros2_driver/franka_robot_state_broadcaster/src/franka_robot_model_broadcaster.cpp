@@ -106,18 +106,18 @@ controller_interface::return_type FrankaRobotModelBroadcaster::update(
     realtime_franka_model_publisher->msg_.header.stamp = time;
 
     if (!franka_robot_model->get_values_as_message(realtime_franka_model_publisher->msg_)) {
-      RCLCPP_ERROR(get_node()->get_logger(),
-                   "Failed to get franka model via franka model interface.");
+      RCLCPP_WARN_THROTTLE(get_node()->get_logger(), *get_node()->get_clock(), 1000,
+                           "Failed to read franka model this cycle; skipping publish.");
       realtime_franka_model_publisher->unlock();
-      return controller_interface::return_type::ERROR;
+      return controller_interface::return_type::OK;
     }
     realtime_franka_model_publisher->unlockAndPublish();
     last_pub_ = get_node()->now();
     return controller_interface::return_type::OK;
-  } 
-  
+  }
+
   else {
-    return controller_interface::return_type::ERROR;
+    return controller_interface::return_type::OK;
   }
 
   }

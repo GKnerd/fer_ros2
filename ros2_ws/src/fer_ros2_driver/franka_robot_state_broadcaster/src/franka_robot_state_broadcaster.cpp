@@ -78,25 +78,28 @@ FrankaRobotStateBroadcaster::state_interface_configuration() const {
 
 controller_interface::return_type FrankaRobotStateBroadcaster::update(
     const rclcpp::Time& time,
-    const rclcpp::Duration& /*period*/) {
+    const rclcpp::Duration& /*period*/) 
+{
   if(time.nanoseconds() - last_pub_.nanoseconds() < 1'000'000'000 / frequency){
     return controller_interface::return_type::OK;
   }
-  if (realtime_franka_state_publisher && realtime_franka_state_publisher->trylock()) {
+  if (realtime_franka_state_publisher && realtime_franka_state_publisher->trylock()) 
+  {
     realtime_franka_state_publisher->msg_.header.stamp = time;
 
-    if (!franka_robot_state->get_values_as_message(realtime_franka_state_publisher->msg_)) {
-      RCLCPP_ERROR(get_node()->get_logger(),
-                   "Failed to get franka state via franka state interface.");
+    if (!franka_robot_state->get_values_as_message(realtime_franka_state_publisher->msg_))
+    {
+      RCLCPP_WARN_THROTTLE(get_node()->get_logger(), *get_node()->get_clock(), 1000,
+                           "Failed to read franka state this cycle; skipping publish.");
       realtime_franka_state_publisher->unlock();
-      return controller_interface::return_type::ERROR;
+      return controller_interface::return_type::OK;
     }
     realtime_franka_state_publisher->unlockAndPublish();
     last_pub_ = get_node()->now();
     return controller_interface::return_type::OK;
 
   } else {
-    return controller_interface::return_type::ERROR;
+    return controller_interface::return_type::OK;
   }
 }
 
