@@ -93,8 +93,8 @@ to keep the migration history in one place. **NOT YET LAUNCHED ON HARDWARE** —
   joint_state/joint_trajectory controllers, franka_robot_state_broadcaster, franka_gripper,
   robot_state_publisher, joint_state_publisher, rviz2, ros2launch).
 
-- **Gripper has no ros2_control controller** — expected; it's driven by the `franka_gripper`
-  action server, outside the controller_manager. Flagged for investigation as TODO item 8.
+- **Gripper has no ros2_control controller** — expected; on the real arm it's driven by the
+  `franka_gripper` action server, outside the controller_manager (not a defect, no TODO).
 
 ## 2026-07-20
 
