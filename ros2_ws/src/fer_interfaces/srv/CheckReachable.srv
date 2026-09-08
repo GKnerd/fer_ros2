@@ -1,0 +1,10 @@
+# CheckReachable.srv 
+
+MotionTarget[] targets              # chained: each starts where the previous ends; the first starts at the current state
+
+---
+
+Outcome outcome                     # OK, INVALID_GOAL, UNSUPPORTED, NOT_FOUND, UNREACHABLE, NO_PATH
+uint32 failed_index                 # which target failed (valid if outcome != OK)
+string[] joint_names
+float64[] joint_positions           # flat: len(targets) × len(joint_names), the configuration at each target

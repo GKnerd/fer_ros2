@@ -1,0 +1,12 @@
+# Grasp.action
+
+string object_id                    # must be FREE in the world model
+float64 width                       # expected width of the object between the fingers, m
+float64 force                       # N
+float64 tolerance 0.005             # how far the measured width may differ from actul `width`
+
+---
+
+Outcome outcome                     # OK, NOT_FOUND, INVALID_STATE, GRASP_FAILED, GRIPPER_FAILED, CANCELLED
+float64 measured_width
+---

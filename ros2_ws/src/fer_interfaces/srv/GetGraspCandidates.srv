@@ -1,0 +1,9 @@
+# GetGraspCandidates.srv
+
+string object_id
+uint32 max_candidates 0             # 0 = all
+
+---
+
+Outcome outcome                     # OK, NOT_FOUND, INVALID_STATE (not FREE)
+GraspCandidate[] candidates         # best first

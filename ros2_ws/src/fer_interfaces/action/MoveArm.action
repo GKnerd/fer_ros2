@@ -1,0 +1,12 @@
+# MoveArm.action
+
+MotionTarget target
+float64 speed_scaling 0.3           # (0, 1]; 0 or >1 → INVALID_GOAL
+---
+Outcome outcome                     # OK, INVALID_GOAL, UNSUPPORTED, NOT_FOUND, UNREACHABLE,
+                                    # NO_PATH, EXECUTION_FAILED, CANCELLED
+---
+uint8 PLANNING=0
+uint8 EXECUTING=1
+uint8 phase                         # Continuous backends only ever report EXECUTING
+float32 progress                    # 0..1 of the execution
