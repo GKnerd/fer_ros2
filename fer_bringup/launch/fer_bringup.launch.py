@@ -47,21 +47,25 @@ def launch_setup(context, *args, **kwargs):
             " ",
             PathJoinSubstitution([fer_bringup_share, "urdf", "fer.xacro"]),
             " ",
-            "robot_type:=",           robot_type,           " ",
-            "arm_prefix:=",           arm_prefix,           " ",
-            "no_prefix:=",            no_prefix,            " ",
-            "hand:=",                 hand,                 " ",
-            "ee_id:=",                ee_id,                " ",
-            "xyz_ee:=",               xyz_ee,               " ",
-            "rpy_ee:=",               rpy_ee,               " ",
-            "tcp_xyz:=",              tcp_xyz,              " ",
-            "tcp_rpy:=",              tcp_rpy,              " ",
-            "safety_distance:=",      safety_distance,      " ",
-            "with_sc:=",              with_sc,              " ",
-            "ros2_control:=",         ros2_control,         " ",
-            "robot_ip:=",             robot_ip,             " ",
-            "xyz:=",                  xyz,                  " ",
-            "rpy:=",                  rpy,                  " ",
+            # Command joins these into one string and then shlex-splits it, so
+            # every value that contains spaces (the xyz/rpy vectors) must be
+            # quoted. Without the quotes "0 0 -0.785" becomes three argv tokens
+            # and xacro's option parser reads the leading "-0.785" as a flag.
+            "robot_type:=",           robot_type,             " ",
+            'arm_prefix:="',          arm_prefix,       '" ',
+            "no_prefix:=",            no_prefix,              " ",
+            "hand:=",                 hand,                   " ",
+            "ee_id:=",                ee_id,                  " ",
+            'xyz_ee:="',              xyz_ee,           '" ',
+            'rpy_ee:="',              rpy_ee,           '" ',
+            'tcp_xyz:="',             tcp_xyz,          '" ',
+            'tcp_rpy:="',             tcp_rpy,          '" ',
+            "safety_distance:=",      safety_distance,        " ",
+            "with_sc:=",              with_sc,                " ",
+            "ros2_control:=",         ros2_control,           " ",
+            "robot_ip:=",             robot_ip,               " ",
+            'xyz:="',                 xyz,              '" ',
+            'rpy:="',                 rpy,              '" ',
         ]
     )
     robot_description_str = fer_description_content.perform(context)
