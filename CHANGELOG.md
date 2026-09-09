@@ -1,3 +1,110 @@
+## 2026-09-09
+
+First bring-up on the real FER arm. One config mismatch blocked startup; fixing it
+exposed three latent driver bugs that together let the arm silently stop obeying
+commands while every ROS-visible signal reported a healthy system.
+
+### fer_bringup
+
+- Fixed startup failure `[FATAL] Parameber 'ns_1' ! set`, which aborted hardware
+  initialization and cascaded into `Waiting for data on 'robot_description' topic`
+  forever plus spawner lock timeouts.
+  `urdf/fer_ros2_control.xacro` declared the hardware parameters as `ns1` / `robot_ip1`,
+  but `FrankaMultiHardwareInterface::on_init` builds its lookup keys as
+  `"ns" + suffix` with `suffix = "_" + std::to_string(i)`
+  (`franka_multi_hardware_interface.cpp:87`) — i.e. `ns_1` / `robot_ip_1`. The
+  `info_.hardware_parameters.at()` call threw `std::out_of_range`. Renamed both
+  parameters. `robot_count` correctly takes no suffix. The contract comment at the top
+  of the file documented the wrong naming and was corrected — it was the likely source
+  of the error.
+
+### franka_hardware
+
+- **`write()` no longer reports success for commands it discards.**
+  `src/real/franka_multi_hardware_interface.cpp:299` returned
+  `return_type::OK` when `arm.robot_->hasError()`, silently dropping every command.
+  `ResourceManager::write()` uses that return value to decide whether a hardware
+  component has failed, so returning OK kept the component active, kept
+  `effort_joint_trajectory_controller` active, and kept all 7 `fer_jointN/effort`
+  interfaces `[claimed]` — while nothing reached the arm. Observed in practice for 102
+  seconds; the only symptom was an arm that ignored a trajectory.
+  Now returns `return_type::DEACTIVATE` with a throttled `RCLCPP_ERROR`.
+  `DEACTIVATE` rather than `ERROR` on purpose: it routes through `on_deactivate()`,
+  which already resets `arm.control_mode_` to `None` and calls `stopRobot()`
+  (`:234-237`), leaving the state machine somewhere a later switch will accept.
+  `ERROR` takes the `on_error()` path instead, skips that reset, and drops the
+  component to UNCONFIGURED.
+  There is no transient case to protect against here: every `setError(true)` in a
+  control thread is paired with `stopped_ = true` on the next line, so `hasError()`
+  means the control loop has already exited and will not return without an explicit
+  error-recovery call.
+  **Behavioural change:** a hardware fault now deactivates controllers and requires an
+  explicit re-activation sequence. See HARDWARE_ACCEPTANCE.md.
+
+- **`Robot::control_mode_` is initialized.**
+  `include/franka_hardware/real/robot.hpp` declared `ControlMode control_mode_;` with no
+  initializer, and `setControlMode()` had **zero callers anywhere in the workspace**.
+  `getControlMode()` therefore returned an indeterminate value. It happened to read as
+  `0` (`ControlMode::None`) on this build, which is why the error-recovery service always
+  took its continuous-reading branch while logging that it was restoring the previous
+  mode. A different optimization level or a reused allocation could have read as `1`,
+  `2` or `4` — `JointTorque`, `JointPosition`, `JointVelocity` — and restarted a
+  *commanding* loop, possibly not the one that was running.
+  Now `ControlMode control_mode_{ControlMode::None};`.
+
+- **The error-recovery service no longer guesses a control mode.**
+  `src/real/franka_error_recovery_service_server.cpp` branched on
+  `robot_->getControlMode()` to decide which loop to restart. Since nothing ever set
+  that variable, the branch was decided by uninitialized memory. Replaced with an
+  unconditional `initializeContinuousReading()` — read-only, no commands — and a log
+  line naming the two commands needed to command the arm again.
+  This is deliberate policy, not just a bug fix: **a fault never auto-resumes a
+  commanding loop.** The authoritative mode already lives in
+  `ArmContainer::control_mode_`, which is correctly maintained and untouched by the
+  error path; it is restored through the normal `prepare`/`perform_command_mode_switch`
+  path when the operator re-activates a controller. Removing the second copy of that
+  state removes the possibility of the two disagreeing, which is what this bug was.
+  Continuous reading is started rather than nothing, because leaving no loop running
+  sends `Robot::read()` down its blocking `readOnce()` branch every cycle — 1-4 ms
+  against a 1000 us budget, producing continuous controller_manager overruns.
+
+- **`assert(isStopped())` replaced with a real runtime guard** in all six
+  `initialize*()` methods (`src/real/robot.cpp:126, 170, 199, 227, 254, 282`).
+  Each of those methods ends by reassigning `control_thread_`, which calls
+  `std::terminate()` if the old `std::thread` is still joinable. The precondition was
+  guarded only by `assert`, which is compiled out in Release — so the guard did not
+  exist in the build that runs. `on_activate()` (`:221-222`) calls
+  `initializeContinuousReading()` *without* a preceding `stopRobot()`, so re-activating
+  the hardware component while a reading loop was running aborted the process:
+  `terminate called without an active exception`, with
+  `libfranka: Cannot perform this operation while another control or read operation is
+  running` alongside it.
+  New `Robot::ensureStopped()` (robot.hpp) calls `stopRobot()` when a loop is running or
+  a joinable thread remains, making every `initialize*()` idempotent regardless of
+  caller. This is the same failure class as the 2026-07-22 `stopRobot()` join fix; that
+  fix removed one route to it, this one removes the precondition being unenforced at all.
+  Reachable before this session only in theory — the silent `OK` in `write()` meant the
+  component never self-deactivated, so nothing ever re-activated it.
+
+### fer_bringup — diagnostic scripts
+
+Two standalone scripts under `scripts/`, installed to `lib/fer_bringup`. Deliberately
+not a package: this is a sanity check, not a test framework.
+
+- `fer_sanity_check.py` — passive. Topic rates, joint validity, TF chain, controllers
+  *staying* active over a hold period, and control-loop liveness from `FrankaState`.
+  The liveness check exists because of the incident above: every other signal read
+  green while the arm was uncommandable.
+- `fer_mode_switch_check.py` — asserts the start-without-stop guard and measures the
+  libfranka dead window across an atomic effort/velocity switch.
+
+Operational notes moved to the "Information" section of the fer_ros2 README: the
+`robot_mode` check, the 3-step fault recovery sequence, mode-switch semantics, and the
+`ff_velocity_scale` finding.
+
+For communication quality use libfranka's own `communication_test` example; an earlier
+iptables-based fault injector was dropped as strictly worse.
+
 ## 2026-07-22
 
 ### franka_robot_state_broadcaster

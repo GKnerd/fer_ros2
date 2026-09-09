@@ -16,6 +16,14 @@ install(
   DESTINATION share/${PROJECT_NAME}
 )
 
+# Standalone diagnostic scripts; see "Information" in the fer_ros2 README.
+install(
+  PROGRAMS
+    scripts/fer_sanity_check.py
+    scripts/fer_mode_switch_check.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   # the following line skips the linter which checks for copyrights
