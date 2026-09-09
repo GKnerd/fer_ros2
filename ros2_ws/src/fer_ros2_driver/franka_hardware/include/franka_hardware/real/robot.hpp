@@ -96,6 +96,15 @@ class Robot {
 
   /// stops the control or reading loop of the robot.
   void stopRobot();
+
+  // Every initialize*() ends by reassigning control_thread_, which calls std::terminate
+  // if the old thread is still joinable. assert(isStopped()) guarded that, but asserts
+  // are compiled out in Release. This enforces the precondition for real.
+  void ensureStopped(){
+    if(!stopped_ || (control_thread_ && control_thread_->joinable())){
+      stopRobot();
+    }
+  };
   /**
    * Return pointer to the franka robot model object .
    * @return pointer to the current robot model.
@@ -320,7 +329,8 @@ class Robot {
   bool has_error_ = false;
   bool init_params_set = false;
   franka::RobotState current_state_;
-  ControlMode control_mode_;
+  // Was uninitialized; getControlMode() then returned an indeterminate value that read as None. Explicit now so nothing branches on garbage.
+  ControlMode control_mode_{ControlMode::None};
   std::array<double, 7> tau_command_;
   std::array<double, 7> joint_position_command_ = {0,-0.785398163397,0,-2.35619449019,0,1.57079632679,0.785398163397};
   std::array<double, 7> joint_velocity_command_;

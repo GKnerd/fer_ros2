@@ -38,28 +38,19 @@ void FrankaErrorRecoveryServiceServer::triggerAutomaticRecovery(const franka_msg
                 RCLCPP_INFO(this->get_logger(), "Setting default params");
                 this->robot_->setDefaultParams();
             }
-            auto current_cm = robot_->getControlMode();
-            RCLCPP_INFO_STREAM(this->get_logger(), "Restarting the control loop. Current cm: " << current_cm);
-
+            // Deliberately read-only: never auto-resume a commanding loop after a fault.
+            // This used to branch on Robot::getControlMode(), which nothing ever set, so
+            // it silently landed here anyway while claiming to restore the previous mode.
+            // The authoritative mode lives in ArmContainer::control_mode_ and is restored
+            // by prepare/perform_command_mode_switch when the operator re-activates.
             std::lock_guard<std::mutex> lock(robot_->read_mutex_);
-            if(current_cm == ControlMode::None){
-                robot_->initializeContinuousReading();
-            }
-            else if(current_cm == ControlMode::JointTorque){
-                robot_->initializeTorqueControl();
-            }
-            else if(current_cm == ControlMode::JointPosition){
-                robot_->initializeJointPositionControl();
-            }
-            else if(current_cm == ControlMode::JointVelocity){
-                robot_->initializeJointVelocityControl();
-            }
-            else if(current_cm == ControlMode::CartesianPose){
-                robot_->initializeCartesianPositionControl();
-            }
-            else if(current_cm == ControlMode::CartesianVelocity){
-                robot_->initializeCartesianVelocityControl();
-            }
+            robot_->initializeContinuousReading();
+            RCLCPP_INFO(this->get_logger(),
+                        "Recovered into continuous reading (no commands are being sent). "
+                        "To command the arm again, re-activate the hardware component and a "
+                        "controller:\n"
+                        "  ros2 control set_hardware_component_state <component> active\n"
+                        "  ros2 control switch_controllers --activate <controller>");
             response->success = true;
         }
         catch(franka::ControlException& e){

@@ -296,8 +296,17 @@ hardware_interface::return_type FrankaMultiHardwareInterface::write(const rclcpp
       return hardware_interface::return_type::ERROR;
     }
 
+    // hasError() means the control thread already exited (every setError(true) is
+    // paired with stopped_ = true), so these commands go nowhere. Returning OK hid
+    // that: controllers stayed active and claimed while the arm ignored them.
+    // DEACTIVATE routes through on_deactivate(), which resets control_mode_ to None.
     if(arm.robot_->hasError()){
-      return hardware_interface::return_type::OK;
+      static rclcpp::Clock throttle_clock(RCL_STEADY_TIME);
+      RCLCPP_ERROR_THROTTLE(getLogger(), throttle_clock, 1000,
+                            "Arm '%s' is in an error state; commands are not reaching the robot. "
+                            "Deactivating. Call error_recovery, then re-activate the hardware "
+                            "component and a controller.", arm.robot_name_.c_str());
+      return hardware_interface::return_type::DEACTIVATE;
     }
     arm.robot_->write(arm.hw_commands_joint_effort_, 
                       arm.hw_commands_joint_position_, 

@@ -123,7 +123,7 @@ void Robot::stopRobot() {
 
 // Joint-level controls
 void Robot::initializeTorqueControl() {
-  assert(isStopped());
+  ensureStopped();
   stopped_ = false;
   std::cout << "Initializing joint torque control" << std::endl;
   logged_ = false;
@@ -167,7 +167,7 @@ void Robot::initializeTorqueControl() {
 }
 
 void Robot::initializeJointPositionControl() {
-  assert(isStopped());
+  ensureStopped();
   stopped_ = false;
   std::cout << "Initializing joint position control" << std::endl;
   const auto kJointPositionControl = [this]() {
@@ -196,7 +196,7 @@ void Robot::initializeJointPositionControl() {
 }
 
 void Robot::initializeJointVelocityControl() {
-  assert(isStopped());
+  ensureStopped();
   stopped_ = false;
   std::cout << "Initializing joint velocity control" << std::endl;
   const auto kJointVelocityControl = [this]() {
@@ -224,7 +224,7 @@ void Robot::initializeJointVelocityControl() {
 
 // Cartesian controls
 void Robot::initializeCartesianVelocityControl() {
-  assert(isStopped());
+  ensureStopped();
   stopped_ = false;
   std::cout << "Initializing cartesian velocity control" << std::endl;
   const auto kCartesianVelocityControl = [this]() {
@@ -251,7 +251,7 @@ void Robot::initializeCartesianVelocityControl() {
 }
 
 void Robot::initializeCartesianPositionControl() {
-  assert(isStopped());
+  ensureStopped();
   stopped_ = false;
   std::cout << "Initializing cartesian position control" << std::endl;
   const auto kCartesianPositionControl = [this]() {
@@ -279,7 +279,7 @@ void Robot::initializeCartesianPositionControl() {
 
 void Robot::initializeContinuousReading() {
   std::cout << "Initializing continuous reading" << std::endl;
-  assert(isStopped());
+  ensureStopped();
   stopped_ = false;
   const auto kReading = [this]() {
     try{
