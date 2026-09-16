@@ -1,0 +1,83 @@
+# Controllers shared by every backend. The launch files load this file first,
+# followed by one backend file (fer_controllers_real.yaml or
+# fer_controllers_gripper.yaml).
+
+controller_manager:
+  ros__parameters:
+    update_rate: 1000  # Hz
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    effort_trajectory_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+    velocity_trajectory_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+    position_trajectory_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+effort_trajectory_controller:
+  ros__parameters:
+    joints:
+      - fer_joint1
+      - fer_joint2
+      - fer_joint3
+      - fer_joint4
+      - fer_joint5
+      - fer_joint6
+      - fer_joint7
+    command_interfaces:
+      - effort
+    state_interfaces:
+      - position
+      - velocity
+    gains:
+      fer_joint1: { p: 600., d: 30., i: 0., antiwindup_strategy: "none" }
+      fer_joint2: { p: 600., d: 30., i: 0., antiwindup_strategy: "none" }
+      fer_joint3: { p: 600., d: 30., i: 0., antiwindup_strategy: "none" }
+      fer_joint4: { p: 600., d: 30., i: 0., antiwindup_strategy: "none" }
+      fer_joint5: { p: 250., d: 10., i: 0., antiwindup_strategy: "none" }
+      fer_joint6: { p: 150., d: 10., i: 0., antiwindup_strategy: "none" }
+      fer_joint7: { p: 50., d: 5., i: 0., antiwindup_strategy: "none" }
+
+velocity_trajectory_controller:
+  ros__parameters:
+    joints:
+      - fer_joint1
+      - fer_joint2
+      - fer_joint3
+      - fer_joint4
+      - fer_joint5
+      - fer_joint6
+      - fer_joint7
+    command_interfaces:
+      - velocity
+    state_interfaces:
+      - position
+      - velocity
+    gains:
+      fer_joint1: { p: 2.0, d: 0.0, i: 0.0, antiwindup_strategy: "none" }
+      fer_joint2: { p: 2.0, d: 0.0, i: 0.0, antiwindup_strategy: "none" }
+      fer_joint3: { p: 2.0, d: 0.0, i: 0.0, antiwindup_strategy: "none" }
+      fer_joint4: { p: 2.0, d: 0.0, i: 0.0, antiwindup_strategy: "none" }
+      fer_joint5: { p: 3.0, d: 0.0, i: 0.0, antiwindup_strategy: "none" }
+      fer_joint6: { p: 3.0, d: 0.0, i: 0.0, antiwindup_strategy: "none" }
+      fer_joint7: { p: 3.0, d: 0.0, i: 0.0, antiwindup_strategy: "none" }
+
+position_trajectory_controller:
+  ros__parameters:
+    joints:
+      - fer_joint1
+      - fer_joint2
+      - fer_joint3
+      - fer_joint4
+      - fer_joint5
+      - fer_joint6
+      - fer_joint7
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
+      - velocity

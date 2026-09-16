@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  description-invariant:
+    # fer.urdf.xacro must reproduce upstream franka_description for every
+    # hardware backend and add exactly one consistent ros2_control overlay.
+    runs-on: ubuntu-24.04
+    container: ros:jazzy-ros-base
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: ws/src/fer_ros2_bringup
+
+      - name: Install tools
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends git python3-vcstool
+
+      - name: Import franka_description at the platform pin
+        run: |
+          git clone --depth 1 https://github.com/GKnerd/fer_ros2_docker.git platform
+          python3 - <<'EOF'
+          import yaml
+          with open("platform/fer_core.repos") as f:
+              repos = yaml.safe_load(f)["repositories"]
+          entry = repos["ros2_ws/src/franka_description"]
+          with open("franka_description.repos", "w") as f:
+              yaml.safe_dump({"repositories": {"src/franka_description": entry}}, f)
+          EOF
+          vcs import ws < franka_description.repos
+
+      - name: Install dependencies
+        run: |
+          source /opt/ros/jazzy/setup.bash
+          rosdep update
+          rosdep install --from-paths ws/src --ignore-src -r -y \
+            --dependency-types build --dependency-types buildtool --dependency-types test
+
+      - name: Build
+        working-directory: ws
+        run: |
+          source /opt/ros/jazzy/setup.bash
+          colcon build --packages-select franka_description fer_ros2_bringup
+
+      - name: Test
+        working-directory: ws
+        run: |
+          source /opt/ros/jazzy/setup.bash
+          source install/setup.bash
+          colcon test --packages-select fer_ros2_bringup --ctest-args -R test_description
+          colcon test-result --verbose

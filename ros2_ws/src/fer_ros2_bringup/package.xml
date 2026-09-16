@@ -1,34 +1,57 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>fer_bringup</name>
-  <version>0.0.0</version>
-  <description>TODO: Package description</description>
-  <maintainer email="georg.katranis@gmail.com">georg.katranis@gmail.com</maintainer>
+  <name>fer_ros2_bringup</name>
+  <version>0.1.0</version>
+  <description>
+    Bringup for the Franka Emika Robot (FER) on the real robot and in MuJoCo.
+    Wraps the upstream franka_description with one ros2_control overlay per
+    hardware backend (hardware:=real|mujoco), and provides the controller
+    configuration, MuJoCo scenes, and the layered launch files for hardware,
+    MoveIt, skills and behavior trees.
+  </description>
+  <maintainer email="georg.katranis@gmail.com">Georgios Katranis</maintainer>
   <license>Apache-2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <!-- description / xacro overlay -->
+  <!-- description -->
   <exec_depend>xacro</exec_depend>
   <exec_depend>franka_description</exec_depend>
   <exec_depend>robot_state_publisher</exec_depend>
   <exec_depend>joint_state_publisher</exec_depend>
 
-  <!-- ros2_control: manager, hardware plugin, controllers -->
+  <!-- ros2_control and controllers -->
   <exec_depend>controller_manager</exec_depend>
-  <exec_depend>franka_hardware</exec_depend>
   <exec_depend>joint_state_broadcaster</exec_depend>
   <exec_depend>joint_trajectory_controller</exec_depend>
+  <exec_depend>effort_controllers</exec_depend>
+  <exec_depend>position_controllers</exec_depend>
+
+  <!-- hardware:=real -->
+  <exec_depend>franka_hardware</exec_depend>
+  <exec_depend>franka_gripper</exec_depend>
   <exec_depend>franka_robot_state_broadcaster</exec_depend>
 
-  <!-- gripper action server + visualization + launch -->
-  <exec_depend>franka_gripper</exec_depend>
+  <!-- hardware:=mujoco -->
+  <exec_depend>mujoco_vendor</exec_depend>
+  <exec_depend>mujoco_ros2_control</exec_depend>
+
+  <!-- upper launch levels -->
+  <exec_depend>fer_moveit_config</exec_depend>
+  <exec_depend>fer_skills</exec_depend>
+  <exec_depend>fer_behavior_trees</exec_depend>
+  <exec_depend>fer_world_model</exec_depend>
   <exec_depend>rviz2</exec_depend>
   <exec_depend>ros2launch</exec_depend>
 
+  <test_depend>ament_cmake_pytest</test_depend>
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
+  <test_depend>python3-lxml</test_depend>
+  <test_depend>python3-yaml</test_depend>
+  <test_depend>xacro</test_depend>
+  <test_depend>franka_description</test_depend>
 
   <export>
     <build_type>ament_cmake</build_type>

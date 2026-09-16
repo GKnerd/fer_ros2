@@ -1,18 +1,10 @@
 cmake_minimum_required(VERSION 3.8)
-project(fer_bringup)
+project(fer_ros2_bringup)
 
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
-endif()
-
-# find dependencies
 find_package(ament_cmake REQUIRED)
-# uncomment the following section in order to fill in
-# further dependencies manually.
-# find_package(<dependency> REQUIRED)
 
 install(
-  DIRECTORY launch config rviz urdf
+  DIRECTORY launch config rviz scenes urdf
   DESTINATION share/${PROJECT_NAME}
 )
 
@@ -26,6 +18,11 @@ if(BUILD_TESTING)
   # a copyright and license is added to all source files
   set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
+
+  find_package(ament_cmake_pytest REQUIRED)
+  ament_add_pytest_test(test_description test/test_description.py
+    TIMEOUT 120
+  )
 endif()
 
 ament_package()

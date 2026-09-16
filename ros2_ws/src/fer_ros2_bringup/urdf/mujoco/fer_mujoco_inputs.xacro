@@ -1,0 +1,123 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+    <!-- MuJoCo actuators, joint dynamics and gravity compensation for the FER arm and hand (hardware:=mujoco). -->
+    <xacro:macro name="fer_mujoco_inputs"
+                params="arm_id
+                control_type
+                dynamics
+                joint_limits
+                hand:=true
+                hand_control_type:='position'">
+
+        <xacro:property name="prefix" value="${arm_id}_" />
+
+        <mujoco_inputs>
+            <raw_inputs>
+                <option integrator="implicitfast" cone="elliptic" impratio="100"/>
+
+                <actuator>
+                    <xacro:if value="${control_type == 'position'}">
+                        <xacro:macro name="mujoco_position_actuator" params="joint_num prefix dynamics joint_limits">
+                            <xacro:property name="j_name" value="joint${joint_num}"/>
+                            <xacro:property name="dyn" value="${dynamics[j_name]['dynamic']}"/>
+                            <xacro:property name="j_limit" value="${joint_limits[j_name]['limit']}"/>
+
+                            <position name="${prefix}joint${joint_num}_motor"
+                                      joint="${prefix}joint${joint_num}"
+                                      kp="${dyn['K']}" kv="${dyn['D']}"
+                                      ctrlrange="${j_limit['lower']} ${j_limit['upper']}"/>
+                        </xacro:macro>
+
+                        <xacro:mujoco_position_actuator joint_num="1" prefix="${prefix}" dynamics="${dynamics}" joint_limits="${joint_limits}"/>
+                        <xacro:mujoco_position_actuator joint_num="2" prefix="${prefix}" dynamics="${dynamics}" joint_limits="${joint_limits}"/>
+                        <xacro:mujoco_position_actuator joint_num="3" prefix="${prefix}" dynamics="${dynamics}" joint_limits="${joint_limits}"/>
+                        <xacro:mujoco_position_actuator joint_num="4" prefix="${prefix}" dynamics="${dynamics}" joint_limits="${joint_limits}"/>
+                        <xacro:mujoco_position_actuator joint_num="5" prefix="${prefix}" dynamics="${dynamics}" joint_limits="${joint_limits}"/>
+                        <xacro:mujoco_position_actuator joint_num="6" prefix="${prefix}" dynamics="${dynamics}" joint_limits="${joint_limits}"/>
+                        <xacro:mujoco_position_actuator joint_num="7" prefix="${prefix}" dynamics="${dynamics}" joint_limits="${joint_limits}"/>
+                    </xacro:if>
+
+                    <xacro:if value="${control_type == 'effort'}">
+                        <xacro:macro name="mujoco_motor_actuator" params="joint_num prefix joint_limits">
+                            <xacro:property name="j_name" value="joint${joint_num}"/>
+                            <xacro:property name="j_limit" value="${joint_limits[j_name]['limit']}"/>
+
+                            <motor name="${prefix}joint${joint_num}_motor"
+                                   joint="${prefix}joint${joint_num}"
+                                   ctrlrange="-${j_limit['effort']} ${j_limit['effort']}"/>
+                        </xacro:macro>
+
+                        <xacro:mujoco_motor_actuator joint_num="1" prefix="${prefix}" joint_limits="${joint_limits}"/>
+                        <xacro:mujoco_motor_actuator joint_num="2" prefix="${prefix}" joint_limits="${joint_limits}"/>
+                        <xacro:mujoco_motor_actuator joint_num="3" prefix="${prefix}" joint_limits="${joint_limits}"/>
+                        <xacro:mujoco_motor_actuator joint_num="4" prefix="${prefix}" joint_limits="${joint_limits}"/>
+                        <xacro:mujoco_motor_actuator joint_num="5" prefix="${prefix}" joint_limits="${joint_limits}"/>
+                        <xacro:mujoco_motor_actuator joint_num="6" prefix="${prefix}" joint_limits="${joint_limits}"/>
+                        <xacro:mujoco_motor_actuator joint_num="7" prefix="${prefix}" joint_limits="${joint_limits}"/>
+                    </xacro:if>
+
+                    <xacro:if value="${hand}">
+                        <xacro:if value="${hand_control_type == 'effort'}">
+                            <motor name="${prefix}finger_joint1_motor" joint="${prefix}finger_joint1" ctrlrange="-20.0 20.0"/>
+                        </xacro:if>
+                        <xacro:if value="${hand_control_type == 'position'}">
+                            <position name="${prefix}finger_joint1_motor" joint="${prefix}finger_joint1" kp="1000" kv="50" ctrlrange="0.0 0.04"/>
+                        </xacro:if>
+                    </xacro:if>
+                </actuator>
+
+                <xacro:if value="${hand}">
+                    <equality>
+                        <joint joint1="${prefix}finger_joint1" joint2="${prefix}finger_joint2"
+                               polycoef="0 1 0 0 0" solimp="0.95 0.99 0.001" solref="0.005 1"/>
+                    </equality>
+                </xacro:if>
+            </raw_inputs>
+
+            <processed_inputs>
+                <xacro:macro name="mujoco_dynamics" params="joint_num prefix dynamics">
+                    <xacro:property name="j_name" value="joint${joint_num}"/>
+                    <xacro:property name="dyn" value="${dynamics[j_name]['dynamic']}"/>
+
+                    <xacro:property name="calc_armature" value="${dyn['motor_inertia'] * (dyn['gear_ratio'] * dyn['gear_ratio'])}"/>
+
+                    <modify_element type="joint" name="${prefix}joint${joint_num}"
+                            damping="${dyn['mu_viscous']}"
+                            frictionloss="${dyn['friction']}"
+                            armature="${calc_armature}"/>
+                </xacro:macro>
+
+                <xacro:mujoco_dynamics joint_num="1" prefix="${prefix}" dynamics="${dynamics}"/>
+                <xacro:mujoco_dynamics joint_num="2" prefix="${prefix}" dynamics="${dynamics}"/>
+                <xacro:mujoco_dynamics joint_num="3" prefix="${prefix}" dynamics="${dynamics}"/>
+                <xacro:mujoco_dynamics joint_num="4" prefix="${prefix}" dynamics="${dynamics}"/>
+                <xacro:mujoco_dynamics joint_num="5" prefix="${prefix}" dynamics="${dynamics}"/>
+                <xacro:mujoco_dynamics joint_num="6" prefix="${prefix}" dynamics="${dynamics}"/>
+                <xacro:mujoco_dynamics joint_num="7" prefix="${prefix}" dynamics="${dynamics}"/>
+
+                <xacro:macro name="mujoco_gravcomp" params="link_num prefix">
+                    <modify_element type="body" name="${prefix}link${link_num}" gravcomp="1"/>
+                </xacro:macro>
+
+                <xacro:mujoco_gravcomp link_num="1" prefix="${prefix}"/>
+                <xacro:mujoco_gravcomp link_num="2" prefix="${prefix}"/>
+                <xacro:mujoco_gravcomp link_num="3" prefix="${prefix}"/>
+                <xacro:mujoco_gravcomp link_num="4" prefix="${prefix}"/>
+                <xacro:mujoco_gravcomp link_num="5" prefix="${prefix}"/>
+                <xacro:mujoco_gravcomp link_num="6" prefix="${prefix}"/>
+                <xacro:mujoco_gravcomp link_num="7" prefix="${prefix}"/>
+
+                <xacro:if value="${hand}">
+                    <modify_element type="joint" name="${prefix}finger_joint1" damping="0.3" frictionloss="0.1"/>
+                    <modify_element type="joint" name="${prefix}finger_joint2" damping="0.3" frictionloss="0.1"/>
+
+                    <modify_element type="body" name="${prefix}hand"        gravcomp="1"/>
+                    <modify_element type="body" name="${prefix}leftfinger"  gravcomp="1"/>
+                    <modify_element type="body" name="${prefix}rightfinger" gravcomp="1"/>
+                </xacro:if>
+            </processed_inputs>
+
+        </mujoco_inputs>
+  </xacro:macro>
+</robot>

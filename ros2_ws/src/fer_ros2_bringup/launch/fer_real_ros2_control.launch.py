@@ -1,68 +1,49 @@
 from typing import List
 
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, Shutdown, OpaqueFunction, IncludeLaunchDescription
+from launch.actions import DeclareLaunchArgument, OpaqueFunction, Shutdown
 from launch.conditions import IfCondition
-from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import Command, FindExecutable, LaunchConfiguration, PathJoinSubstitution
 from launch_ros.parameter_descriptions import ParameterValue
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 
+
 def launch_setup(context, *args, **kwargs):
 
     # Launch Args
-    log_level   = LaunchConfiguration("log_level")
-    use_rviz    = LaunchConfiguration("use_rviz")
+    log_level = LaunchConfiguration("log_level")
+    use_rviz = LaunchConfiguration("use_rviz")
+    robot_ip = LaunchConfiguration("robot_ip")
+    hand = LaunchConfiguration("hand")
 
-    # xacro args (mirrors the necessary <xacro:arg> declarations in fer.urdf.xacro)
-    robot_type           = LaunchConfiguration("robot_type")
-    arm_prefix           = LaunchConfiguration("arm_prefix")
-    no_prefix            = LaunchConfiguration("no_prefix")
-    hand                 = LaunchConfiguration("hand")
-    ee_id                = LaunchConfiguration("ee_id")
-    xyz_ee               = LaunchConfiguration("xyz_ee")
-    rpy_ee               = LaunchConfiguration("rpy_ee")
-    tcp_xyz              = LaunchConfiguration("tcp_xyz")
-    tcp_rpy              = LaunchConfiguration("tcp_rpy")
-    safety_distance      = LaunchConfiguration("safety_distance")
-    with_sc              = LaunchConfiguration("with_sc")
-    ros2_control         = LaunchConfiguration("ros2_control")
-    robot_ip             = LaunchConfiguration("robot_ip")
-    xyz                  = LaunchConfiguration("xyz")
-    rpy                  = LaunchConfiguration("rpy")
+    if not robot_ip.perform(context):
+        raise RuntimeError("robot_ip is empty. Pass robot_ip:=<FCI address> for hardware:=real.")
+
+    # xacro args passed through to upstream fer.urdf.xacro
+    xacro_args = [
+        "robot_type", "arm_prefix", "no_prefix", "hand", "ee_id", "xyz_ee", "rpy_ee",
+        "tcp_xyz", "tcp_rpy", "safety_distance", "with_sc", "robot_ip", "xyz", "rpy",
+    ]
 
     # Package Share
-    fer_bringup_share = FindPackageShare("fer_bringup")
+    fer_ros2_bringup_share = FindPackageShare("fer_ros2_bringup")
 
     # Controllers
-    controllers_yaml = PathJoinSubstitution(
-        [fer_bringup_share, "config", "controllers.yaml"]
-    )
+    controller_files = ["fer_controllers.yaml", "fer_controllers_real.yaml"]
+    param_files = [
+        PathJoinSubstitution([fer_ros2_bringup_share, "config", f]) for f in controller_files
+    ]
 
     # FER description
     fer_description_content = Command(
         [
             PathJoinSubstitution([FindExecutable(name="xacro")]),
             " ",
-            PathJoinSubstitution([fer_bringup_share, "urdf", "fer.xacro"]),
-            " ",
-            "robot_type:=",           robot_type,           " ",
-            "arm_prefix:=",           arm_prefix,           " ",
-            "no_prefix:=",            no_prefix,            " ",
-            "hand:=",                 hand,                 " ",
-            "ee_id:=",                ee_id,                " ",
-            "xyz_ee:=",               xyz_ee,               " ",
-            "rpy_ee:=",               rpy_ee,               " ",
-            "tcp_xyz:=",              tcp_xyz,              " ",
-            "tcp_rpy:=",              tcp_rpy,              " ",
-            "safety_distance:=",      safety_distance,      " ",
-            "with_sc:=",              with_sc,              " ",
-            "ros2_control:=",         ros2_control,         " ",
-            "robot_ip:=",             robot_ip,             " ",
-            "xyz:=",                  xyz,                  " ",
-            "rpy:=",                  rpy,                  " ",
+            PathJoinSubstitution([fer_ros2_bringup_share, "urdf", "fer.urdf.xacro"]),
+            " hardware:=real",
         ]
+        + [item for arg in xacro_args for item in (f" {arg}:='", LaunchConfiguration(arg), "'")]
     )
     robot_description_str = fer_description_content.perform(context)
     robot_description = {"robot_description": ParameterValue(value=robot_description_str, value_type=str)}
@@ -75,6 +56,7 @@ def launch_setup(context, *args, **kwargs):
         arguments=["--ros-args", "--log-level", log_level],
     )
 
+    # Merges the arm (fer/joint_states) and gripper (fer_gripper/joint_states) states into /joint_states
     joint_state_publisher_node = Node(
         package='joint_state_publisher',
         executable='joint_state_publisher',
@@ -86,55 +68,66 @@ def launch_setup(context, *args, **kwargs):
             ],
     )
 
-    # ROS2 Control
+    # ROS2 Control: robot_description arrives on the topic from robot_state_publisher
     ros2_control_node = Node(
         package="controller_manager",
         executable="ros2_control_node",
-        parameters=[robot_description, controllers_yaml],
-        remappings=[("joint_states", "fer/joint_states")],
+        parameters=param_files,
+        remappings=[("~/robot_description", "/robot_description")],
         output="both",
         arguments=["--ros-args", "--log-level", log_level]
     )
-    
-    # One spawner mechanism for broadcasters and motion controllers.
-    # --param-file passes controllers.yaml so generate_parameter_library controllers
-    # (the trajectory controllers) receive their required params (joints, gains). (TODO item 2)
-    def controller_spawner(name, *args):
+
+    def controller_spawner(names, *args):
+        arguments = [*names, *args]
+        for param_file in param_files:
+            arguments += ["--param-file", param_file]
         return Node(
             package="controller_manager",
             executable="spawner",
             output="both",
-            arguments=[name, *args,
-                       "--param-file", controllers_yaml,
-                       "--ros-args", "--log-level", log_level],
+            arguments=arguments + ["--ros-args", "--log-level", log_level],
         )
 
-    # Active on start.
-    active_controllers = [
-        "joint_state_broadcaster",
-        "franka_robot_state_broadcaster",
-    ]
-    active_spawners = [controller_spawner(c) for c in active_controllers]
+    # Active on start: broadcasters only.
+    joint_state_broadcaster_spawner = controller_spawner(
+        ["joint_state_broadcaster"],
+        "--controller-ros-args", "-r joint_states:=fer/joint_states",
+    )
+    robot_state_broadcaster_spawner = controller_spawner(["franka_robot_state_broadcaster"])
 
     # Loaded but inactive: only one motion controller may drive the joints at a time.
     # Switch to it at runtime with `ros2 control switch_controllers`.
     inactive_controllers = [
-        "effort_joint_trajectory_controller",
-        "vel_joint_trajectory_controller",
+        "effort_trajectory_controller",
+        "velocity_trajectory_controller",
+        "position_trajectory_controller",
     ]
-    inactive_spawners = [controller_spawner(c, "--inactive") for c in inactive_controllers]
+    inactive_spawner = controller_spawner(inactive_controllers, "--inactive")
 
-    gripper_launch_desc = PathJoinSubstitution(
-        [FindPackageShare('franka_gripper'), 'launch', 'gripper.launch.py']
+    # Same node as franka_gripper/launch/gripper.launch.py; the whole bringup
+    # shuts down if the gripper connection fails.
+    arm_id = LaunchConfiguration("robot_type").perform(context)
+    gripper_node = Node(
+        package="franka_gripper",
+        executable="franka_gripper_node",
+        name=f"{arm_id}_gripper",
+        output="both",
+        parameters=[
+            {
+                "robot_ip": robot_ip,
+                "joint_names": [f"{arm_id}_finger_joint1", f"{arm_id}_finger_joint2"],
+            },
+            PathJoinSubstitution(
+                [FindPackageShare("franka_gripper"), "config", "franka_gripper_node.yaml"]
+            ),
+        ],
+        condition=IfCondition(hand),
+        on_exit=Shutdown(),
     )
-    fer_gripper_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(gripper_launch_desc),
-            launch_arguments={'robot_ip': robot_ip,}.items(),
-            condition=IfCondition(hand)
-    )
-    
+
     rviz_config_file = PathJoinSubstitution(
-        [fer_bringup_share, "rviz", "visualize_franka.rviz"]
+        [fer_ros2_bringup_share, "rviz", "fer_real.rviz"]
     )
     rviz_node = Node(
         package="rviz2",
@@ -151,9 +144,10 @@ def launch_setup(context, *args, **kwargs):
         robot_state_publisher_node,
         joint_state_publisher_node,
         ros2_control_node,
-        *active_spawners,
-        *inactive_spawners,
-        fer_gripper_launch,
+        joint_state_broadcaster_spawner,
+        robot_state_broadcaster_spawner,
+        inactive_spawner,
+        gripper_node,
         rviz_node,
     ]
 
@@ -227,14 +221,9 @@ def generate_declared_arguments() -> List[DeclareLaunchArgument]:
             description="Should self-collision be enabled?"
         ),
         DeclareLaunchArgument(
-            "ros2_control",
-            default_value="true",
-            description="Is the robot being controlled with ros2_control?"
-        ),
-        DeclareLaunchArgument(
             "robot_ip",
             default_value="",
-            description="IP address or hostname of the robot."
+            description="IP address or hostname of the robot. Required."
         ),
         DeclareLaunchArgument(
             "xyz",

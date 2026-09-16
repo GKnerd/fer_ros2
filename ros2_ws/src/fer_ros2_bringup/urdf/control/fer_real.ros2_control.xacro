@@ -7,9 +7,8 @@
 
     Upstream franka_description's franka_arm.ros2_control.xacro targets the
     non-multi franka_hardware/FrankaHardwareInterface, which is NOT registered in
-    this workspace and uses a different param/interface contract. We suppress it
-    (ros2_control:=false on xacro:franka_robot in fer.xacro) and emit this instead.
-    See fer_ros2/TODO.md item 7.
+    this workspace and uses a different param/interface contract. fer.urdf.xacro
+    keeps it off (ros2_control:=false) and emits this instead for hardware:=real.
 
     Contract enforced by FrankaMultiHardwareInterface::on_init:
       hardware params : robot_count, ns<i>, robot_ip<i>   (i = 1 .. robot_count)
@@ -23,8 +22,8 @@
     programmatically by the hardware (export_*_interfaces), NOT from the URDF, so
     they must NOT be declared here.
   -->
-  <xacro:macro name="fer_ros2_control" params="arm_id robot_ip">
-    <ros2_control name="${arm_id}_FrankaMultiHardwareInterface" type="system">
+  <xacro:macro name="fer_real_ros2_control" params="arm_id robot_ip">
+    <ros2_control name="${arm_id}_hardware" type="system">
       <hardware>
         <plugin>franka_hardware/FrankaMultiHardwareInterface</plugin>
         <param name="robot_count">1</param>
