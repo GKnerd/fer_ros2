@@ -48,26 +48,36 @@ def load_yaml(package_name, file_path):
         return None
 
 
-def select_default_controllers(controllers_yaml, selection_yaml, arm_type, hand_type):
+HARDWARE = ("real", "mujoco")
+
+
+def select_default_controllers(controllers_yaml, arm_type, hand_type):
     """Mutate moveit_controllers dict so the chosen controllers are flagged default.
 
-    The (arm_type, hand_type) -> controller-name mapping lives in
-    config/controller_selection.yaml so it can be edited without touching
-    Python.
+    Controller names follow <interface>_trajectory_controller for the arm and
+    gripper_<interface>_controller for ros2_control grippers. Entries that match
+    neither pattern (e.g. the real fer_gripper node) keep their YAML default.
     """
-    chosen = {
-        selection_yaml["arm"][arm_type],
-        selection_yaml["hand"][hand_type],
-    }
-    for name in controllers_yaml.get("controller_names", []):
-        entry = controllers_yaml.get(name)
-        if isinstance(entry, dict):
-            entry["default"] = name in chosen
+    arm = f"{arm_type}_trajectory_controller"
+    hand = f"gripper_{hand_type}_controller"
+    names = controllers_yaml.get("controller_names", [])
+    arm_names = [n for n in names if n.endswith("_trajectory_controller")]
+    hand_names = [n for n in names if n.startswith("gripper_")]
+    for chosen, members in ((arm, arm_names), (hand, hand_names)):
+        if not members:
+            continue
+        if chosen not in members:
+            raise RuntimeError(f"'{chosen}' is not available for this hardware; choose one of {members}")
+        for name in members:
+            controllers_yaml[name]["default"] = name == chosen
     return controllers_yaml
 
 
 def moveit_launch_setup(context, *args, **kwargs):
     # Launch Config
+    hardware = LaunchConfiguration("hardware").perform(context)
+    if hardware not in HARDWARE:
+        raise RuntimeError(f"hardware must be one of {HARDWARE}, got '{hardware}'")
     use_sim_time = LaunchConfiguration("use_sim_time")
     use_rviz = LaunchConfiguration("use_rviz")
     db = LaunchConfiguration("db")
@@ -165,20 +175,13 @@ def moveit_launch_setup(context, *args, **kwargs):
 
     # Trajectory Execution Functionality
     #
-    # moveit_controllers.yaml *defines* the controllers MoveIt may route to;
-    # controller_selection.yaml *maps* the high-level launch args
-    # (arm_control_type / hand_control_type) to which of those controllers
-    # is currently the default. The `default:` flags inside
-    # moveit_controllers.yaml are overridden at launch time accordingly.
+    # moveit_controllers_<hardware>.yaml defines the controllers MoveIt may
+    # route to; arm_control_type / hand_control_type pick the default ones.
     moveit_simple_controllers_yaml = load_yaml(
-        "fer_moveit_config", 'config/moveit_controllers.yaml'
-    )
-    controller_selection_yaml = load_yaml(
-        "fer_moveit_config", 'config/controller_selection.yaml'
+        "fer_moveit_config", f'config/moveit_controllers_{hardware}.yaml'
     )
     select_default_controllers(
-        moveit_simple_controllers_yaml, controller_selection_yaml,
-        arm_control_type, hand_control_type,
+        moveit_simple_controllers_yaml, arm_control_type, hand_control_type,
     )
     moveit_controllers = {
         'moveit_simple_controller_manager': moveit_simple_controllers_yaml,
@@ -259,6 +262,12 @@ def generate_declared_arguments() -> List[DeclareLaunchArgument]:
 
     return [
         DeclareLaunchArgument(
+            "hardware",
+            default_value="mujoco",
+            choices=list(HARDWARE),
+            description="Hardware backend whose controllers MoveIt routes to: 'real' or 'mujoco'."
+        ),
+        DeclareLaunchArgument(
             "use_sim_time",
             default_value="true",
             description="If true, use simulated clock"
@@ -310,13 +319,14 @@ def generate_declared_arguments() -> List[DeclareLaunchArgument]:
         DeclareLaunchArgument(
             "arm_control_type",
             default_value="effort",
-            description="Which arm controller is the active default for move_group "
-                        "to route trajectories to: 'effort' or 'position'."
+            description="Which arm controller is the default for move_group to route "
+                        "trajectories to: 'effort' or 'position' (mujoco), "
+                        "'effort', 'velocity' or 'position' (real)."
         ),
         DeclareLaunchArgument(
             "hand_control_type",
             default_value="position",
-            description="Which gripper controller is the active default for move_group: "
-                        "'effort' or 'position'."
+            description="Which gripper controller is the default for move_group: "
+                        "'effort' or 'position'. Ignored for hardware:=real (franka_gripper node)."
         ),
     ]

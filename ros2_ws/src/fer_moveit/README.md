@@ -65,6 +65,7 @@ The launch file accepts the following arguments (defaults in parentheses):
 
 | Argument               | Default        | Description |
 | ---------------------- | -------------- | ----------- |
+| `hardware`             | `mujoco`       | `real` or `mujoco` — selects `config/moveit_controllers_<hardware>.yaml` |
 | `use_sim_time`         | `true`         | Use the simulated `/clock` |
 | `use_rviz`             | `true`         | Start RViz with `rviz/moveit_conf.rviz` |
 | `log_level`            | `warn`         | `debug` / `info` / `warn` / `error` / `fatal` |
@@ -75,18 +76,23 @@ The launch file accepts the following arguments (defaults in parentheses):
 | `ee_id`                | `franka_hand`  | End-effector id: `none`, `franka_hand`, `cobot_pump` |
 | `use_fake_hardware`    | `false`        | Use `ros2_control` fake hardware |
 | `fake_sensor_commands` | `false`        | Fake sensor commands (only with `use_fake_hardware:=true`) |
-| `arm_control_type`     | `effort`       | `effort` or `position` — selects default arm controller |
-| `hand_control_type`    | `position`     | `effort` or `position` — selects default gripper controller |
+| `arm_control_type`     | `effort`       | `effort`, `velocity` (real only) or `position` — selects `<type>_trajectory_controller` |
+| `hand_control_type`    | `position`     | `effort` or `position` — selects `gripper_<type>_controller`; ignored for `real` |
 
-The `arm_control_type` / `hand_control_type` args are the single source of
-truth for which controller `move_group` routes trajectories to: the `default`
-flag in `config/moveit_controllers.yaml` is mutated at launch time based on
-these args, so you do not need to edit the YAML to switch controllers.
+`config/moveit_controllers_<hardware>.yaml` lists the controllers `move_group`
+may route to on that hardware. The `arm_control_type` / `hand_control_type`
+args pick the default ones: the `default` flag is set at launch time, so you do
+not need to edit the YAML to switch controllers. On the real robot the gripper
+is the `franka_gripper` node (`/fer_gripper/gripper_action`).
+
+The controllers must be active in `ros2_control` before `move_group` can
+execute; the bringup starts them inactive.
 
 Example:
 
 ```bash
 ros2 launch fer_moveit_config fer_moveit_launch.py \
+    hardware:=mujoco \
     use_sim_time:=true \
     arm_control_type:=effort \
     hand_control_type:=position

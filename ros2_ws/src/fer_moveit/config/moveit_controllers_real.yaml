@@ -1,0 +1,55 @@
+# Controllers MoveIt may route to with hardware:=real.
+# fer_moveit_launch.py sets `default: true` on the arm controller chosen by
+# arm_control_type. The gripper is the franka_gripper node, whose
+# GripperCommand action server is /fer_gripper/gripper_action.
+controller_names:
+  - effort_trajectory_controller
+  - velocity_trajectory_controller
+  - position_trajectory_controller
+  - fer_gripper
+
+effort_trajectory_controller:
+  type: FollowJointTrajectory
+  action_ns: follow_joint_trajectory
+  default: true
+  joints:
+    - fer_joint1
+    - fer_joint2
+    - fer_joint3
+    - fer_joint4
+    - fer_joint5
+    - fer_joint6
+    - fer_joint7
+
+velocity_trajectory_controller:
+  type: FollowJointTrajectory
+  action_ns: follow_joint_trajectory
+  default: false
+  joints:
+    - fer_joint1
+    - fer_joint2
+    - fer_joint3
+    - fer_joint4
+    - fer_joint5
+    - fer_joint6
+    - fer_joint7
+
+position_trajectory_controller:
+  type: FollowJointTrajectory
+  action_ns: follow_joint_trajectory
+  default: false
+  joints:
+    - fer_joint1
+    - fer_joint2
+    - fer_joint3
+    - fer_joint4
+    - fer_joint5
+    - fer_joint6
+    - fer_joint7
+
+fer_gripper:
+  type: GripperCommand
+  action_ns: gripper_action
+  default: true
+  joints:
+    - fer_finger_joint1
