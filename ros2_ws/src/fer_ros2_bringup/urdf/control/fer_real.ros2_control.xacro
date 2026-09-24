@@ -11,12 +11,12 @@
     keeps it off (ros2_control:=false) and emits this instead for hardware:=real.
 
     Contract enforced by FrankaMultiHardwareInterface::on_init:
-      hardware params : robot_count, ns<i>, robot_ip<i>   (i = 1 .. robot_count)
+      hardware params : robot_count, ns_<i>, robot_ip_<i>   (i = 1 .. robot_count)
       per joint       : exactly 3 command interfaces (effort, position, velocity)
                         exactly 3 state interfaces   (position, velocity, effort)
       joint namespace : get_ns(joint) = substring before the LAST '_' and must
                         equal ns<i>. With joints '<arm_id>_joint1..7' and
-                        ns1='<arm_id>', get_ns('fer_joint1') == 'fer'. Holds.
+                        ns_1='<arm_id>', get_ns('fer_joint1') == 'fer'. Holds.
 
     The cartesian / robot_state / robot_model interfaces are created
     programmatically by the hardware (export_*_interfaces), NOT from the URDF, so
@@ -27,8 +27,8 @@
       <hardware>
         <plugin>franka_hardware/FrankaMultiHardwareInterface</plugin>
         <param name="robot_count">1</param>
-        <param name="ns1">${arm_id}</param>
-        <param name="robot_ip1">${robot_ip}</param>
+        <param name="ns_1">${arm_id}</param>
+        <param name="robot_ip_1">${robot_ip}</param>
       </hardware>
 
       <xacro:macro name="configure_joint" params="joint_name">
