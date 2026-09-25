@@ -5,5 +5,5 @@ uint32 max_candidates 0             # 0 = all
 
 ---
 
-Outcome outcome                     # OK, NOT_FOUND, INVALID_STATE (not FREE)
+Outcome outcome                     # OK, NOT_FOUND, INVALID_STATE (not FREE), NO_DATA
 GraspCandidate[] candidates         # best first

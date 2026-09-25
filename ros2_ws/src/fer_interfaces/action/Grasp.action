@@ -3,7 +3,7 @@
 string object_id                    # must be FREE in the world model
 float64 width                       # expected width of the object between the fingers, m
 float64 force                       # N
-float64 tolerance 0.005             # how far the measured width may differ from actul `width`
+float64 tolerance 0.005             # how far the measured width may differ from actual `width`
 
 ---
 

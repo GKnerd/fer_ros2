@@ -1,14 +1,12 @@
 # DetectObjects.action
 
-string target_id                    # empty = full snapshot; set = refine only this object
 string[] class_ids                  # empty = all classes
-float64 timeout_s 2.0
 
 ---
 
-Outcome outcome                     # OK, NOT_FOUND (refine target not seen), TIMEOUT, CANCELLED
+Outcome outcome                     # OK, CANCELLED
 uint64 revision
 string[] added
 string[] updated
-string[] not_seen                   # known FREE objects not matched; informational, status NOT changed
+string[] not_seen                   # known FREE objects not matched; status NOT changed
 ---

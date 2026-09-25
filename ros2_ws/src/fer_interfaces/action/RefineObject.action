@@ -1,0 +1,9 @@
+# RefineObject.action
+
+string object_id
+
+---
+
+Outcome outcome                     # OK, NOT_FOUND, INVALID_STATE, CANCELLED
+uint64 revision
+---
