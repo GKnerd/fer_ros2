@@ -1,5 +1,5 @@
-import os
 from glob import glob
+import os
 
 from setuptools import find_packages, setup
 
@@ -20,7 +20,8 @@ setup(
     zip_safe=True,
     maintainer='georg.katranis@gmail.com',
     maintainer_email='georg.katranis@gmail.com',
-    description='TODO: Package description',
+    description='World model of the FER platform: objects built from detections, '
+                'served through fer_interfaces.',
     license='Apache-2.0',
     extras_require={
         'test': [
@@ -29,8 +30,8 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'world_model_server = fer_world_model.planning_scene_world_model_server:main',
-            'mock_camera = fer_world_model.mock_camera_node:main',
+            'world_model_server = fer_world_model.world_model_server:main',
+            'mock_perception = fer_world_model.mock_perception_node:main',
         ],
     },
 )

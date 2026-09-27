@@ -1,0 +1,11 @@
+fer_world_model:
+  ros__parameters:
+    detection_topic: /perception/detections
+    detection_source: perception   # recorded as `source` of detected objects
+    base_frame: base
+    association_gate: 0.05         # m, largest center distance for the same object
+    refine_gate: 0.10              # m, search radius around the object for RefineObject
+    min_score: 0.5                 # detections below are ignored
+    detection_timeout: 5.0         # s, DetectObjects/RefineObject wait for a snapshot
+    tf_timeout: 0.1                # s
+    removal_timeout: 30.0          # s, missing objects are removed after this
