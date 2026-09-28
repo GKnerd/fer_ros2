@@ -24,6 +24,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/FrankaModel.msg"
   "msg/Errors.msg"
   "msg/PoseStampedArray.msg"
+  "msg/GripperState.msg"
   DEPENDENCIES std_msgs geometry_msgs builtin_interfaces
 )
 
