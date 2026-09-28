@@ -125,6 +125,8 @@ GripperActionServer::GripperActionServer(const rclcpp::NodeOptions& options)
 
   this->joint_states_publisher_ =
       this->create_publisher<sensor_msgs::msg::JointState>("~/joint_states", 1);
+  this->gripper_state_publisher_ =
+      this->create_publisher<franka_msgs::msg::GripperState>("~/gripper_state", 1);
   this->timer_ = this->create_wall_timer(rclcpp::WallRate(kStatePublishRate).period(),
                                          [this]() { return publishGripperState(); });
 }
@@ -275,6 +277,14 @@ void GripperActionServer::publishGripperState() {
   joint_states.effort.push_back(0.0);
   joint_states.effort.push_back(0.0);
   joint_states_publisher_->publish(joint_states);
+
+  franka_msgs::msg::GripperState gripper_state;
+  gripper_state.header.stamp = joint_states.header.stamp;
+  gripper_state.width = current_gripper_state_.width;
+  gripper_state.max_width = current_gripper_state_.max_width;
+  gripper_state.is_grasped = current_gripper_state_.is_grasped;
+  gripper_state.temperature = current_gripper_state_.temperature;
+  gripper_state_publisher_->publish(gripper_state);
 }
 
 void GripperActionServer::publishGripperCommandFeedback(
