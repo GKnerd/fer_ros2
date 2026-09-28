@@ -4,8 +4,7 @@ Gripper server of the FER platform. Serves `MoveGripper`, `Grasp` and `Release` 
 `fer_interfaces`, judges grasps from the measured width, and reports GRASPED, FREE and
 LOST to the world model.
 
-It is the only component that moves the gripper, so the world model has exactly one
-source for grasp state.
+It is the only component that moves the gripper. It directly updates the world model's grasp state.
 
 ## Interfaces
 
