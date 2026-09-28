@@ -1,3 +1,27 @@
+## 2026-09-28
+
+Gripper state for the platform's gripper server: libfranka already reports
+whether an object is held, but the ROS node never published it.
+
+### franka_msgs
+
+- **New message `msg/GripperState.msg`**: `header`, `width`, `max_width`, `is_grasped`,
+  `temperature` — the fields of `franka::GripperState`. Added to
+  `rosidl_generate_interfaces` in `CMakeLists.txt`. Additive; no existing message or
+  action changed.
+
+### franka_gripper
+
+- **New publisher `~/gripper_state`** (`franka_msgs/msg/GripperState`), created next to
+  `~/joint_states` in the constructor (`src/gripper_action_server.cpp`) and filled in
+  `publishGripperState()` from the same `readOnce()` result, with the same stamp.
+  `is_grasped` is libfranka's own verdict: true while the fingers stay within the epsilon
+  window of the last `grasp()`. It lets a client detect an object slipping out or being
+  taken out of the hand, which `~/joint_states` (width only) cannot express.
+  Runs inside `publishGripperState()` under `gripper_state_mutex_`, so no new threading.
+- Built against libfranka 0.9.2. **NOT YET VERIFIED ON HARDWARE** — check that
+  `is_grasped` is true while holding an object and turns false when it is removed.
+
 ## 2026-09-09
 
 First bring-up on the real FER arm. One config mismatch blocked startup; fixing it
