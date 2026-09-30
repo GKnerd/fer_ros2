@@ -1,0 +1,12 @@
+fer_moveit_motion_server:
+  ros__parameters:
+    planning_time: 5.0                  # s, per plan
+    planning_attempts: 1
+    goal_position_tolerance: 0.001      # m, pose targets
+    goal_orientation_tolerance: 0.01    # rad, pose targets
+    rest_velocity: 0.01                 # rad/s, every joint below this = at rest
+    rest_timeout: 3.0                   # s, wait for rest after a stop
+    tf_timeout: 0.2                     # s
+    world_model_timeout: 2.0            # s
+    move_group_timeout: 7.0             # s, at least planning_time
+    startup_timeout: 10.0               # s

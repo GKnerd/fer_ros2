@@ -6,27 +6,63 @@
   <version>0.1.0</version>
   <description>
       MoveIt 2 configuration and launch files for the Franka Emika Robot (FER),
-      targeting ROS 2 Jazzy. Downstream rework of the upstream panda_moveit_config
-      package; see NOTICE.md for attribution.
+      targeting ROS 2 Jazzy, and the MoveIt motion server of the FER platform
+      (fer_interfaces MoveToPose, MoveToJoints, CheckReachable through move_group).
+      Downstream rework of the upstream panda_moveit_config package; see NOTICE.md
+      for attribution.
   </description>
-  <author email="georg.katranis@gmail.com">Georgios Katranis</author>
   <maintainer email="georg.katranis@gmail.com">Georgios Katranis</maintainer>
 
   <license>BSD-3-Clause</license>
   <license file="launch/fer_moveit_launch.py">Apache-2.0</license>
+  <!-- motion server: include/, src/, test/, launch/fer_moveit_motion_server.launch.py -->
+  <license>Apache-2.0</license>
+
+  <author email="georg.katranis@gmail.com">Georgios Katranis</author>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
+  <!-- Motion server -->
+  <depend>rclcpp</depend>
+  <depend>rclcpp_action</depend>
+  <depend>fer_interfaces</depend>
+  <depend>geometry_msgs</depend>
+  <depend>moveit_core</depend>
+  <depend>moveit_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>std_msgs</depend>
+  <depend>tf2</depend>
+  <depend>tf2_geometry_msgs</depend>
+  <depend>tf2_ros</depend>
+  <!-- hardware:=real only; absent with a core+sim import (rosdep -r skips it) -->
+  <depend>franka_msgs</depend>
+
   <!-- URDF / SRDF generation -->
+  <depend>franka_description</depend>
   <exec_depend>xacro</exec_depend>
-  <exec_depend>franka_description</exec_depend>
 
   <!-- move_group node + its planning/execution dependencies -->
   <exec_depend>moveit_ros_move_group</exec_depend>
   <exec_depend>moveit_kinematics</exec_depend>
   <exec_depend>moveit_planners_ompl</exec_depend>
+  <exec_depend>pilz_industrial_motion_planner</exec_depend>
   <exec_depend>moveit_simple_controller_manager</exec_depend>
 
   <!-- ExecuteTaskSolutionCapability plugin loaded by move_group for MTC -->
   <exec_depend>moveit_task_constructor_capabilities</exec_depend>
+
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+
+  <test_depend>ament_cmake_gtest</test_depend>
+  <test_depend>control_msgs</test_depend>
+  <test_depend>ament_cmake_ros</test_depend>
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+  <test_depend>launch_testing</test_depend>
+  <test_depend>launch_testing_ament_cmake</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 </package>

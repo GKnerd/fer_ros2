@@ -30,3 +30,10 @@ builds on, including (in no particular order):
 
 If you believe an attribution is missing or incorrect, please open an
 issue on the repository.
+
+## Motion server
+
+The motion server (`include/`, `src/`, `test/`,
+`launch/fer_moveit_motion_server.launch.py`, `config/fer_moveit_motion_server.yaml`)
+is original work by Georgios Katranis, released under the **Apache License, Version
+2.0** (<http://www.apache.org/licenses/LICENSE-2.0>).

@@ -52,7 +52,8 @@ HARDWARE = ("real", "mujoco")
 
 
 def select_default_controllers(controllers_yaml, arm_type, hand_type):
-    """Mutate moveit_controllers dict so the chosen controllers are flagged default.
+    """
+    Mutate moveit_controllers dict so the chosen controllers are flagged default.
 
     Controller names follow <interface>_trajectory_controller for the arm and
     gripper_<interface>_controller for ros2_control grippers. Entries that match
@@ -133,45 +134,49 @@ def moveit_launch_setup(context, *args, **kwargs):
         "robot_description_kinematics": kinematics_yaml
     }
 
-    # Cartesian Limits
-    cartesian_limits_yaml = load_yaml(
-        "fer_moveit_config", "config/cartesian_limits.yaml"
-    )
-    cartesian_limits = {
-        "robot_description_cartesian_limits": cartesian_limits_yaml
-    }
-
-    # Joint Limits
+    # Joint and Cartesian limits; Pilz reads the Cartesian ones from robot_description_planning
     joint_limits_yaml = load_yaml(
         "fer_moveit_config", "config/joint_limits.yaml"
     )
-    joint_limits = {
-        'robot_description_planning': joint_limits_yaml
+    cartesian_limits_yaml = load_yaml(
+        "fer_moveit_config", "config/cartesian_limits.yaml"
+    )
+    planning_limits = {
+        'robot_description_planning': {**joint_limits_yaml, **cartesian_limits_yaml}
     }
 
-    # Planning Functionality
-    ompl_planning_pipeline_config = {
-        'move_group': {
-            'planning_plugins': ['ompl_interface/OMPLPlanner'],
-            'request_adapters': [
-                'default_planning_request_adapters/ResolveConstraintFrames',
-                'default_planning_request_adapters/ValidateWorkspaceBounds',
-                'default_planning_request_adapters/CheckStartStateBounds',
-                'default_planning_request_adapters/CheckStartStateCollision',
-                                ],
-            'response_adapters': [
-                'default_planning_response_adapters/AddTimeOptimalParameterization',
-                'default_planning_response_adapters/ValidateSolution',
-                'default_planning_response_adapters/DisplayMotionPath'
-                                  ],
-            'start_state_max_bounds_error': 0.1,
-        }
+    # Planning pipelines: OMPL for free paths, Pilz LIN for straight paths
+    request_adapters = [
+        'default_planning_request_adapters/ResolveConstraintFrames',
+        'default_planning_request_adapters/ValidateWorkspaceBounds',
+        'default_planning_request_adapters/CheckStartStateBounds',
+        'default_planning_request_adapters/CheckStartStateCollision',
+    ]
+    ompl_pipeline = {
+        'planning_plugins': ['ompl_interface/OMPLPlanner'],
+        'request_adapters': request_adapters,
+        'response_adapters': [
+            'default_planning_response_adapters/AddTimeOptimalParameterization',
+            'default_planning_response_adapters/ValidateSolution',
+            'default_planning_response_adapters/DisplayMotionPath',
+        ],
     }
-    ompl_planning_yaml = load_yaml(
-        "fer_moveit_config", 'config/ompl_planning.yaml'
-    )
-    ompl_planning_pipeline_config['move_group'].update(ompl_planning_yaml)
-    
+    ompl_pipeline.update(load_yaml("fer_moveit_config", 'config/ompl_planning.yaml'))
+    planning_pipelines = {
+        'planning_pipelines': {'pipeline_names': ['ompl', 'pilz_industrial_motion_planner']},
+        'default_planning_pipeline': 'ompl',
+        'ompl': ompl_pipeline,
+        'pilz_industrial_motion_planner': {
+            'planning_plugins': ['pilz_industrial_motion_planner/CommandPlanner'],
+            'default_planner_config': 'PTP',
+            'request_adapters': request_adapters,
+            'response_adapters': [
+                'default_planning_response_adapters/ValidateSolution',
+                'default_planning_response_adapters/DisplayMotionPath',
+            ],
+        },
+    }
+
 
     # Trajectory Execution Functionality
     #
@@ -190,9 +195,9 @@ def moveit_launch_setup(context, *args, **kwargs):
     }
     trajectory_execution = {
         'moveit_manage_controllers': True,
-        'trajectory_execution.allowed_execution_duration_scaling': 1.2,
+        'trajectory_execution.allowed_execution_duration_scaling': 1.1,
         'trajectory_execution.allowed_goal_duration_margin': 0.5,
-        'trajectory_execution.execution_duration_monitoring': False,
+        'trajectory_execution.execution_duration_monitoring': True,
         'trajectory_execution.allowed_start_tolerance': 0.01,
     }
     planning_scene_monitor_parameters = {
@@ -217,9 +222,8 @@ def moveit_launch_setup(context, *args, **kwargs):
             robot_description,
             robot_description_semantic,
             kinematics,
-            joint_limits,
-            cartesian_limits,
-            ompl_planning_pipeline_config,
+            planning_limits,
+            planning_pipelines,
             trajectory_execution,
             moveit_controllers,
             planning_scene_monitor_parameters,
@@ -243,7 +247,7 @@ def moveit_launch_setup(context, *args, **kwargs):
             {"use_sim_time": use_sim_time},
             robot_description,
             robot_description_semantic,
-            ompl_planning_pipeline_config,
+            planning_pipelines,
             kinematics,
         ],
         condition=IfCondition(use_rviz)
