@@ -1,0 +1,8 @@
+fer_grasp_planner:
+  ros__parameters:
+    max_object_width: 0.07     # m, the 0.08 opening minus 1 cm to pass the fingers over it
+    pregrasp_distance: 0.10    # m above the grasp
+    lift_height: 0.10          # m above the grasp
+    max_grasp_depth: 0.04      # m, TCP at most this far below the object top
+    min_tip_clearance: 0.012   # m, TCP at least this far above the object bottom
+    world_model_timeout: 2.0   # s

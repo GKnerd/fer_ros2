@@ -1,0 +1,10 @@
+# Grasp force per detected class, N. One catalog for real and MuJoCo, so forces stay
+# within MuJoCo's 20 N (fer_gripper_server gripper_mujoco.yaml max_force).
+# A class not listed uses `default`.
+
+default: {force: 15.0}
+
+classes:
+  box: {force: 15.0}
+  cylinder: {force: 15.0}
+  sphere: {force: 10.0}
