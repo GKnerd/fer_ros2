@@ -41,6 +41,16 @@ effort_trajectory_controller:
       fer_joint5: { p: 250., d: 10., i: 0., antiwindup_strategy: "none" }
       fer_joint6: { p: 150., d: 10., i: 0., antiwindup_strategy: "none" }
       fer_joint7: { p: 50., d: 5., i: 0., antiwindup_strategy: "none" }
+    # Cancel: decelerate at half the FER datasheet joint acceleration limits, then hold.
+    constraints:
+      decelerate_on_cancel: true
+      fer_joint1: { max_deceleration_on_cancel: 7.5 }
+      fer_joint2: { max_deceleration_on_cancel: 3.75 }
+      fer_joint3: { max_deceleration_on_cancel: 5.0 }
+      fer_joint4: { max_deceleration_on_cancel: 6.25 }
+      fer_joint5: { max_deceleration_on_cancel: 7.5 }
+      fer_joint6: { max_deceleration_on_cancel: 10.0 }
+      fer_joint7: { max_deceleration_on_cancel: 10.0 }
 
 velocity_trajectory_controller:
   ros__parameters:
@@ -65,6 +75,16 @@ velocity_trajectory_controller:
       fer_joint5: { p: 3.0, d: 0.0, i: 0.0, antiwindup_strategy: "none" }
       fer_joint6: { p: 3.0, d: 0.0, i: 0.0, antiwindup_strategy: "none" }
       fer_joint7: { p: 3.0, d: 0.0, i: 0.0, antiwindup_strategy: "none" }
+    # Cancel: decelerate at half the FER datasheet joint acceleration limits, then hold.
+    constraints:
+      decelerate_on_cancel: true
+      fer_joint1: { max_deceleration_on_cancel: 7.5 }
+      fer_joint2: { max_deceleration_on_cancel: 3.75 }
+      fer_joint3: { max_deceleration_on_cancel: 5.0 }
+      fer_joint4: { max_deceleration_on_cancel: 6.25 }
+      fer_joint5: { max_deceleration_on_cancel: 7.5 }
+      fer_joint6: { max_deceleration_on_cancel: 10.0 }
+      fer_joint7: { max_deceleration_on_cancel: 10.0 }
 
 position_trajectory_controller:
   ros__parameters:
@@ -81,3 +101,13 @@ position_trajectory_controller:
     state_interfaces:
       - position
       - velocity
+    # Cancel: decelerate at half the FER datasheet joint acceleration limits, then hold.
+    constraints:
+      decelerate_on_cancel: true
+      fer_joint1: { max_deceleration_on_cancel: 7.5 }
+      fer_joint2: { max_deceleration_on_cancel: 3.75 }
+      fer_joint3: { max_deceleration_on_cancel: 5.0 }
+      fer_joint4: { max_deceleration_on_cancel: 6.25 }
+      fer_joint5: { max_deceleration_on_cancel: 7.5 }
+      fer_joint6: { max_deceleration_on_cancel: 10.0 }
+      fer_joint7: { max_deceleration_on_cancel: 10.0 }

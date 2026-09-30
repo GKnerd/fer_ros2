@@ -18,3 +18,6 @@ gripper_effort_controller:
   ros__parameters:
     joint: fer_finger_joint1
     action_monitor_rate: 20.0
+    allow_stalling: true   # a grasp stalls on the object and keeps squeezing with max_effort
+    gains:
+      fer_finger_joint1: { p: 1000.0, i: 0.0, d: 10.0 }
