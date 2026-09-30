@@ -1,0 +1,10 @@
+fer_bt_server:
+  ros__parameters:
+    action_name: execute_tree
+    tick_frequency: 100                     # Hz
+    groot2_port: 1667
+    behavior_trees:
+      - fer_behavior_trees/trees/manipulation
+    action_timeout: 2000                    # ms, until an action server accepts a goal
+    service_timeout: 5000                   # ms, until a service answers
+    check_reachable_timeout: 60000          # ms, CheckReachable plans three motions

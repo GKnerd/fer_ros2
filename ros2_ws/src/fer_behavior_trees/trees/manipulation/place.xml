@@ -1,0 +1,25 @@
+<root BTCPP_format="4">
+  <!-- Puts the held object_id down with its bottom center at (x, y) on the table in base,
+       then retreats straight up. -->
+  <BehaviorTree ID="Place">
+    <Sequence>
+      <GetPlaceCandidates object_id="{object_id}" x="{x}" y="{y}"
+                          candidates="{place_candidates}"/>
+      <FindReachablePlace object_id="{object_id}" candidates="{place_candidates}"
+                          preplace_joints="{preplace_joints}" place_pose="{place_pose}"
+                          retreat_pose="{retreat_pose}"/>
+      <MoveToJoints joints="{preplace_joints}"/>
+      <MoveToPose pose="{place_pose}" path="straight"/>
+      <Release object_id="{object_id}"/>
+      <MoveToPose pose="{retreat_pose}" path="straight" may_touch="{object_id}"/>
+    </Sequence>
+  </BehaviorTree>
+
+  <TreeNodesModel>
+    <SubTree ID="Place">
+      <input_port name="object_id">GRASPED object to put down</input_port>
+      <input_port name="x">m, base</input_port>
+      <input_port name="y">m, base</input_port>
+    </SubTree>
+  </TreeNodesModel>
+</root>

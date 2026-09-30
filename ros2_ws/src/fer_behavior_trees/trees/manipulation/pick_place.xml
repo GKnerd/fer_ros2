@@ -1,0 +1,27 @@
+<root BTCPP_format="4">
+  <!-- Payload: {"target_class": "<class>", "pick_attempts": <n>}.
+       Every FREE object of target_class is picked (up to pick_attempts tries) and placed in
+       a row. A failed pick moves on to the next object; a failed place ends the tree.
+       SUCCESS only if every object was placed. -->
+  <BehaviorTree ID="PickPlace">
+    <Sequence>
+      <Script code="all_placed := true; place_x := 0.35; place_y := 0.30"/>
+      <DetectObjects class_id="{@target_class}"/>
+      <QueryObjects class_id="{@target_class}" ids="{ids}"/>
+      <LoopString queue="{ids}" value="{object_id}">
+        <IfThenElse>
+          <RetryUntilSuccessful num_attempts="{@pick_attempts}">
+            <SubTree ID="Pick" object_id="{object_id}"/>
+          </RetryUntilSuccessful>
+          <Sequence>
+            <SubTree ID="Place" object_id="{object_id}" x="{place_x}" y="{place_y}"/>
+            <Script code="place_x += 0.08"/>
+          </Sequence>
+          <Script code="all_placed := false"/>
+        </IfThenElse>
+      </LoopString>
+      <MoveToJoints joints="{@home}"/>
+      <ScriptCondition code="all_placed"/>
+    </Sequence>
+  </BehaviorTree>
+</root>
