@@ -41,6 +41,7 @@ def launch_setup(context, *args, **kwargs):
     else:
         hardware_arguments["arm_control_type"] = arm_control_type
         hardware_arguments["hand_control_type"] = hand_control_type
+        hardware_arguments["scene"] = LaunchConfiguration("scene")
 
     # Real robot or MuJoCo sim + ros2_control
     hardware_launch = IncludeLaunchDescription(
@@ -116,5 +117,11 @@ def generate_declared_arguments() -> List[DeclareLaunchArgument]:
             "hand_control_type",
             default_value="position",
             description="Sim gripper controller MoveIt uses: 'position' or 'effort'. Ignored for hardware:=real."
+        ),
+        DeclareLaunchArgument(
+            "scene",
+            default_value=PathJoinSubstitution(
+                [FindPackageShare("fer_ros2_bringup"), "scenes", "base_world.xml"]),
+            description="MuJoCo scene (MJCF) the robot is inserted into. Ignored for hardware:=real."
         )
     ]

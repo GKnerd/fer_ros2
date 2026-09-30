@@ -73,7 +73,10 @@ ros2_control overlay (component name `fer_hardware`):
 `ros2_control` argument must stay `false`.
 
 MuJoCo scenes live in `scenes/`; select one with `scene:=<path>` on
-`fer_mujoco_ros2_control.launch.py`.
+`fer_mujoco_ros2_control.launch.py` or `fer_moveit.launch.py`. `base_world.xml`
+(default) is the floor only. `pick_place_world.xml` puts the robot on a table
+(top at `base` z = 0, as `fer_world_model/config/fixtures.yaml`) with free
+objects at the poses of `fer_world_model/config/mock_objects.yaml`.
 
 ## Tests
 
