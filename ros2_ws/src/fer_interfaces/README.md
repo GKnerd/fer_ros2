@@ -41,7 +41,8 @@ Exactly one motion backend runs at a time; launch selects it.
 - **Results:** every result starts with `Outcome`. Callers branch on `outcome.code`;
   `outcome.message` is for logs only.
 - **Replacement:** a new goal on a server replaces the running one; the old goal ends
-  `CANCELLED`.
+  `CANCELLED`. A motion goal ends `CANCELLED` once the arm is at rest; the next one plans
+  from where the arm stopped.
 - **World model writers:** only detection (`DetectObjects`, `RefineObject`) and
   `fer_gripper_server` (`SetObjectStatus`) change the world model. Everything else
   reads.
@@ -55,8 +56,8 @@ Servers reject what the message types cannot exclude:
 | `speed_scaling` in (0, 1] | motion backend | `INVALID_GOAL` |
 | gripper width in [0, 0.08] m | gripper server | `INVALID_GOAL` |
 | pose frame unknown to TF | motion backend | `INVALID_GOAL` |
-| unknown object id | motion backend, gripper server, world model | `NOT_FOUND` |
-| `Grasp` on a non-FREE object, `Release` on a non-GRASPED object, `RefineObject` on a GRASPED object | gripper server, world model | `INVALID_STATE` |
+| unknown object id | motion backend, gripper server, world model, grasp planner | `NOT_FOUND` |
+| `Grasp` on a non-FREE object, `Release` on a non-GRASPED object, `RefineObject` on a GRASPED object, `GetGraspCandidates` on a non-FREE or fixed object | gripper server, world model, grasp planner | `INVALID_STATE` |
 
 Every implementation of an interface passes the contract test of its server package.
 
@@ -67,10 +68,22 @@ Every implementation of an interface passes the contract test of its server pack
   unchanged.
 - **Release:** opens and confirms the width first, then marks the object FREE at its
   estimated pose (`source: release_estimate`).
-- **Detection:** an object that is not seen is never removed or changed; it is listed
-  in `not_seen`. GRASPED objects are never changed by detection.
+- **Grasp watch:** while the gripper server holds an object, it sets the object LOST as
+  soon as the grip is gone (slipped, taken out, or the hand opened by `MoveGripper`).
+- **Detection:** an object that is not seen is not changed by the detection; it is
+  listed in `not_seen`. An object still missing after the world model's removal timeout
+  is removed; the timeout counts from the first detection that missed it, so nothing is
+  removed while no detection runs. A detection that matches no FREE object takes over a
+  LOST object of the same class before a new id is created. GRASPED objects are never
+  changed by detection.
+- **Objects are boxes:** `shape` is always a `BOX`, the bounding box as detected.
+- **Grasp candidates:** poses in the object's frame; `width` and `force` go straight
+  into `Grasp`. An empty list with `OK` means no side of the object fits the gripper.
 - **CheckReachable:** plans the chained targets without moving; the first starts at the
   current state. Returns the joint configuration at each target.
+- **Motion outcomes:** the world model or the planner not answering → `TIMEOUT`; a failed
+  execution (e.g. an inactive controller) → `EXECUTION_FAILED`; the arm in reflex or user
+  stop → `ROBOT_ERROR`.
 
 ## Use
 

@@ -5,7 +5,7 @@ float64 speed_scaling 0.3           # (0, 1]
 
 ---
 Outcome outcome                     # OK, INVALID_GOAL, UNSUPPORTED, UNREACHABLE, NO_PATH,
-                                    # EXECUTION_FAILED, CANCELLED, ROBOT_ERROR
+                                    # EXECUTION_FAILED, CANCELLED, ROBOT_ERROR, TIMEOUT
 ---
 uint8 PLANNING=0
 uint8 EXECUTING=1

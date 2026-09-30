@@ -5,5 +5,7 @@ uint32 max_candidates 0             # 0 = all
 
 ---
 
-Outcome outcome                     # OK, NOT_FOUND, INVALID_STATE (not FREE), NO_DATA
-GraspCandidate[] candidates         # best first
+Outcome outcome                     # OK, NOT_FOUND, INVALID_STATE (not FREE, or fixed),
+                                    # TIMEOUT (world model), NO_DATA
+GraspCandidate[] candidates         # best first; empty when no side of the object fits
+                                    # the gripper

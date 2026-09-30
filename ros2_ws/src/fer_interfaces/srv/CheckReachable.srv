@@ -4,6 +4,7 @@ PoseTarget[] targets                # chained; the first starts at the current s
 
 ---
 
-Outcome outcome                     # OK, INVALID_GOAL, UNSUPPORTED, NOT_FOUND, UNREACHABLE, NO_PATH
+Outcome outcome                     # OK, INVALID_GOAL, UNSUPPORTED, NOT_FOUND, UNREACHABLE, NO_PATH,
+                                    # TIMEOUT
 uint32 failed_index                 # valid if outcome != OK
 JointConfiguration[] configurations # one per target

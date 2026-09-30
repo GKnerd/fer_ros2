@@ -10,6 +10,6 @@ uint8 LOST=2                        # was dropped or failed to place; location u
 uint8 status
 string held_by                      # link name when GRASPED, else empty
 geometry_msgs/PoseStamped pose      # center of shape; GRASPED: frame_id = held_by
-shape_msgs/SolidPrimitive shape     # centered on pose
+shape_msgs/SolidPrimitive shape     # always BOX: the bounding box, centered on pose
 string source                       # "mock_perception", "d405", "release_estimate", "manual"
 builtin_interfaces/Time last_observed   # last time a detector actually saw it

@@ -4,9 +4,10 @@ string[] class_ids                  # empty = all classes
 
 ---
 
-Outcome outcome                     # OK, CANCELLED
+Outcome outcome                     # OK, CANCELLED, TIMEOUT (no detections arrived)
 uint64 revision
 string[] added
-string[] updated
-string[] not_seen                   # known FREE objects not matched; status NOT changed
+string[] updated                    # matched, or LOST objects found again
+string[] not_seen                   # known FREE objects not matched; status NOT changed,
+                                    # removed if still missing after the removal timeout
 ---

@@ -4,6 +4,7 @@ string object_id
 
 ---
 
-Outcome outcome                     # OK, NOT_FOUND, INVALID_STATE, CANCELLED
+Outcome outcome                     # OK, NOT_FOUND (unknown id, or not seen: counts as
+                                    # missing), INVALID_STATE, CANCELLED, TIMEOUT
 uint64 revision
 ---
