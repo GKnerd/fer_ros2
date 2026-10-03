@@ -8,6 +8,7 @@
 #include <optional>
 #include <set>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "fer_interfaces/msg/world_object.hpp"
@@ -18,6 +19,7 @@
 #include "moveit_msgs/msg/robot_trajectory.hpp"
 #include "moveit_msgs/srv/apply_planning_scene.hpp"
 #include "moveit_msgs/srv/get_planning_scene.hpp"
+#include "moveit_msgs/srv/get_state_validity.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_action/rclcpp_action.hpp"
 #include "sensor_msgs/msg/joint_state.hpp"
@@ -55,6 +57,8 @@ public:
   void sync_scene(const std::vector<fer_interfaces::msg::WorldObject> & objects);
 
   /// \brief Plan only; \p start empty means move_group's current state.
+  ///
+  /// A straight path may keep the contacts a held object has at \p start (lift off a surface).
   /// \throws MotionError UNREACHABLE, NO_PATH or TIMEOUT; Interrupted.
   moveit_msgs::msg::RobotTrajectory plan(
     const MotionTarget & target, double speed_scaling,
@@ -72,7 +76,12 @@ private:
   using MoveGroup = moveit_msgs::action::MoveGroup;
   using ExecuteTrajectory = moveit_msgs::action::ExecuteTrajectory;
 
-  moveit_msgs::msg::AllowedCollisionMatrix touch_matrix(const std::vector<std::string> & ids);
+  using Contact = std::pair<std::string, std::string>;
+
+  /// (held object, world object) pairs in contact at \p start; empty if nothing is held.
+  std::vector<Contact> held_contacts(const std::optional<sensor_msgs::msg::JointState> & start);
+  moveit_msgs::msg::AllowedCollisionMatrix touch_matrix(
+    const std::vector<std::string> & ids, const std::vector<Contact> & contacts);
   void stop();
 
   double planning_time_;
@@ -85,6 +94,7 @@ private:
   rclcpp_action::Client<ExecuteTrajectory>::SharedPtr execute_client_;
   rclcpp::Client<moveit_msgs::srv::ApplyPlanningScene>::SharedPtr apply_client_;
   rclcpp::Client<moveit_msgs::srv::GetPlanningScene>::SharedPtr get_client_;
+  rclcpp::Client<moveit_msgs::srv::GetStateValidity>::SharedPtr validity_client_;
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr stop_publisher_;
 
   std::mutex scene_mutex_;

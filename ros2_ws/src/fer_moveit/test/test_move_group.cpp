@@ -338,6 +338,26 @@ TEST_F(MoveGroupIntegration, HeldObjectCollidesWithTheTable)
   EXPECT_EQ(empty.code, Outcome::OK) << empty.message;
 }
 
+TEST_F(MoveGroupIntegration, HeldObjectLiftsStraightOffTheSurfaceItRestsOn)
+{
+  // A held bar reaching 1 mm into the table, as a box picked from it.
+  const double height = tcp_pose(arm_joints(), arm_->positions()).position.z;
+  auto bar = box("bar", WorldObject::GRASPED);
+  bar.pose.pose.position.x = 0.0;
+  bar.shape.dimensions = {0.04, 0.04, height + 0.001};
+  bar.pose.pose.position.z = bar.shape.dimensions[2] / 2.0;
+  world_->set({table(), bar});
+
+  MoveToJoints::Goal free;
+  free.joints.positions = {0.3, -0.785, 0.0, -2.356, 0.0, 1.571, 0.785};
+  free.speed_scaling = 1.0;
+  const auto dragged = run<MoveToJoints>(joints_client_, free);
+  EXPECT_EQ(dragged.code, Outcome::NO_PATH) << dragged.message;
+
+  const auto lifted = run<MoveToPose>(pose_client_, down_from_here(height + 0.05));
+  EXPECT_EQ(lifted.code, Outcome::OK) << lifted.message;
+}
+
 TEST_F(MoveGroupIntegration, ClosedFingerBelowItsLimitDoesNotBlockPlanning)
 {
   arm_->set_finger(-0.00085);

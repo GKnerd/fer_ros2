@@ -20,6 +20,7 @@
 #include "moveit_msgs/msg/planning_scene.hpp"
 #include "moveit_msgs/srv/apply_planning_scene.hpp"
 #include "moveit_msgs/srv/get_planning_scene.hpp"
+#include "moveit_msgs/srv/get_state_validity.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_action/rclcpp_action.hpp"
 #include "sensor_msgs/msg/joint_state.hpp"
@@ -92,7 +93,7 @@ private:
 };
 
 /// move_group as the motion server sees it: MoveGroup (plan only), ExecuteTrajectory,
-/// the "stop" event, ApplyPlanningScene and GetPlanningScene.
+/// the "stop" event, ApplyPlanningScene, GetPlanningScene and GetStateValidity.
 class FakeMoveGroup
 {
 public:
@@ -152,6 +153,13 @@ public:
         matrix.entry_values.resize(2);
         matrix.entry_values[0].enabled = {false, true};
         matrix.entry_values[1].enabled = {true, false};
+      });
+    validity_service_ = node->create_service<moveit_msgs::srv::GetStateValidity>(
+      "/check_state_validity",
+      [](
+        const std::shared_ptr<moveit_msgs::srv::GetStateValidity::Request>,
+        std::shared_ptr<moveit_msgs::srv::GetStateValidity::Response> response) {
+        response->valid = true;
       });
   }
 
@@ -299,6 +307,7 @@ private:
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr stop_sub_;
   rclcpp::Service<moveit_msgs::srv::ApplyPlanningScene>::SharedPtr apply_service_;
   rclcpp::Service<moveit_msgs::srv::GetPlanningScene>::SharedPtr get_service_;
+  rclcpp::Service<moveit_msgs::srv::GetStateValidity>::SharedPtr validity_service_;
 };
 
 /// QueryObjects backed by a list the tests edit.

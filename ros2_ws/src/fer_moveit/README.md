@@ -129,6 +129,7 @@ of `move_group`: MoveIt plans and executes, the server adds validation, the worl
 |---|---|
 | `/world_model/query_objects` | FREE and GRASPED objects (fixed ones included) per request |
 | `/apply_planning_scene`, `/get_planning_scene` | scene sync; allowed collisions for `may_touch` |
+| `/check_state_validity` | contacts of a held object at the start of a straight path |
 | `/move_action` | plan only |
 | `/execute_trajectory` | execution on `move_group`'s default arm controller (`arm_control_type`) |
 | `/trajectory_execution_event` | `"stop"` on cancel or replacement |
@@ -146,6 +147,11 @@ From goal to motion:
    answer → `TIMEOUT`.
 3. **`may_touch`:** the current allowed-collision matrix plus (object, hand link) pairs,
    sent with the plan request only. A diff replaces the whole matrix, hence the full copy.
+   **Held object at the start:** on a `PATH_STRAIGHT` motion while an object is held,
+   `move_group` is asked which world objects the held one touches at the start state, and
+   those pairs are allowed too, so a box lifts off the table it rests on. The pairs hold
+   for the whole straight path; free paths and joint targets get none and fail on such a
+   start state.
 4. **Plan:** plan-only `MoveGroup` on `fer_arm` with velocity and acceleration scaling =
    `speed_scaling`: `PATH_FREE` and joint targets with `ompl`, `PATH_STRAIGHT` with Pilz
    `LIN`. A planning failure → `NO_PATH`, the reason in `message`: `move_group`'s plan-only

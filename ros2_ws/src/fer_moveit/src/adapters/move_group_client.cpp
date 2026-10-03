@@ -10,6 +10,7 @@
 #include "fer_interfaces/msg/outcome.hpp"
 #include "moveit/kinematic_constraints/utils.hpp"
 #include "moveit/utils/moveit_error_code.hpp"
+#include "moveit_msgs/msg/contact_information.hpp"
 #include "moveit_msgs/msg/move_it_error_codes.hpp"
 #include "moveit_msgs/msg/planning_scene_components.hpp"
 
@@ -23,6 +24,7 @@ using fer_interfaces::msg::WorldObject;
 using moveit_msgs::msg::AllowedCollisionMatrix;
 using moveit_msgs::msg::AttachedCollisionObject;
 using moveit_msgs::msg::CollisionObject;
+using moveit_msgs::msg::ContactInformation;
 using moveit_msgs::msg::MoveItErrorCodes;
 
 namespace
@@ -115,6 +117,8 @@ MoveGroupClient::MoveGroupClient(
       "/apply_planning_scene", rclcpp::ServicesQoS(), group)),
   get_client_(node->create_client<moveit_msgs::srv::GetPlanningScene>(
       "/get_planning_scene", rclcpp::ServicesQoS(), group)),
+  validity_client_(node->create_client<moveit_msgs::srv::GetStateValidity>(
+      "/check_state_validity", rclcpp::ServicesQoS(), group)),
   stop_publisher_(node->create_publisher<std_msgs::msg::String>(
       "/trajectory_execution_event", rclcpp::ServicesQoS()))
 {
@@ -129,6 +133,7 @@ bool MoveGroupClient::ready() const
 {
   return move_client_->action_server_is_ready() && execute_client_->action_server_is_ready() &&
          apply_client_->service_is_ready() && get_client_->service_is_ready() &&
+         validity_client_->service_is_ready() &&
          stop_publisher_->get_subscription_count() > 0;
 }
 
@@ -198,7 +203,44 @@ void MoveGroupClient::sync_scene(const std::vector<WorldObject> & objects)
   attached_links_ = std::move(attached_links);
 }
 
-AllowedCollisionMatrix MoveGroupClient::touch_matrix(const std::vector<std::string> & ids)
+std::vector<MoveGroupClient::Contact> MoveGroupClient::held_contacts(
+  const std::optional<sensor_msgs::msg::JointState> & start)
+{
+  {
+    std::lock_guard<std::mutex> lock(scene_mutex_);
+    if (attached_links_.empty()) {
+      return {};
+    }
+  }
+  auto request = std::make_shared<moveit_msgs::srv::GetStateValidity::Request>();
+  request->robot_state.is_diff = true;
+  if (start) {
+    request->robot_state.joint_state = *start;
+  }
+  request->group_name = PLANNING_GROUP;
+  auto pending = validity_client_->async_send_request(request);
+  auto future = pending.future.share();
+  if (!wait_for(future, timeout_)) {
+    validity_client_->remove_pending_request(pending.request_id);
+    throw MotionError(Outcome::TIMEOUT, "move_group did not check the start state");
+  }
+  std::vector<Contact> contacts;
+  for (const auto & contact : future.get()->contacts) {
+    if (contact.body_type_1 == ContactInformation::ROBOT_ATTACHED &&
+      contact.body_type_2 == ContactInformation::WORLD_OBJECT)
+    {
+      contacts.emplace_back(contact.contact_body_1, contact.contact_body_2);
+    } else if (contact.body_type_2 == ContactInformation::ROBOT_ATTACHED &&
+      contact.body_type_1 == ContactInformation::WORLD_OBJECT)
+    {
+      contacts.emplace_back(contact.contact_body_2, contact.contact_body_1);
+    }
+  }
+  return contacts;
+}
+
+AllowedCollisionMatrix MoveGroupClient::touch_matrix(
+  const std::vector<std::string> & ids, const std::vector<Contact> & contacts)
 {
   auto request = std::make_shared<moveit_msgs::srv::GetPlanningScene::Request>();
   request->components.components =
@@ -215,6 +257,9 @@ AllowedCollisionMatrix MoveGroupClient::touch_matrix(const std::vector<std::stri
     for (const auto & link : HAND_LINKS) {
       allow(matrix, id, link);
     }
+  }
+  for (const auto & [held, other] : contacts) {
+    allow(matrix, held, other);
   }
   return matrix;
 }
@@ -259,9 +304,14 @@ moveit_msgs::msg::RobotTrajectory MoveGroupClient::plan(
   goal.planning_options.plan_only = true;
   goal.planning_options.planning_scene_diff.is_diff = true;
   goal.planning_options.planning_scene_diff.robot_state.is_diff = true;
-  if (!target.may_touch.empty()) {
+  // Only a straight path keeps them: a free path could drag the held object through the surface.
+  std::vector<Contact> contacts;
+  if (target.kind == MotionTarget::Kind::POSE_STRAIGHT) {
+    contacts = held_contacts(start);
+  }
+  if (!target.may_touch.empty() || !contacts.empty()) {
     goal.planning_options.planning_scene_diff.allowed_collision_matrix =
-      touch_matrix(target.may_touch);
+      touch_matrix(target.may_touch, contacts);
   }
 
   auto handle = send_goal<MoveGroup>(move_client_, goal, timeout_, "planning");
