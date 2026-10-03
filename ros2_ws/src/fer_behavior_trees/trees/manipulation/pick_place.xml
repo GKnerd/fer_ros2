@@ -15,7 +15,7 @@
           </RetryUntilSuccessful>
           <Sequence>
             <SubTree ID="Place" object_id="{object_id}" x="{place_x}" y="{place_y}"/>
-            <Script code="place_x += 0.08"/>
+            <Script code="place_x += 0.12"/>
           </Sequence>
           <Script code="all_placed := false"/>
         </IfThenElse>

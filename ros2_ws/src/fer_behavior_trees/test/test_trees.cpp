@@ -167,7 +167,7 @@ TEST_F(Trees, PickPlacePlacesEveryObjectInARow)
   ids_ = {"box_1", "box_2"};
   EXPECT_EQ(run("PickPlace"), NodeStatus::SUCCESS);
   EXPECT_EQ(count("GetPlaceCandidates box_1 0.35 0.30"), 1u);
-  EXPECT_EQ(count("GetPlaceCandidates box_2 0.43 0.30"), 1u);
+  EXPECT_EQ(count("GetPlaceCandidates box_2 0.47 0.30"), 1u);
   EXPECT_EQ(log_.back(), "MoveToJoints {@home}");
 }
 
