@@ -42,6 +42,9 @@
   <exec_depend>fer_skills</exec_depend>
   <exec_depend>fer_behavior_trees</exec_depend>
   <exec_depend>fer_world_model</exec_depend>
+  <exec_depend>fer_grasp_planner</exec_depend>
+  <exec_depend>fer_gripper_server</exec_depend>
+  <exec_depend>ros2controlcli</exec_depend>
   <exec_depend>rviz2</exec_depend>
   <exec_depend>ros2launch</exec_depend>
 
