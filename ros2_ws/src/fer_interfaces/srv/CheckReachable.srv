@@ -1,6 +1,7 @@
 # CheckReachable.srv
 
 PoseTarget[] targets                # chained; the first starts at the current state
+float64 speed_scaling 0.3           # (0, 1]
 
 ---
 
