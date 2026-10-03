@@ -16,4 +16,4 @@ fer_gripper_server:
     controller: gripper_effort_controller
     joint: fer_finger_joint1
     joint_states_topic: /joint_states
-    move_force: 20.0             # N, max_effort of MoveGripper and Release
+    move_force: 1.5              # N, max_effort of MoveGripper and Release; / controller d = 0.05 m/s per finger
