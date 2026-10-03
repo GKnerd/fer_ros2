@@ -45,6 +45,13 @@ bool Server::onGoalReceived(const std::string & /*tree_name*/, const std::string
   return true;
 }
 
+void Server::onTreeCreated(BT::Tree & tree)
+{
+  // The tree is rebuilt for every goal; the old logger watched the old one.
+  cout_logger_.reset();
+  cout_logger_ = std::make_unique<BT::StdCoutLogger>(tree);
+}
+
 void Server::registerNodesIntoFactory(BT::BehaviorTreeFactory & factory)
 {
   register_nodes(

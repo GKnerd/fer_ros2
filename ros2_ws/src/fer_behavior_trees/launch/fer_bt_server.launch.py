@@ -14,7 +14,7 @@ def generate_launch_description() -> LaunchDescription:
             package='fer_behavior_trees',
             executable='fer_bt_server',
             name='fer_bt_server',
-            output='screen',
+            output='both',
             arguments=['--ros-args', '--log-level', LaunchConfiguration('log_level')],
             parameters=[
                 PathJoinSubstitution([config, 'fer_bt_server.yaml']),
