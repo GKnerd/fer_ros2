@@ -1,9 +1,10 @@
 """
-Grasp planner node: serves GetGraspCandidates of fer_interfaces.
+Grasp planner node: serves GetGraspCandidates and GetPlaceCandidates of fer_interfaces.
 
-Candidates are computed top-down from the object's bounding box, in the object's frame
-(`base` for FREE objects). The grasp poses of the latest answer are published on
-/grasp/debug/candidates for RViz; that topic is not part of the contract.
+Grasp candidates are computed top-down from the object's bounding box, in the object's
+frame (`base` for FREE objects). The grasp poses of the latest answer are published on
+/grasp/debug/candidates for RViz; that topic is not part of the contract. Place
+candidates are in `base`.
 """
 from __future__ import annotations
 
@@ -15,6 +16,7 @@ from fer_grasp_planner.adapters.ros_conversions import (
 from fer_grasp_planner.adapters.world_model_client import WorldModelClient, WorldModelError
 from fer_grasp_planner.core.catalog import Catalog, catalog_from_dict, CatalogError
 from fer_grasp_planner.core.top_down import top_down_candidates, TopDownParams
+from fer_grasp_planner.place_server import PlacePlannerServer
 from fer_interfaces.msg import Outcome, WorldObject
 from fer_interfaces.srv import GetGraspCandidates
 from geometry_msgs.msg import PoseArray
@@ -23,6 +25,7 @@ from rclpy.callback_groups import CallbackGroup, ReentrantCallbackGroup
 from rclpy.executors import ExternalShutdownException, MultiThreadedExecutor
 from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, QoSProfile
+from tf2_ros import Buffer, TransformListener
 import yaml
 
 
@@ -121,7 +124,11 @@ def main(args: list[str] | None = None) -> None:
         return
 
     callback_group = ReentrantCallbackGroup()
-    GraspPlannerServer(node, catalog, WorldModelClient(node, callback_group), callback_group)
+    world_model = WorldModelClient(node, callback_group)
+    tf_buffer = Buffer()
+    TransformListener(tf_buffer, node)
+    GraspPlannerServer(node, catalog, world_model, callback_group)
+    PlacePlannerServer(node, world_model, tf_buffer, callback_group)
     node.get_logger().info('grasp planner ready')
     executor = MultiThreadedExecutor()
     executor.add_node(node)

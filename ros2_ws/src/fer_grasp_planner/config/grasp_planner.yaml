@@ -6,3 +6,7 @@ fer_grasp_planner:
     max_grasp_depth: 0.04      # m, TCP at most this far below the object top
     min_tip_clearance: 0.012   # m, TCP at least this far above the object bottom
     world_model_timeout: 2.0   # s
+    place_clearance: 0.005     # m, box bottom above the place target when released
+    preplace_distance: 0.10    # m above the place pose
+    retreat_height: 0.10       # m above the place pose
+    tf_timeout: 0.2            # s, place target transform to base

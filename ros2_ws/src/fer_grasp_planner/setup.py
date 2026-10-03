@@ -20,8 +20,9 @@ setup(
     zip_safe=True,
     maintainer='georg.katranis@gmail.com',
     maintainer_email='georg.katranis@gmail.com',
-    description='Grasp planner of the FER platform: GetGraspCandidates through '
-                'fer_interfaces, top-down candidates from the object bounding box.',
+    description='Grasp planner of the FER platform: GetGraspCandidates and '
+                'GetPlaceCandidates through fer_interfaces, top-down candidates from the '
+                'object bounding box, place candidates for the held object.',
     license='Apache-2.0',
     extras_require={
         'test': [

@@ -1,4 +1,4 @@
-"""Grasp planner: GetGraspCandidates on /grasp/candidates."""
+"""Grasp planner: /grasp/candidates and /place/candidates."""
 from typing import List
 
 from launch import LaunchDescription
