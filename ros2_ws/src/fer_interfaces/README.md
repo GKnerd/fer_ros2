@@ -23,6 +23,7 @@ renumbering a constant is a breaking change.
 | `QueryObjects` | service | `/world_model/query_objects` | `fer_world_model` | BT, motion backend, gripper server, grasp planner |
 | `SetObjectStatus` | service | `/world_model/set_object_status` | `fer_world_model` | `fer_gripper_server` |
 | `GetGraspCandidates` | service | `/grasp/candidates` | `fer_grasp_planner` | BT |
+| `GetPlaceCandidates` | service | `/place/candidates` | `fer_grasp_planner` | BT |
 | `WorldObjectArray` | topic, latched | `/world_model/objects` | `fer_world_model` | RViz, monitoring |
 
 Exactly one motion backend runs at a time; launch selects it.
@@ -55,9 +56,9 @@ Servers reject what the message types cannot exclude:
 |---|---|---|
 | `speed_scaling` in (0, 1] | motion backend | `INVALID_GOAL` |
 | gripper width in [0, 0.08] m | gripper server | `INVALID_GOAL` |
-| pose frame unknown to TF | motion backend | `INVALID_GOAL` |
+| pose frame unknown to TF | motion backend, grasp planner (place target) | `INVALID_GOAL` |
 | unknown object id | motion backend, gripper server, world model, grasp planner | `NOT_FOUND` |
-| `Grasp` on a non-FREE object, `Release` on a non-GRASPED object, `RefineObject` on a GRASPED object, `GetGraspCandidates` on a non-FREE or fixed object | gripper server, world model, grasp planner | `INVALID_STATE` |
+| `Grasp` on a non-FREE object, `Release` on a non-GRASPED object, `RefineObject` on a GRASPED object, `GetGraspCandidates` on a non-FREE or fixed object, `GetPlaceCandidates` on a non-GRASPED object | gripper server, world model, grasp planner | `INVALID_STATE` |
 
 Every implementation of an interface passes the contract test of its server package.
 
@@ -79,6 +80,9 @@ Every implementation of an interface passes the contract test of its server pack
 - **Objects are boxes:** `shape` is always a `BOX`, the bounding box as detected.
 - **Grasp candidates:** poses in the object's frame; `width` and `force` go straight
   into `Grasp`. An empty list with `OK` means no side of the object fits the gripper.
+- **Place candidates:** poses of `fer_hand_tcp` that put a GRASPED object at the target;
+  the box bottom ends `place_clearance` above the target. Two candidates, the object
+  turned 180° about the vertical.
 - **CheckReachable:** plans the chained targets without moving; the first starts at the
   current state. Returns the joint configuration at each target.
 - **Motion outcomes:** the world model or the planner not answering → `TIMEOUT`; a failed

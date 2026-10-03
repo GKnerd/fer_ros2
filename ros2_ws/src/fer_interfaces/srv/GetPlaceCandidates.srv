@@ -1,0 +1,12 @@
+# GetPlaceCandidates.srv
+
+string object_id                    # must be GRASPED
+geometry_msgs/PoseStamped target    # bottom center of the object's box at the place,
+                                    # and the object's orientation there
+
+---
+
+Outcome outcome                     # OK, INVALID_GOAL (target frame), NOT_FOUND,
+                                    # INVALID_STATE (not GRASPED), TIMEOUT (world model)
+PlaceCandidate[] candidates         # best first: the target orientation, then turned
+                                    # 180 deg about the vertical
