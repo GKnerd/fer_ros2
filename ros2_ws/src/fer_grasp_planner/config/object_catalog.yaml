@@ -5,6 +5,6 @@
 default: {force: 15.0}
 
 classes:
-  box: {force: 15.0}
+  box: {force: 5.0}
   cylinder: {force: 15.0}
   sphere: {force: 10.0}
