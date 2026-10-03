@@ -40,10 +40,12 @@ Outcome make_outcome(uint8_t code, const std::string & message)
 
 void check_ids(const std::vector<WorldObject> & objects, const std::vector<std::string> & ids)
 {
-  for (const auto & id : ids) {
-    const bool known = std::any_of(
-      objects.begin(), objects.end(), [&id](const WorldObject & o) {return o.id == id;});
-    if (!known) {
+  for (const auto & id : ids)
+  {
+    const bool known = std::any_of(objects.begin(),
+    objects.end(), [&id](const WorldObject & o) {return o.id == id;});
+    if (!known) 
+    {
       throw MotionError(Outcome::NOT_FOUND, "unknown object '" + id + "' in may_touch");
     }
   }
@@ -171,13 +173,12 @@ MotionServer::MotionServer(
 
   pose_server_ = create_action<MoveToPose>("/motion/move_to_pose");
   joints_server_ = create_action<MoveToJoints>("/motion/move_to_joints");
-  reachable_service_ = node->create_service<CheckReachable>(
-    "/motion/check_reachable",
-    [this](
-      const std::shared_ptr<CheckReachable::Request> request,
-      std::shared_ptr<CheckReachable::Response> response) {
+  reachable_service_ = node->create_service<CheckReachable>("/motion/check_reachable",
+    [this](const std::shared_ptr<CheckReachable::Request> request,
+      std::shared_ptr<CheckReachable::Response> response) 
+      {
       on_check_reachable(request, response);
-    },
+      },
     rclcpp::ServicesQoS(), group);
 
   startup_timer_ = node->create_wall_timer(
@@ -321,45 +322,59 @@ void MotionServer::on_check_reachable(
   response->outcome = make_outcome(Outcome::OK, "");
   const auto & names = move_group_.joint_names();
   size_t index = 0;
-  try {
-    if (!ready_) {
+  try 
+  {
+    if (!ready_)
+    {
       throw MotionError(Outcome::TIMEOUT, "motion server not ready");
     }
-    if (request->targets.empty()) {
+    if (request->targets.empty()) 
+    {
       throw MotionError(Outcome::INVALID_GOAL, "no targets");
     }
+    check_speed(request->speed_scaling);
+
     std::vector<MotionTarget> targets;
-    for (index = 0; index < request->targets.size(); ++index) {
+    for (index = 0; index < request->targets.size(); ++index)
+    {
       targets.push_back(pose_target(request->targets[index]));
     }
     index = 0;
     const auto objects = world_model_.snapshot();
-    for (index = 0; index < targets.size(); ++index) {
+    for (index = 0; index < targets.size(); ++index)
+    {
       check_ids(objects, targets[index].may_touch);
     }
     index = 0;
     move_group_.sync_scene(objects);
-
     auto start = current_joints();
-    for (index = 0; index < targets.size(); ++index) {
-      const auto trajectory =
-        move_group_.plan(targets[index], 1.0, start, [] {return false;});
+    for (index = 0; index < targets.size(); ++index)
+    {
+      const auto trajectory = move_group_.plan(targets[index], 
+        request->speed_scaling, 
+        start, 
+        [] {return false;}
+      );
       const auto & joint_trajectory = trajectory.joint_trajectory;
       sensor_msgs::msg::JointState reached;
       reached.name = joint_trajectory.joint_names;
       reached.position = joint_trajectory.points.back().positions;
       JointConfiguration configuration;
-      for (size_t j = 0; j < names.size() && j < configuration.positions.size(); ++j) {
+      for (size_t j = 0; j < names.size() && j < configuration.positions.size(); ++j)
+      {
         const auto it = std::find(reached.name.begin(), reached.name.end(), names[j]);
-        if (it != reached.name.end()) {
+        if (it != reached.name.end()) 
+        {
           configuration.positions[j] = reached.position.at(
-            static_cast<size_t>(it - reached.name.begin()));
+          static_cast<size_t>(it - reached.name.begin()));
         }
       }
       response->configurations.push_back(configuration);
       start = reached;
     }
-  } catch (const MotionError & e) {
+  }
+  catch (const MotionError & e)
+  {
     response->outcome = make_outcome(e.code(), e.what());
     response->failed_index = static_cast<uint32_t>(index);
   }

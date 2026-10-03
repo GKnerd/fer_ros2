@@ -221,6 +221,31 @@ TEST_F(Contract, CheckReachableReportsTheFailedTarget)
   EXPECT_EQ(response->configurations.size(), 1u);
 }
 
+TEST_F(Contract, CheckReachableSpeedOutsideZeroToOneIsInvalid)
+{
+  start();
+  for (const double speed : {0.0, 1.5}) {
+    const auto response = check({pose_goal().target}, speed);
+    EXPECT_EQ(response->outcome.code, Outcome::INVALID_GOAL);
+  }
+  std::lock_guard<std::mutex> lock(move_group_fake_->mutex);
+  EXPECT_TRUE(move_group_fake_->plan_goals.empty());
+}
+
+TEST_F(Contract, CheckReachablePlansWithTheRequestedSpeed)
+{
+  start();
+  const auto response = check({pose_goal().target, pose_goal().target}, 0.5);
+  ASSERT_EQ(response->outcome.code, Outcome::OK);
+
+  std::lock_guard<std::mutex> lock(move_group_fake_->mutex);
+  ASSERT_EQ(move_group_fake_->plan_goals.size(), 2u);
+  for (const auto & goal : move_group_fake_->plan_goals) {
+    EXPECT_DOUBLE_EQ(goal.request.max_velocity_scaling_factor, 0.5);
+    EXPECT_DOUBLE_EQ(goal.request.max_acceleration_scaling_factor, 0.5);
+  }
+}
+
 TEST_F(Contract, NewGoalReplacesTheRunningOneAfterRest)
 {
   start();

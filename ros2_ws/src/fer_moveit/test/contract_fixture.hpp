@@ -162,10 +162,12 @@ protected:
     return result.get();
   }
 
-  CheckReachable::Response::SharedPtr check(const std::vector<PoseTarget> & targets)
+  CheckReachable::Response::SharedPtr check(
+    const std::vector<PoseTarget> & targets, double speed = 0.3)
   {
     auto request = std::make_shared<CheckReachable::Request>();
     request->targets = targets;
+    request->speed_scaling = speed;
     auto future = reachable_client_->async_send_request(request).future.share();
     EXPECT_TRUE(wait(future));
     return future.get();
