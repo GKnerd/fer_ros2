@@ -1,4 +1,4 @@
-fer_ros2
+fer_ros2_driver
 
 This project is a ROS 2 Jazzy port of the real-robot Franka Emika Robot (FER /
 "Panda") driver stack, derived from multipanda_ros2:

@@ -48,7 +48,7 @@ should not share a return path.
 ## 2. Re-check: controllers using `generate_parameter_library` need `--param-file` on the spawner
 
 **Status:** NOT APPLICABLE AS WRITTEN — `cartesian_impedance_controller.launch.py`
-does not exist in this tree, and no launch file under `fer_ros2` currently passes
+does not exist in this tree, and no launch file under `fer_ros2_driver` currently passes
 `--param-file`. Re-evaluate during the `franka_bringup` refactor.
 
 **Cause:** in ros2_control 4.x (Jazzy), controllers built with

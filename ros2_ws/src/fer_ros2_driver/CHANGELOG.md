@@ -1,3 +1,13 @@
+## 2026-10-12
+
+Phase 8.7 of the platform consolidation.
+
+- Repo renamed `fer_ros2` → `fer_ros2_driver`.
+- `fer_bringup/` removed. Phase 1 replaced it with the `fer_ros2_bringup` repo
+  (`fer_real_ros2_control.launch.py`). The diagnostic scripts `fer_sanity_check.py` and
+  `fer_mode_switch_check.py` moved to `fer_ros2_bringup/scripts/`, with the controller names
+  `effort_trajectory_controller` and `velocity_trajectory_controller`.
+
 ## 2026-09-28
 
 Gripper state for the platform's gripper server: libfranka already reports
@@ -122,7 +132,7 @@ not a package: this is a sanity check, not a test framework.
 - `fer_mode_switch_check.py` — asserts the start-without-stop guard and measures the
   libfranka dead window across an atomic effort/velocity switch.
 
-Operational notes moved to the "Information" section of the fer_ros2 README: the
+Operational notes moved to the "Information" section of the fer_ros2_driver README: the
 `robot_mode` check, the 3-step fault recovery sequence, mode-switch semantics, and the
 `ff_velocity_scale` finding.
 
@@ -175,7 +185,7 @@ iptables-based fault injector was dropped as strictly worse.
 
 ### fer_bringup (new package — real-robot bringup)
 
-Not part of `fer_ros2`; lives at `src/fer_bringup` (sibling of the fork). Documented here
+Not part of `fer_ros2_driver`; lived at `src/fer_bringup` (sibling of the fork). Documented here
 to keep the migration history in one place. **NOT YET LAUNCHED ON HARDWARE** — pending a
 `colcon build` and an expand/inspect of the generated URDF.
 

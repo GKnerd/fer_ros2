@@ -1,4 +1,4 @@
-# fer_ros2
+# fer_ros2_driver
 
 ROS 2 **Jazzy** driver stack for the real Franka Emika Robot
 ("FER" / "Panda"). Firmware version 4.2.1, `libfranka` version 0.9.2. 
@@ -33,7 +33,7 @@ multipanda_ros2 targets ROS 2 Humble and ros2_control 3.x. This port:
   on controller spawners) that are either absent or solved differently
   upstream.
 
-MoveIt configuration is maintained separately in [`fer_moveit_config`][fer-moveit],
+MoveIt configuration is maintained separately in [`fer_moveit`][fer-moveit],
 not `franka_moveit_config` from upstream.
 
 ## Information
@@ -70,7 +70,7 @@ You will see:
 
 ```
 [ERROR] Arm 'fer' is in an error state; commands are not reaching the robot. Deactivating.
-[ERROR] Deactivating controllers [effort_joint_trajectory_controller ] as their command
+[ERROR] Deactivating controllers [effort_trajectory_controller ] as their command
         interfaces are tied to DEACTIVATEing hardware components
 ```
 
@@ -88,10 +88,10 @@ ros2 service call /fer_error_recovery_service_server/error_recovery \
 ros2 control set_hardware_component_state fer_FrankaMultiHardwareInterface active
 
 # 3. Now the controller can claim its interfaces.
-ros2 control switch_controllers --activate effort_joint_trajectory_controller
+ros2 control switch_controllers --activate effort_trajectory_controller
 
 # 4. Verify a COMMANDING loop exists -- not just an active controller.
-ros2 run fer_bringup fer_sanity_check.py --duration 5
+python3 fer_ros2_bringup/scripts/fer_sanity_check.py --duration 5
 ```
 
 **Order matters in both directions.** Run step 2 before step 1 and the next `write()`
@@ -123,18 +123,18 @@ because `prepare_command_mode_switch` refuses a start while `control_mode_ != No
 
 ```bash
 ros2 control switch_controllers \
-  --deactivate effort_joint_trajectory_controller \
-  --activate vel_joint_trajectory_controller
+  --deactivate effort_trajectory_controller \
+  --activate velocity_trajectory_controller
 ```
 
 Two sequential calls also work, but leave the arm briefly in continuous reading.
 
 ### Velocity controller gains
 
-`vel_joint_trajectory_controller` runs low PID gains (`p: 2.0, d: 0.0`) deliberately —
+`velocity_trajectory_controller` runs low PID gains (`p: 2.0, d: 0.0`) deliberately —
 high outer-loop gains in velocity mode fight the FER's internal velocity controller.
 
-Be aware, though, that `ff_velocity_scale` defaults to **0.0** and `controllers.yaml`
+Be aware, though, that `ff_velocity_scale` defaults to **0.0** and `fer_controllers.yaml`
 does not set it. JTC's velocity-mode command is
 
 ```
@@ -149,9 +149,11 @@ velocity pass through as the primary command, with the PID reduced to a drift tr
 ### Diagnostic scripts
 
 ```bash
-ros2 run fer_bringup fer_sanity_check.py [--duration 30]   # passive; moves nothing
-ros2 run fer_bringup fer_mode_switch_check.py [--cycles 3] # effort <-> velocity
+python3 fer_sanity_check.py [--duration 30]   # passive; moves nothing
+python3 fer_mode_switch_check.py [--cycles 3] # effort <-> velocity
 ```
+
+Both live in `fer_ros2_bringup/scripts/` and run inside the container with ROS sourced.
 
 `fer_sanity_check.py` checks topic rates, joint validity, the TF chain (`base` →
 `fer_hand_tcp` spans `/tf_static` and `/tf`, so `ros2 topic echo /tf` alone misses both
@@ -172,4 +174,4 @@ Apache License 2.0 — see [`LICENSE`](./LICENSE) and [`NOTICE`](./NOTICE).
 [multipanda]: https://github.com/tenfoldpaper/multipanda_ros2/tree/humble
 [pinned-commit]: https://github.com/tenfoldpaper/multipanda_ros2/tree/ad741e3ffcbe44cf47f7138ac8659802a3c9e43b
 [mcbed]: https://github.com/mcbed/franka_ros2/tree/humble
-[fer-moveit]: https://github.com/GKnerd/fer_moveit_config
+[fer-moveit]: https://github.com/GKnerd/fer_moveit
