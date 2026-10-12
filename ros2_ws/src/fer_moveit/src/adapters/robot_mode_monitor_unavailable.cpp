@@ -1,8 +1,8 @@
 #include <stdexcept>
 
-#include "fer_moveit_config/adapters/robot_mode_monitor.hpp"
+#include "fer_moveit/adapters/robot_mode_monitor.hpp"
 
-namespace fer_moveit_config
+namespace fer_moveit
 {
 
 // Built instead of robot_mode_monitor.cpp when franka_msgs is absent (core+sim import).
@@ -13,4 +13,4 @@ RobotModeMonitor::RobotModeMonitor(
     "hardware:=real needs franka_msgs; this build has none (core+sim import)");
 }
 
-}  // namespace fer_moveit_config
+}  // namespace fer_moveit

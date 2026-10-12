@@ -1,10 +1,10 @@
-#include "fer_moveit_config/core/checks.hpp"
+#include "fer_moveit/core/checks.hpp"
 
 #include <algorithm>
 #include <cmath>
 #include <vector>
 
-namespace fer_moveit_config
+namespace fer_moveit
 {
 bool speed_valid(double speed_scaling) { return speed_scaling > 0.0 && speed_scaling <= 1.0; }
 
@@ -24,4 +24,4 @@ double progress(double elapsed, double duration)
   return std::clamp(elapsed / duration, 0.0, 1.0);
 }
 
-}  // namespace fer_moveit_config
+}  // namespace fer_moveit

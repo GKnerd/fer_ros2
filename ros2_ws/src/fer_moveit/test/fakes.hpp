@@ -1,5 +1,5 @@
-#ifndef FER_MOVEIT_CONFIG__TEST__FAKES_HPP_
-#define FER_MOVEIT_CONFIG__TEST__FAKES_HPP_
+#ifndef FER_MOVEIT__TEST__FAKES_HPP_
+#define FER_MOVEIT__TEST__FAKES_HPP_
 
 #include <algorithm>
 #include <atomic>
@@ -27,7 +27,7 @@
 #include "std_msgs/msg/string.hpp"
 #include "tf2_ros/static_transform_broadcaster.hpp"
 
-namespace fer_moveit_config
+namespace fer_moveit
 {
 
 inline const std::vector<std::string> & arm_joints()
@@ -385,6 +385,6 @@ inline std::shared_ptr<tf2_ros::StaticTransformBroadcaster> camera_frame(
   return broadcaster;
 }
 
-}  // namespace fer_moveit_config
+}  // namespace fer_moveit
 
-#endif  // FER_MOVEIT_CONFIG__TEST__FAKES_HPP_
+#endif  // FER_MOVEIT__TEST__FAKES_HPP_

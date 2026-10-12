@@ -5,9 +5,9 @@
 #include <limits>
 #include <vector>
 
-#include "fer_moveit_config/core/checks.hpp"
+#include "fer_moveit/core/checks.hpp"
 
-namespace fer_moveit_config
+namespace fer_moveit
 {
 
 TEST(Checks, SpeedScalingMustLieInZeroToOne)
@@ -50,4 +50,4 @@ TEST(Checks, WaitForThrowsWhenInterrupted)
   EXPECT_THROW(wait_for(future, std::chrono::seconds(5), [] { return true; }), Interrupted);
 }
 
-}  // namespace fer_moveit_config
+}  // namespace fer_moveit

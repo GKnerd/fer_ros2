@@ -1,5 +1,5 @@
-#ifndef FER_MOVEIT_CONFIG__ADAPTERS__MOVE_GROUP_CLIENT_HPP_
-#define FER_MOVEIT_CONFIG__ADAPTERS__MOVE_GROUP_CLIENT_HPP_
+#ifndef FER_MOVEIT__ADAPTERS__MOVE_GROUP_CLIENT_HPP_
+#define FER_MOVEIT__ADAPTERS__MOVE_GROUP_CLIENT_HPP_
 
 #include <chrono>
 #include <functional>
@@ -25,7 +25,7 @@
 #include "sensor_msgs/msg/joint_state.hpp"
 #include "std_msgs/msg/string.hpp"
 
-namespace fer_moveit_config
+namespace fer_moveit
 {
 
 /// \brief One motion request: a TCP pose in the base frame, or a joint configuration.
@@ -107,6 +107,6 @@ private:
   std::mutex plan_mutex_;
 };
 
-}  // namespace fer_moveit_config
+}  // namespace fer_moveit
 
-#endif  // FER_MOVEIT_CONFIG__ADAPTERS__MOVE_GROUP_CLIENT_HPP_
+#endif  // FER_MOVEIT__ADAPTERS__MOVE_GROUP_CLIENT_HPP_

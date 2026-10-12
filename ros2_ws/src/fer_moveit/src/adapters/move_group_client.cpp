@@ -1,4 +1,4 @@
-#include "fer_moveit_config/adapters/move_group_client.hpp"
+#include "fer_moveit/adapters/move_group_client.hpp"
 
 #include <algorithm>
 #include <memory>
@@ -8,14 +8,14 @@
 #include <vector>
 
 #include "fer_interfaces/msg/outcome.hpp"
-#include "fer_moveit_config/core/checks.hpp"
+#include "fer_moveit/core/checks.hpp"
 #include "moveit/kinematic_constraints/utils.hpp"
 #include "moveit/utils/moveit_error_code.hpp"
 #include "moveit_msgs/msg/contact_information.hpp"
 #include "moveit_msgs/msg/move_it_error_codes.hpp"
 #include "moveit_msgs/msg/planning_scene_components.hpp"
 
-namespace fer_moveit_config
+namespace fer_moveit
 {
 
 using fer_interfaces::msg::Outcome;
@@ -441,4 +441,4 @@ void MoveGroupClient::stop()
   stop_publisher_->publish(event);
 }
 
-}  // namespace fer_moveit_config
+}  // namespace fer_moveit

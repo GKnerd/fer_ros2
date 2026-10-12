@@ -1,13 +1,13 @@
-#include "fer_moveit_config/adapters/world_model_client.hpp"
+#include "fer_moveit/adapters/world_model_client.hpp"
 
 #include <memory>
 #include <string>
 #include <vector>
 
 #include "fer_interfaces/msg/outcome.hpp"
-#include "fer_moveit_config/core/checks.hpp"
+#include "fer_moveit/core/checks.hpp"
 
-namespace fer_moveit_config
+namespace fer_moveit
 {
 
 using fer_interfaces::msg::Outcome;
@@ -43,4 +43,4 @@ std::vector<WorldObject> WorldModelClient::snapshot()
   return future.get()->objects;
 }
 
-}  // namespace fer_moveit_config
+}  // namespace fer_moveit

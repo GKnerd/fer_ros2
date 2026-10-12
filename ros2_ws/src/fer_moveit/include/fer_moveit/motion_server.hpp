@@ -1,5 +1,5 @@
-#ifndef FER_MOVEIT_CONFIG__MOTION_SERVER_HPP_
-#define FER_MOVEIT_CONFIG__MOTION_SERVER_HPP_
+#ifndef FER_MOVEIT__MOTION_SERVER_HPP_
+#define FER_MOVEIT__MOTION_SERVER_HPP_
 
 #include <atomic>
 #include <chrono>
@@ -15,16 +15,16 @@
 #include "fer_interfaces/msg/pose_target.hpp"
 #include "fer_interfaces/msg/world_object.hpp"
 #include "fer_interfaces/srv/check_reachable.hpp"
-#include "fer_moveit_config/adapters/move_group_client.hpp"
-#include "fer_moveit_config/adapters/robot_mode_monitor.hpp"
-#include "fer_moveit_config/adapters/world_model_client.hpp"
+#include "fer_moveit/adapters/move_group_client.hpp"
+#include "fer_moveit/adapters/robot_mode_monitor.hpp"
+#include "fer_moveit/adapters/world_model_client.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_action/rclcpp_action.hpp"
 #include "sensor_msgs/msg/joint_state.hpp"
 #include "tf2_ros/buffer.hpp"
 #include "tf2_ros/transform_listener.hpp"
 
-namespace fer_moveit_config
+namespace fer_moveit
 {
 
 /// \brief Serves /motion/move_to_pose, /motion/move_to_joints and /motion/check_reachable.
@@ -105,6 +105,6 @@ private:
   uint64_t joint_count_{0};
 };
 
-}  // namespace fer_moveit_config
+}  // namespace fer_moveit
 
-#endif  // FER_MOVEIT_CONFIG__MOTION_SERVER_HPP_
+#endif  // FER_MOVEIT__MOTION_SERVER_HPP_

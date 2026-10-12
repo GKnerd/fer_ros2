@@ -2,10 +2,10 @@
 #include <stdexcept>
 #include <string>
 
-#include "fer_moveit_config/adapters/move_group_client.hpp"
-#include "fer_moveit_config/adapters/robot_mode_monitor.hpp"
-#include "fer_moveit_config/adapters/world_model_client.hpp"
-#include "fer_moveit_config/motion_server.hpp"
+#include "fer_moveit/adapters/move_group_client.hpp"
+#include "fer_moveit/adapters/robot_mode_monitor.hpp"
+#include "fer_moveit/adapters/world_model_client.hpp"
+#include "fer_moveit/motion_server.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 int main(int argc, char ** argv)
@@ -22,14 +22,14 @@ int main(int argc, char ** argv)
   }
   auto group = node->create_callback_group(rclcpp::CallbackGroupType::Reentrant);
 
-  fer_moveit_config::WorldModelClient world_model(node, group);
-  fer_moveit_config::MoveGroupClient move_group(node, group);
-  std::unique_ptr<fer_moveit_config::RobotModeMonitor> robot_mode;
+  fer_moveit::WorldModelClient world_model(node, group);
+  fer_moveit::MoveGroupClient move_group(node, group);
+  std::unique_ptr<fer_moveit::RobotModeMonitor> robot_mode;
   if (hardware == "real")
   {
     try
     {
-      robot_mode = std::make_unique<fer_moveit_config::RobotModeMonitor>(node, group);
+      robot_mode = std::make_unique<fer_moveit::RobotModeMonitor>(node, group);
     }
     catch (const std::runtime_error & e)
     {
@@ -38,7 +38,7 @@ int main(int argc, char ** argv)
       return 1;
     }
   }
-  fer_moveit_config::MotionServer server(node, world_model, move_group, robot_mode.get(), group);
+  fer_moveit::MotionServer server(node, world_model, move_group, robot_mode.get(), group);
 
   rclcpp::executors::MultiThreadedExecutor executor(rclcpp::ExecutorOptions(), 4);
   executor.add_node(node);

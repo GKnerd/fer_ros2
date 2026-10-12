@@ -81,11 +81,7 @@ def moveit_launch_setup(context, *args, **kwargs):
         raise RuntimeError(f"hardware must be one of {HARDWARE}, got '{hardware}'")
     use_sim_time = LaunchConfiguration("use_sim_time")
     use_rviz = LaunchConfiguration("use_rviz")
-    db = LaunchConfiguration("db")
     log_level = LaunchConfiguration("log_level")
-    robot_ip = LaunchConfiguration("robot_ip")
-    use_fake_hardware = LaunchConfiguration("use_fake_hardware")
-    fake_sensor_commands = LaunchConfiguration("fake_sensor_commands")
     namespace = LaunchConfiguration("namespace")
     load_gripper = LaunchConfiguration("load_gripper")
     ee_id = LaunchConfiguration("ee_id")
@@ -95,7 +91,7 @@ def moveit_launch_setup(context, *args, **kwargs):
 
     # Package Shares
     franka_description_share    = get_package_share_directory("franka_description")
-    fer_moveit_config_share  = get_package_share_directory("fer_moveit_config")
+    fer_moveit_share  = get_package_share_directory("fer_moveit")
 
 
     # FER description
@@ -104,10 +100,7 @@ def moveit_launch_setup(context, *args, **kwargs):
         " ",
         PathJoinSubstitution([franka_description_share, "robots", "fer", "fer.urdf.xacro"]),
         " hand:=", load_gripper,
-        " robot_ip:=", robot_ip,
         " ee_id:=", ee_id,
-        " use_fake_hardware:=", use_fake_hardware,
-        " fake_sensor_commands:=", fake_sensor_commands,
         " ros2_control:=false"
     ])
     robot_description = {
@@ -128,7 +121,7 @@ def moveit_launch_setup(context, *args, **kwargs):
 
     # Kinematics 
     kinematics_yaml = load_yaml(
-        "fer_moveit_config", "config/kinematics.yaml"
+        "fer_moveit", "config/kinematics.yaml"
     )
     kinematics = {
         "robot_description_kinematics": kinematics_yaml
@@ -136,10 +129,10 @@ def moveit_launch_setup(context, *args, **kwargs):
 
     # Joint and Cartesian limits; Pilz reads the Cartesian ones from robot_description_planning
     joint_limits_yaml = load_yaml(
-        "fer_moveit_config", "config/joint_limits.yaml"
+        "fer_moveit", "config/joint_limits.yaml"
     )
     cartesian_limits_yaml = load_yaml(
-        "fer_moveit_config", "config/cartesian_limits.yaml"
+        "fer_moveit", "config/cartesian_limits.yaml"
     )
     planning_limits = {
         'robot_description_planning': {**joint_limits_yaml, **cartesian_limits_yaml}
@@ -161,7 +154,7 @@ def moveit_launch_setup(context, *args, **kwargs):
             'default_planning_response_adapters/DisplayMotionPath',
         ],
     }
-    ompl_pipeline.update(load_yaml("fer_moveit_config", 'config/ompl_planning.yaml'))
+    ompl_pipeline.update(load_yaml("fer_moveit", 'config/ompl_planning.yaml'))
     planning_pipelines = {
         'planning_pipelines': {'pipeline_names': ['ompl', 'pilz_industrial_motion_planner']},
         'default_planning_pipeline': 'ompl',
@@ -183,7 +176,7 @@ def moveit_launch_setup(context, *args, **kwargs):
     # moveit_controllers_<hardware>.yaml defines the controllers MoveIt may
     # route to; arm_control_type / hand_control_type pick the default ones.
     moveit_simple_controllers_yaml = load_yaml(
-        "fer_moveit_config", f'config/moveit_controllers_{hardware}.yaml'
+        "fer_moveit", f'config/moveit_controllers_{hardware}.yaml'
     )
     select_default_controllers(
         moveit_simple_controllers_yaml, arm_control_type, hand_control_type,
@@ -207,10 +200,6 @@ def moveit_launch_setup(context, *args, **kwargs):
         'publish_transforms_updates': True,
     }
 
-    move_group_capabilities = {
-        'capabilities': 'move_group/ExecuteTaskSolutionCapability',
-    }
-
     # Move Group Action Server
     move_group_node = Node(
         package='moveit_ros_move_group',
@@ -227,13 +216,12 @@ def moveit_launch_setup(context, *args, **kwargs):
             trajectory_execution,
             moveit_controllers,
             planning_scene_monitor_parameters,
-            move_group_capabilities
         ],
         arguments=[ "--ros-args", "--log-level", log_level]
     )
 
     # RViz
-    rviz_base = os.path.join(fer_moveit_config_share, 'rviz')
+    rviz_base = os.path.join(fer_moveit_share, 'rviz')
     rviz_full_config = os.path.join(rviz_base, 'moveit_conf.rviz')
 
     rviz_node = Node(
@@ -287,16 +275,6 @@ def generate_declared_arguments() -> List[DeclareLaunchArgument]:
             description="Level of logging for the ros2_nodes. Possible args ('debug', 'info', 'warn', 'error', 'fatal')."
         ),
         DeclareLaunchArgument(
-            "db",
-            default_value="False",
-            description="Database flag"
-        ),
-        DeclareLaunchArgument(
-            "robot_ip",
-            default_value="",
-            description='Hostname or IP address of the robot.'
-        ),
-        DeclareLaunchArgument(
             "namespace",
             default_value='',
             description='Namespace for the robot.'
@@ -310,15 +288,6 @@ def generate_declared_arguments() -> List[DeclareLaunchArgument]:
             "ee_id",
             default_value='franka_hand',
             description='The end-effector id to use. Available options: none, franka_hand, cobot_pump'
-        ),
-        DeclareLaunchArgument(
-            "use_fake_hardware",
-            default_value='false',
-            description='Use fake hardware'),
-        DeclareLaunchArgument(
-            "fake_sensor_commands",
-            default_value='false',
-            description="Fake sensor commands. Only valid when '{}' is true".format("use_fake_hardware")
         ),
         DeclareLaunchArgument(
             "arm_control_type",

@@ -1,4 +1,4 @@
-# fer_moveit_config
+# fer_moveit
 
 MoveIt 2 configuration and launch files for the **Franka Emika Robot (FER)**,
 targeting **ROS 2 Jazzy**.
@@ -24,13 +24,13 @@ It also holds the MoveIt motion server of the FER platform,
 ## Repository layout
 
 ```
-fer_moveit_config/
+fer_moveit/
 ├── config/                  # MoveIt + controller YAMLs (kinematics, OMPL, joint/cartesian limits, …)
 │                            # fer_moveit_motion_server.yaml: motion server parameters
 ├── launch/
-│   ├── fer_moveit_launch.py                # move_group + optional RViz, with declared launch args
+│   ├── fer_move_group.launch.py            # move_group + optional RViz, with declared launch args
 │   └── fer_moveit_motion_server.launch.py  # motion server
-├── include/fer_moveit_config/  # motion server: core/ (no ROS), adapters/, motion_server.hpp
+├── include/fer_moveit/  # motion server: core/ (no ROS), adapters/, motion_server.hpp
 ├── src/                        # motion server sources and main.cpp
 ├── test/                       # gtests; move_group_test.launch.py runs against a real move_group
 ├── rviz/
@@ -53,8 +53,6 @@ Declared in `package.xml`:
 - motion server: `rclcpp`, `rclcpp_action`, `fer_interfaces`, `moveit_msgs`,
   `moveit_core`, `tf2_ros`, `tf2_geometry_msgs`; `franka_msgs` for `hardware:=real`
   only (built without it on a core+sim import)
-- `moveit_task_constructor_capabilities` (loads
-  `move_group/ExecuteTaskSolutionCapability` for MTC users)
 
 Install everything declared in the manifest with `rosdep`:
 
@@ -67,7 +65,7 @@ rosdep install --from-paths src --ignore-src -r -y
 From your colcon workspace root:
 
 ```bash
-colcon build --symlink-install --packages-up-to fer_moveit_config
+colcon build --symlink-install --packages-up-to fer_moveit
 source install/setup.bash
 ```
 
@@ -171,7 +169,7 @@ never executes.
 ### Launch
 
 ```bash
-ros2 launch fer_moveit_config fer_moveit_motion_server.launch.py hardware:=mujoco
+ros2 launch fer_moveit fer_moveit_motion_server.launch.py hardware:=mujoco
 ```
 
 | Argument | Default | Description |
@@ -180,7 +178,7 @@ ros2 launch fer_moveit_config fer_moveit_motion_server.launch.py hardware:=mujoc
 | `log_level` | `info` | node log level |
 | `params_file` | `''` | `''` selects `config/fer_moveit_motion_server.yaml` |
 
-`move_group` must run (`fer_moveit_launch.py`) and its arm controller must be active.
+`move_group` must run (`fer_move_group.launch.py`) and its arm controller must be active.
 
 ### Parameters
 
@@ -199,7 +197,7 @@ file if needed).
 ### Tests
 
 ```bash
-colcon test --packages-select fer_moveit_config
+colcon test --packages-select fer_moveit
 colcon test-result --verbose
 ```
 
@@ -224,7 +222,7 @@ domain on localhost.
 Example:
 
 ```bash
-ros2 launch fer_moveit_config fer_moveit_launch.py \
+ros2 launch fer_moveit fer_move_group.launch.py \
     hardware:=mujoco \
     use_sim_time:=true \
     arm_control_type:=effort \
@@ -238,7 +236,7 @@ This package is released under the **BSD 3-Clause License** — see
 `launch/fer_moveit_motion_server.launch.py`) is released under the **Apache License,
 Version 2.0**.
 
-`launch/fer_moveit_launch.py` is adapted from a Franka Robotics example
+`launch/fer_move_group.launch.py` is adapted from a Franka Robotics example
 distributed under the **Apache License, Version 2.0**, and retains its
 original header. See [`NOTICE.md`](NOTICE.md) for upstream attribution and
 third-party file notices.
@@ -246,4 +244,4 @@ third-party file notices.
 ## Contributing
 
 Issues and pull requests are welcome at
-<https://github.com/GKnerd/fer_moveit_config>.
+<https://github.com/GKnerd/fer_moveit>.

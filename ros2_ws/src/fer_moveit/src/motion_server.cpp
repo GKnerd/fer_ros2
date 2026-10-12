@@ -1,4 +1,4 @@
-#include "fer_moveit_config/motion_server.hpp"
+#include "fer_moveit/motion_server.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -12,11 +12,11 @@
 
 #include "fer_interfaces/msg/joint_configuration.hpp"
 #include "fer_interfaces/msg/outcome.hpp"
-#include "fer_moveit_config/core/checks.hpp"
+#include "fer_moveit/core/checks.hpp"
 #include "tf2/exceptions.h"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 
-namespace fer_moveit_config
+namespace fer_moveit
 {
 
 using fer_interfaces::msg::JointConfiguration;
@@ -446,4 +446,4 @@ void MotionServer::on_startup()
   }
 }
 
-}  // namespace fer_moveit_config
+}  // namespace fer_moveit

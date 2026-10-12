@@ -7,7 +7,7 @@
 
 #include "contract_fixture.hpp"
 
-namespace fer_moveit_config
+namespace fer_moveit
 {
 
 TEST_F(Contract, SpeedScalingOutsideZeroToOneIsInvalid)
@@ -289,4 +289,4 @@ TEST_F(Contract, ClientCancelStopsTheArm)
   EXPECT_EQ(move_group_fake_->stops.load(), 1);
 }
 
-}  // namespace fer_moveit_config
+}  // namespace fer_moveit

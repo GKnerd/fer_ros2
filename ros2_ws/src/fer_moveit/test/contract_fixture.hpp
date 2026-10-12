@@ -1,5 +1,5 @@
-#ifndef FER_MOVEIT_CONFIG__TEST__CONTRACT_FIXTURE_HPP_
-#define FER_MOVEIT_CONFIG__TEST__CONTRACT_FIXTURE_HPP_
+#ifndef FER_MOVEIT__TEST__CONTRACT_FIXTURE_HPP_
+#define FER_MOVEIT__TEST__CONTRACT_FIXTURE_HPP_
 
 #include <gtest/gtest.h>
 
@@ -15,14 +15,14 @@
 #include "fer_interfaces/action/move_to_pose.hpp"
 #include "fer_interfaces/msg/outcome.hpp"
 #include "fer_interfaces/srv/check_reachable.hpp"
-#include "fer_moveit_config/adapters/move_group_client.hpp"
-#include "fer_moveit_config/adapters/robot_mode_monitor.hpp"
-#include "fer_moveit_config/adapters/world_model_client.hpp"
-#include "fer_moveit_config/motion_server.hpp"
+#include "fer_moveit/adapters/move_group_client.hpp"
+#include "fer_moveit/adapters/robot_mode_monitor.hpp"
+#include "fer_moveit/adapters/world_model_client.hpp"
+#include "fer_moveit/motion_server.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_action/rclcpp_action.hpp"
 
-namespace fer_moveit_config
+namespace fer_moveit
 {
 
 using fer_interfaces::action::MoveToJoints;
@@ -194,6 +194,6 @@ protected:
   std::thread spinner_;
 };
 
-}  // namespace fer_moveit_config
+}  // namespace fer_moveit
 
-#endif  // FER_MOVEIT_CONFIG__TEST__CONTRACT_FIXTURE_HPP_
+#endif  // FER_MOVEIT__TEST__CONTRACT_FIXTURE_HPP_

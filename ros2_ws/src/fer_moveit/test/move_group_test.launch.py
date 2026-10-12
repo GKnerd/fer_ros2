@@ -20,7 +20,7 @@ def generate_test_description():
         path=LaunchConfiguration('test_binary'), timeout=280.0, output='screen')
     move_group = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(PathJoinSubstitution(
-            [FindPackageShare('fer_moveit_config'), 'launch', 'fer_moveit_launch.py'])),
+            [FindPackageShare('fer_moveit'), 'launch', 'fer_move_group.launch.py'])),
         launch_arguments={
             'hardware': 'mujoco',
             'use_sim_time': 'false',

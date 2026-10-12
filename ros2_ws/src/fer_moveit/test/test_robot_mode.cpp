@@ -6,7 +6,7 @@
 #include "contract_fixture.hpp"
 #include "franka_msgs/msg/franka_state.hpp"
 
-namespace fer_moveit_config
+namespace fer_moveit
 {
 
 TEST_F(Contract, ReflexIsRobotError)
@@ -29,4 +29,4 @@ TEST_F(Contract, ReflexIsRobotError)
   EXPECT_TRUE(move_group_fake_->plan_goals.empty());
 }
 
-}  // namespace fer_moveit_config
+}  // namespace fer_moveit

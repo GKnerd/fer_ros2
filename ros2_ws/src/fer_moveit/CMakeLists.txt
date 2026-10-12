@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(fer_moveit_config)
+project(fer_moveit)
 
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)
@@ -76,7 +76,7 @@ if(BUILD_TESTING)
   set(ament_cmake_uncrustify_FOUND TRUE)
   set(ament_cmake_clang_format_CONFIG_FILE "${CMAKE_CURRENT_SOURCE_DIR}/.clang-format")
   # Adapted upstream launch file, kept in its original style.
-  set(AMENT_LINT_AUTO_FILE_EXCLUDE launch/fer_moveit_launch.py)
+  set(AMENT_LINT_AUTO_FILE_EXCLUDE launch/fer_move_group.launch.py)
   ament_lint_auto_find_test_dependencies()
 
   find_package(ament_cmake_ros REQUIRED)

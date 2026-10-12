@@ -1,5 +1,5 @@
-#ifndef FER_MOVEIT_CONFIG__CORE__CHECKS_HPP_
-#define FER_MOVEIT_CONFIG__CORE__CHECKS_HPP_
+#ifndef FER_MOVEIT__CORE__CHECKS_HPP_
+#define FER_MOVEIT__CORE__CHECKS_HPP_
 
 #include <chrono>
 #include <cstdint>
@@ -10,7 +10,7 @@
 #include <thread>
 #include <vector>
 
-namespace fer_moveit_config
+namespace fer_moveit
 {
 /// \brief How often blocking waits look at the interruption flag.
 constexpr std::chrono::milliseconds POLL_PERIOD{50};
@@ -67,6 +67,6 @@ bool wait_for(
   return true;
 }
 
-}  // namespace fer_moveit_config
+}  // namespace fer_moveit
 
-#endif  // FER_MOVEIT_CONFIG__CORE__CHECKS_HPP_
+#endif  // FER_MOVEIT__CORE__CHECKS_HPP_

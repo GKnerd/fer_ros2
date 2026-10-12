@@ -1,4 +1,4 @@
-#include "fer_moveit_config/adapters/robot_mode_monitor.hpp"
+#include "fer_moveit/adapters/robot_mode_monitor.hpp"
 
 #include <optional>
 #include <sstream>
@@ -6,7 +6,7 @@
 
 #include "franka_msgs/msg/franka_state.hpp"
 
-namespace fer_moveit_config
+namespace fer_moveit
 {
 
 using franka_msgs::msg::FrankaState;
@@ -60,4 +60,4 @@ RobotModeMonitor::RobotModeMonitor(
     options);
 }
 
-}  // namespace fer_moveit_config
+}  // namespace fer_moveit

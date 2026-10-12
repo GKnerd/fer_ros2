@@ -1,4 +1,4 @@
-"""MoveIt motion server of the FER platform; move_group comes from fer_moveit_launch.py."""
+"""MoveIt motion server of the FER platform; move_group comes from fer_move_group.launch.py."""
 from typing import List
 
 from launch import LaunchDescription
@@ -14,12 +14,12 @@ def launch_setup(context, *args, **kwargs) -> List[Node]:
     hardware = LaunchConfiguration('hardware').perform(context)
     log_level = LaunchConfiguration('log_level').perform(context)
     params_file = LaunchConfiguration('params_file').perform(context) or PathJoinSubstitution(
-        [FindPackageShare('fer_moveit_config'), 'config', 'fer_moveit_motion_server.yaml']
+        [FindPackageShare('fer_moveit'), 'config', 'fer_moveit_motion_server.yaml']
     ).perform(context)
 
     return [
         Node(
-            package='fer_moveit_config',
+            package='fer_moveit',
             executable='fer_moveit_motion_server',
             name='fer_moveit_motion_server',
             output='both',

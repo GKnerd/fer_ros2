@@ -1,6 +1,6 @@
 # Attribution and Third-Party Notices
 
-`fer_moveit_config` is a downstream rework of the long-running
+`fer_moveit` is a downstream rework of the long-running
 [`panda_moveit_config`](https://github.com/moveit/panda_moveit_config) package
 (originally hosted under the `ros-planning` GitHub organization, now under
 `moveit`). The configuration files (`config/*.yaml`, `rviz/*.rviz`) are
@@ -20,7 +20,7 @@ builds on, including (in no particular order):
 
 ## Third-party files with their own license
 
-- `launch/fer_moveit_launch.py` is an adapted version of
+- `launch/fer_move_group.launch.py` is an adapted version of
   [`moveit_resources/panda_moveit_config/launch/demo.launch.py`](https://github.com/ros-planning/moveit_resources/blob/ca3f7930c630581b5504f3b22c40b4f82ee6369d/panda_moveit_config/launch/demo.launch.py),
   originally distributed under the **Apache License, Version 2.0**, with
   modifications by Franka Robotics GmbH and Georgios Katranis. The Apache

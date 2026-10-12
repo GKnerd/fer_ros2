@@ -1,5 +1,5 @@
 # Controllers MoveIt may route to with hardware:=real.
-# fer_moveit_launch.py sets `default: true` on the arm controller chosen by
+# fer_move_group.launch.py sets `default: true` on the arm controller chosen by
 # arm_control_type. The gripper is the franka_gripper node, whose
 # GripperCommand action server is /fer_gripper/gripper_action.
 controller_names:

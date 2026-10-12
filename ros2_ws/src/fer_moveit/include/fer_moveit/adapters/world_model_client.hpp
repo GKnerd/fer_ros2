@@ -1,5 +1,5 @@
-#ifndef FER_MOVEIT_CONFIG__ADAPTERS__WORLD_MODEL_CLIENT_HPP_
-#define FER_MOVEIT_CONFIG__ADAPTERS__WORLD_MODEL_CLIENT_HPP_
+#ifndef FER_MOVEIT__ADAPTERS__WORLD_MODEL_CLIENT_HPP_
+#define FER_MOVEIT__ADAPTERS__WORLD_MODEL_CLIENT_HPP_
 
 #include <chrono>
 #include <vector>
@@ -8,7 +8,7 @@
 #include "fer_interfaces/srv/query_objects.hpp"
 #include "rclcpp/rclcpp.hpp"
 
-namespace fer_moveit_config
+namespace fer_moveit
 {
 
 /// \brief Reads the objects the collision scene is built from.
@@ -27,6 +27,6 @@ private:
   std::chrono::duration<double> timeout_;
 };
 
-}  // namespace fer_moveit_config
+}  // namespace fer_moveit
 
-#endif  // FER_MOVEIT_CONFIG__ADAPTERS__WORLD_MODEL_CLIENT_HPP_
+#endif  // FER_MOVEIT__ADAPTERS__WORLD_MODEL_CLIENT_HPP_

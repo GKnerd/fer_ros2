@@ -1,5 +1,5 @@
-#ifndef FER_MOVEIT_CONFIG__ADAPTERS__ROBOT_MODE_MONITOR_HPP_
-#define FER_MOVEIT_CONFIG__ADAPTERS__ROBOT_MODE_MONITOR_HPP_
+#ifndef FER_MOVEIT__ADAPTERS__ROBOT_MODE_MONITOR_HPP_
+#define FER_MOVEIT__ADAPTERS__ROBOT_MODE_MONITOR_HPP_
 
 #include <mutex>
 #include <optional>
@@ -7,7 +7,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 
-namespace fer_moveit_config
+namespace fer_moveit
 {
 
 /// \brief Robot mode of the real FER from franka_robot_state_broadcaster (hardware:=real).
@@ -34,6 +34,6 @@ private:
   std::optional<std::string> error_;
 };
 
-}  // namespace fer_moveit_config
+}  // namespace fer_moveit
 
-#endif  // FER_MOVEIT_CONFIG__ADAPTERS__ROBOT_MODE_MONITOR_HPP_
+#endif  // FER_MOVEIT__ADAPTERS__ROBOT_MODE_MONITOR_HPP_

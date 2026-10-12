@@ -1,5 +1,5 @@
 # Controllers MoveIt may route to with hardware:=mujoco.
-# fer_moveit_launch.py sets `default: true` on the arm and gripper controller
+# fer_move_group.launch.py sets `default: true` on the arm and gripper controller
 # chosen by arm_control_type / hand_control_type.
 controller_names:
   - effort_trajectory_controller

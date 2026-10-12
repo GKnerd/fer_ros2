@@ -15,14 +15,14 @@
 #include "fer_interfaces/action/move_to_joints.hpp"
 #include "fer_interfaces/action/move_to_pose.hpp"
 #include "fer_interfaces/msg/outcome.hpp"
-#include "fer_moveit_config/adapters/move_group_client.hpp"
-#include "fer_moveit_config/adapters/world_model_client.hpp"
-#include "fer_moveit_config/motion_server.hpp"
+#include "fer_moveit/adapters/move_group_client.hpp"
+#include "fer_moveit/adapters/world_model_client.hpp"
+#include "fer_moveit/motion_server.hpp"
 #include "moveit_msgs/srv/get_position_fk.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_action/rclcpp_action.hpp"
 
-namespace fer_moveit_config
+namespace fer_moveit
 {
 
 using control_msgs::action::FollowJointTrajectory;
@@ -417,4 +417,4 @@ TEST_F(MoveGroupIntegration, StopCancelsTheControllerGoal)
   EXPECT_EQ(controller_->cancels.load(), 1);
 }
 
-}  // namespace fer_moveit_config
+}  // namespace fer_moveit
