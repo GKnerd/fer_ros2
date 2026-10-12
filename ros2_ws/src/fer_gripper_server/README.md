@@ -43,9 +43,9 @@ Used:
 
 ## Hardware
 
-**Real** (`hardware:=real`) — the `franka_gripper` node `/fer_gripper` from `fer_ros2`:
+**Real** (`hardware:=real`) — the `franka_gripper` node `/fer_gripper` from `fer_ros2_driver`:
 actions `move`, `grasp` (epsilon = `tolerance`), topic `gripper_state` (needs
-`fer_ros2` with `franka_msgs/GripperState`, 2026-09-28 or later). `franka_msgs` is a
+`fer_ros2_driver` with `franka_msgs/GripperState`, 2026-09-28 or later). `franka_msgs` is a
 runtime dependency of this mode only; a core+sim import builds without it.
 
 **MuJoCo** (`hardware:=mujoco`) — `gripper_effort_controller` via
