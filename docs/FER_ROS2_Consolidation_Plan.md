@@ -1016,10 +1016,12 @@ server), `src/server.cpp`, `main.cpp` builds the node and passes it in.
 - The pre-grasp is reached with `MoveToJoints`, not `MoveToPose`: the arm has 7
   joints, so a pose alone can end in a different arm configuration than the one
   `CheckReachable` tested, from which the straight approach may fail.
-- **Payload:** the `ExecuteTree` goal's `payload`, a flat JSON object with string or
-  integer values, goes to the global blackboard; `PickPlace` reads `target_class` and
-  `pick_attempts`. Keys of the previous goal are removed first. Malformed JSON, other
-  value types or a key named like a named pose → goal rejected.
+- **Payload:** the `ExecuteTree` goal's `payload`, a flat JSON object with string, integer
+  or floating-point values, goes to the global blackboard; `PickPlace` reads `target_class`
+  and `pick_attempts`. Optional `speed_scaling`: every motion and `FindReachable*` node of
+  the trees reads it; without it, the BT server parameter `speed_scaling` (0.3) applies.
+  Keys of the previous goal are removed first. Malformed JSON, other value types or a key
+  named like a named pose → goal rejected.
 - The blackboard holds ids only; hand poses come from the grasp planner. Named poses
   (`home`, `view`, 7 joint values each) are parameters in `config/poses.yaml`, put on the
   global blackboard at startup.
@@ -1085,8 +1087,22 @@ Open after the first MuJoCo runs (2026-10-02):
   `gripper_effort_controller` before the gripper server starts.
 - `fer_skills` is not started. `fer_manipulation.launch.py` builds on the `fer_moveit`
   level: `move_group` serves the motion backend.
+- `fer_manipulation.launch.py` activates `<arm_control_type>_trajectory_controller` (and on
+  MuJoCo `gripper_<hand_control_type>_controller`) after the inactive spawner exits, then
+  starts the gripper server.
+- `fer_manipulation_bt.launch.py` declares every argument of `fer_manipulation.launch.py`
+  plus `bt_server_params_file` and `poses_file`, and forwards them: the top level's defaults
+  decide. `fer_bt_server.launch.py` takes `params_file` and `poses_file`.
+- The BT server can be restarted alone (`fer_bt_server.launch.py`) under a running
+  `fer_manipulation.launch.py`.
 
-**Verification:** the same tree on `hardware:=mujoco` and `hardware:=real`.
+**Verification:** the same tree on `hardware:=mujoco` and `hardware:=real`. Done
+(2026-10-12): MuJoCo — `PickPlace` SUCCESS with `fer_manipulation_bt.launch.py`, with and
+without `speed_scaling` in the payload; real robot — `PickPlace` with mock perception on
+`fer_manipulation.launch.py` (BT server still included, default speed); `colcon test` green
+for `fer_interfaces`, `fer_world_model`, `fer_gripper_server`, `fer_grasp_planner`,
+`fer_moveit_config`, `fer_behavior_trees`, `fer_ros2_bringup`.
+[Done]
 
 #### 8.7 Removal
 
