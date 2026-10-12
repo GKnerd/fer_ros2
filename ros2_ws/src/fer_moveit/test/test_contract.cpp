@@ -13,7 +13,8 @@ namespace fer_moveit_config
 TEST_F(Contract, SpeedScalingOutsideZeroToOneIsInvalid)
 {
   start();
-  for (const double speed : {0.0, 1.5}) {
+  for (const double speed : {0.0, 1.5})
+  {
     const auto result = run<MoveToJoints>(joints_client_, joints_goal(speed));
     EXPECT_EQ(result.code, rclcpp_action::ResultCode::ABORTED);
     EXPECT_EQ(result.result->outcome.code, Outcome::INVALID_GOAL);
@@ -81,8 +82,8 @@ TEST_F(Contract, FreeAndStraightPosesUseTheirPipelines)
     run<MoveToPose>(pose_client_, pose_goal(PoseTarget::PATH_FREE)).result->outcome.code,
     Outcome::OK);
   EXPECT_EQ(
-    run<MoveToPose>(
-      pose_client_, pose_goal(PoseTarget::PATH_STRAIGHT, "camera")).result->outcome.code,
+    run<MoveToPose>(pose_client_, pose_goal(PoseTarget::PATH_STRAIGHT, "camera"))
+      .result->outcome.code,
     Outcome::OK);
 
   std::lock_guard<std::mutex> lock(move_group_fake_->mutex);
@@ -129,11 +130,9 @@ TEST_F(Contract, SceneFollowsTheWorldModel)
   ASSERT_EQ(detached.size(), 1u);
   EXPECT_EQ(detached[0].object.operation, moveit_msgs::msg::CollisionObject::REMOVE);
   const auto & world = scenes[2].world.collision_objects;
-  EXPECT_TRUE(
-    std::any_of(
-      world.begin(), world.end(), [](const auto & o) {
-        return o.id == "cup_1" && o.operation == moveit_msgs::msg::CollisionObject::REMOVE;
-      }));
+  EXPECT_TRUE(std::any_of(
+    world.begin(), world.end(), [](const auto & o)
+    { return o.id == "cup_1" && o.operation == moveit_msgs::msg::CollisionObject::REMOVE; }));
 }
 
 TEST_F(Contract, MayTouchAllowsTheHandForThisRequestOnly)
@@ -146,20 +145,23 @@ TEST_F(Contract, MayTouchAllowsTheHandForThisRequestOnly)
   std::lock_guard<std::mutex> lock(move_group_fake_->mutex);
   const auto & options = move_group_fake_->plan_goals.at(0).planning_options;
   const auto & matrix = options.planning_scene_diff.allowed_collision_matrix;
-  auto index = [&matrix](const std::string & name) {
-      return static_cast<size_t>(
-        std::find(matrix.entry_names.begin(), matrix.entry_names.end(), name) -
-        matrix.entry_names.begin());
-    };
+  auto index = [&matrix](const std::string & name)
+  {
+    return static_cast<size_t>(
+      std::find(matrix.entry_names.begin(), matrix.entry_names.end(), name) -
+      matrix.entry_names.begin());
+  };
   ASSERT_LT(index("cup_1"), matrix.entry_names.size());
-  for (const auto & link : {"fer_hand", "fer_leftfinger", "fer_rightfinger"}) {
+  for (const auto & link : {"fer_hand", "fer_leftfinger", "fer_rightfinger"})
+  {
     ASSERT_LT(index(link), matrix.entry_names.size());
     EXPECT_TRUE(matrix.entry_values[index("cup_1")].enabled[index(link)]);
     EXPECT_TRUE(matrix.entry_values[index(link)].enabled[index("cup_1")]);
   }
   // The allowances already in move_group's matrix are kept.
   EXPECT_TRUE(matrix.entry_values[index("fer_link0")].enabled[index("fer_link1")]);
-  for (const auto & scene : move_group_fake_->applied_scenes) {
+  for (const auto & scene : move_group_fake_->applied_scenes)
+  {
     EXPECT_TRUE(scene.allowed_collision_matrix.entry_names.empty());
   }
 }
@@ -168,11 +170,9 @@ TEST_F(Contract, PlanningErrorsMapToUnreachableAndNoPath)
 {
   start();
   move_group_fake_->plan_error = Codes::NO_IK_SOLUTION;
-  EXPECT_EQ(
-    run<MoveToPose>(pose_client_, pose_goal()).result->outcome.code, Outcome::UNREACHABLE);
+  EXPECT_EQ(run<MoveToPose>(pose_client_, pose_goal()).result->outcome.code, Outcome::UNREACHABLE);
   move_group_fake_->plan_error = Codes::GOAL_IN_COLLISION;
-  EXPECT_EQ(
-    run<MoveToPose>(pose_client_, pose_goal()).result->outcome.code, Outcome::UNREACHABLE);
+  EXPECT_EQ(run<MoveToPose>(pose_client_, pose_goal()).result->outcome.code, Outcome::UNREACHABLE);
   move_group_fake_->plan_error = Codes::PLANNING_FAILED;
   EXPECT_EQ(run<MoveToPose>(pose_client_, pose_goal()).result->outcome.code, Outcome::NO_PATH);
   EXPECT_TRUE(move_group_fake_->execute_goals.empty());
@@ -205,8 +205,8 @@ TEST_F(Contract, CheckReachableChainsTargetsWithoutMoving)
     move_group_fake_->plan_goals[0].request.start_state.joint_state.position.at(0), before[0],
     1e-6);
   EXPECT_NEAR(
-    move_group_fake_->plan_goals[1].request.start_state.joint_state.position.at(0),
-    before[0] + 0.1, 1e-9);
+    move_group_fake_->plan_goals[1].request.start_state.joint_state.position.at(0), before[0] + 0.1,
+    1e-9);
   EXPECT_TRUE(move_group_fake_->execute_goals.empty());
 }
 
@@ -224,7 +224,8 @@ TEST_F(Contract, CheckReachableReportsTheFailedTarget)
 TEST_F(Contract, CheckReachableSpeedOutsideZeroToOneIsInvalid)
 {
   start();
-  for (const double speed : {0.0, 1.5}) {
+  for (const double speed : {0.0, 1.5})
+  {
     const auto response = check({pose_goal().target}, speed);
     EXPECT_EQ(response->outcome.code, Outcome::INVALID_GOAL);
   }
@@ -240,7 +241,8 @@ TEST_F(Contract, CheckReachablePlansWithTheRequestedSpeed)
 
   std::lock_guard<std::mutex> lock(move_group_fake_->mutex);
   ASSERT_EQ(move_group_fake_->plan_goals.size(), 2u);
-  for (const auto & goal : move_group_fake_->plan_goals) {
+  for (const auto & goal : move_group_fake_->plan_goals)
+  {
     EXPECT_DOUBLE_EQ(goal.request.max_velocity_scaling_factor, 0.5);
     EXPECT_DOUBLE_EQ(goal.request.max_acceleration_scaling_factor, 0.5);
   }
@@ -252,7 +254,7 @@ TEST_F(Contract, NewGoalReplacesTheRunningOneAfterRest)
   move_group_fake_->trajectory_duration = 3.0;
   auto first = send<MoveToJoints>(joints_client_, joints_goal());
   auto first_result = joints_client_->async_get_result(first);
-  ASSERT_TRUE(wait_until([this] {return move_group_fake_->executing.load();}));
+  ASSERT_TRUE(wait_until([this] { return move_group_fake_->executing.load(); }));
 
   move_group_fake_->trajectory_duration = 0.3;
   const auto replaced_at = std::chrono::steady_clock::now();
@@ -276,7 +278,7 @@ TEST_F(Contract, ClientCancelStopsTheArm)
   move_group_fake_->trajectory_duration = 3.0;
   auto handle = send<MoveToJoints>(joints_client_, joints_goal());
   auto result = joints_client_->async_get_result(handle);
-  ASSERT_TRUE(wait_until([this] {return move_group_fake_->executing.load();}));
+  ASSERT_TRUE(wait_until([this] { return move_group_fake_->executing.load(); }));
   const auto cancelled_at = std::chrono::steady_clock::now();
   joints_client_->async_cancel_goal(handle);
 

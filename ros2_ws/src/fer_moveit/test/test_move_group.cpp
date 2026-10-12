@@ -11,17 +11,16 @@
 
 #include "control_msgs/action/follow_joint_trajectory.hpp"
 #include "control_msgs/action/gripper_command.hpp"
+#include "fakes.hpp"
 #include "fer_interfaces/action/move_to_joints.hpp"
 #include "fer_interfaces/action/move_to_pose.hpp"
 #include "fer_interfaces/msg/outcome.hpp"
-#include "moveit_msgs/srv/get_position_fk.hpp"
-#include "rclcpp/rclcpp.hpp"
-#include "rclcpp_action/rclcpp_action.hpp"
-
 #include "fer_moveit_config/adapters/move_group_client.hpp"
 #include "fer_moveit_config/adapters/world_model_client.hpp"
 #include "fer_moveit_config/motion_server.hpp"
-#include "fakes.hpp"
+#include "moveit_msgs/srv/get_position_fk.hpp"
+#include "rclcpp/rclcpp.hpp"
+#include "rclcpp_action/rclcpp_action.hpp"
 
 namespace fer_moveit_config
 {
@@ -45,23 +44,25 @@ public:
   {
     server_ = rclcpp_action::create_server<FollowJointTrajectory>(
       node, "/" + name + "/follow_joint_trajectory",
-      [](const rclcpp_action::GoalUUID &, std::shared_ptr<const FollowJointTrajectory::Goal>) {
-        return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
-      },
-      [this](const std::shared_ptr<rclcpp_action::ServerGoalHandle<FollowJointTrajectory>>) {
+      [](const rclcpp_action::GoalUUID &, std::shared_ptr<const FollowJointTrajectory::Goal>)
+      { return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE; },
+      [this](const std::shared_ptr<rclcpp_action::ServerGoalHandle<FollowJointTrajectory>>)
+      {
         ++cancels;
         return rclcpp_action::CancelResponse::ACCEPT;
       },
-      [this](const std::shared_ptr<rclcpp_action::ServerGoalHandle<FollowJointTrajectory>> h) {
+      [this](const std::shared_ptr<rclcpp_action::ServerGoalHandle<FollowJointTrajectory>> h)
+      {
         std::lock_guard<std::mutex> lock(threads_mutex_);
-        threads_.emplace_back([this, h] {play(h);});
+        threads_.emplace_back([this, h] { play(h); });
       });
   }
 
   ~FakeTrajectoryController()
   {
     stopping_ = true;
-    for (auto & thread : threads_) {
+    for (auto & thread : threads_)
+    {
       thread.join();
     }
   }
@@ -89,12 +90,12 @@ private:
     const auto begin = std::chrono::steady_clock::now();
     const double duration = rclcpp::Duration(points.back().time_from_start).seconds();
     std::vector<double> positions = points.front().positions;
-    while (!stopping_) {
-      const double t = std::chrono::duration<double>(
-        std::chrono::steady_clock::now() - begin).count();
+    while (!stopping_)
+    {
+      const double t =
+        std::chrono::duration<double>(std::chrono::steady_clock::now() - begin).count();
       size_t k = 1;
-      while (k < points.size() - 1 &&
-        rclcpp::Duration(points[k].time_from_start).seconds() < t)
+      while (k < points.size() - 1 && rclcpp::Duration(points[k].time_from_start).seconds() < t)
       {
         ++k;
       }
@@ -102,12 +103,14 @@ private:
       const double t1 = rclcpp::Duration(points[k].time_from_start).seconds();
       const double s = t1 > t0 ? std::clamp((t - t0) / (t1 - t0), 0.0, 1.0) : 1.0;
       std::vector<double> velocities;
-      for (size_t i = 0; i < positions.size(); ++i) {
-        positions[i] = points[k - 1].positions[i] +
-          s * (points[k].positions[i] - points[k - 1].positions[i]);
+      for (size_t i = 0; i < positions.size(); ++i)
+      {
+        positions[i] =
+          points[k - 1].positions[i] + s * (points[k].positions[i] - points[k - 1].positions[i]);
         velocities.push_back(t < duration ? points[k].velocities.at(i) : 0.0);
       }
-      if (h->is_canceling()) {
+      if (h->is_canceling())
+      {
         std::this_thread::sleep_for(300ms);
         arm_.set(positions, std::vector<double>(positions.size(), 0.0));
         playing = false;
@@ -115,7 +118,8 @@ private:
         return;
       }
       arm_.set(positions, velocities);
-      if (t >= duration) {
+      if (t >= duration)
+      {
         break;
       }
       std::this_thread::sleep_for(10ms);
@@ -149,19 +153,17 @@ protected:
     arm_ = std::make_unique<FakeArm>(fakes_);
     controller_ =
       std::make_unique<FakeTrajectoryController>(fakes_, *arm_, "effort_trajectory_controller");
-    position_controller_ = std::make_unique<FakeTrajectoryController>(
-      fakes_, *arm_, "position_trajectory_controller");
-    for (const auto & name : {"gripper_effort_controller", "gripper_position_controller"}) {
-      grippers_.push_back(
-        rclcpp_action::create_server<GripperCommand>(
-          fakes_, std::string("/") + name + "/gripper_cmd",
-          [](const rclcpp_action::GoalUUID &, std::shared_ptr<const GripperCommand::Goal>) {
-            return rclcpp_action::GoalResponse::REJECT;
-          },
-          [](const std::shared_ptr<rclcpp_action::ServerGoalHandle<GripperCommand>>) {
-            return rclcpp_action::CancelResponse::ACCEPT;
-          },
-          [](const std::shared_ptr<rclcpp_action::ServerGoalHandle<GripperCommand>>) {}));
+    position_controller_ =
+      std::make_unique<FakeTrajectoryController>(fakes_, *arm_, "position_trajectory_controller");
+    for (const auto & name : {"gripper_effort_controller", "gripper_position_controller"})
+    {
+      grippers_.push_back(rclcpp_action::create_server<GripperCommand>(
+        fakes_, std::string("/") + name + "/gripper_cmd",
+        [](const rclcpp_action::GoalUUID &, std::shared_ptr<const GripperCommand::Goal>)
+        { return rclcpp_action::GoalResponse::REJECT; },
+        [](const std::shared_ptr<rclcpp_action::ServerGoalHandle<GripperCommand>>)
+        { return rclcpp_action::CancelResponse::ACCEPT; },
+        [](const std::shared_ptr<rclcpp_action::ServerGoalHandle<GripperCommand>>) {}));
     }
     world_ = std::make_unique<FakeWorldModel>(fakes_);
     world_->set({table()});
@@ -169,21 +171,19 @@ protected:
 
     world_model_ = std::make_unique<WorldModelClient>(node_, group_);
     move_group_ = std::make_unique<MoveGroupClient>(node_, group_);
-    server_ = std::make_unique<MotionServer>(
-      node_, *world_model_, *move_group_, nullptr, group_);
+    server_ = std::make_unique<MotionServer>(node_, *world_model_, *move_group_, nullptr, group_);
 
     pose_client_ = rclcpp_action::create_client<MoveToPose>(fakes_, "/motion/move_to_pose");
-    joints_client_ =
-      rclcpp_action::create_client<MoveToJoints>(fakes_, "/motion/move_to_joints");
+    joints_client_ = rclcpp_action::create_client<MoveToJoints>(fakes_, "/motion/move_to_joints");
     fk_client_ = fakes_->create_client<moveit_msgs::srv::GetPositionFK>("/compute_fk");
 
-    executor_ = std::make_shared<rclcpp::executors::MultiThreadedExecutor>(
-      rclcpp::ExecutorOptions(), 8);
+    executor_ =
+      std::make_shared<rclcpp::executors::MultiThreadedExecutor>(rclcpp::ExecutorOptions(), 8);
     executor_->add_node(node_);
     executor_->add_node(fakes_);
-    spinner_ = std::thread([this] {executor_->spin();});
+    spinner_ = std::thread([this] { executor_->spin(); });
 
-    ASSERT_TRUE(wait_until([this] {return server_->ready();}, 120s));
+    ASSERT_TRUE(wait_until([this] { return server_->ready(); }, 120s));
     ASSERT_TRUE(fk_client_->wait_for_service(10s));
     // Let move_group see the fake arm's state.
     std::this_thread::sleep_for(500ms);
@@ -200,12 +200,14 @@ protected:
     rclcpp::shutdown();
   }
 
-  template<typename Predicate>
+  template <typename Predicate>
   static bool wait_until(Predicate predicate, std::chrono::duration<double> timeout = 10s)
   {
     const auto end = std::chrono::steady_clock::now() + timeout;
-    while (!predicate()) {
-      if (std::chrono::steady_clock::now() > end) {
+    while (!predicate())
+    {
+      if (std::chrono::steady_clock::now() > end)
+      {
         return false;
       }
       std::this_thread::sleep_for(10ms);
@@ -249,7 +251,7 @@ protected:
     return goal;
   }
 
-  template<typename ActionT>
+  template <typename ActionT>
   Outcome run(
     const typename rclcpp_action::Client<ActionT>::SharedPtr & client,
     const typename ActionT::Goal & goal)
@@ -292,14 +294,15 @@ TEST_F(MoveGroupIntegration, StraightPathKeepsTheTcpOnTheLine)
   const auto & a = start.position;
   const auto & b = goal.target.pose.pose.position;
   const double length = std::hypot(b.x - a.x, b.y - a.y, b.z - a.z);
-  for (const auto & point : trajectory.points) {
+  for (const auto & point : trajectory.points)
+  {
     const auto p = tcp_pose(trajectory.joint_names, point.positions).position;
     const double s = std::clamp(
       ((p.x - a.x) * (b.x - a.x) + (p.y - a.y) * (b.y - a.y) + (p.z - a.z) * (b.z - a.z)) /
-      (length * length), 0.0, 1.0);
+        (length * length),
+      0.0, 1.0);
     const double distance = std::hypot(
-      p.x - (a.x + s * (b.x - a.x)), p.y - (a.y + s * (b.y - a.y)),
-      p.z - (a.z + s * (b.z - a.z)));
+      p.x - (a.x + s * (b.x - a.x)), p.y - (a.y + s * (b.y - a.y)), p.z - (a.z + s * (b.z - a.z)));
     EXPECT_LT(distance, 1e-3);
   }
   const auto end = tcp_pose(trajectory.joint_names, trajectory.points.back().positions).position;
@@ -384,12 +387,15 @@ TEST_F(MoveGroupIntegration, SpeedScalingBoundsTheJointVelocities)
   std::copy(start.begin(), start.end(), back.joints.positions.begin());
   back.speed_scaling = 0.2;
 
-  for (const auto & goal : {away, back}) {
+  for (const auto & goal : {away, back})
+  {
     ASSERT_EQ(run<MoveToJoints>(joints_client_, goal).code, Outcome::OK);
-    for (const auto & point : controller_->last().points) {
-      for (size_t i = 0; i < limits.size(); ++i) {
-        EXPECT_LE(std::abs(point.velocities.at(i)), goal.speed_scaling * limits[i] + 1e-3) <<
-          "joint " << i + 1 << " at speed_scaling " << goal.speed_scaling;
+    for (const auto & point : controller_->last().points)
+    {
+      for (size_t i = 0; i < limits.size(); ++i)
+      {
+        EXPECT_LE(std::abs(point.velocities.at(i)), goal.speed_scaling * limits[i] + 1e-3)
+          << "joint " << i + 1 << " at speed_scaling " << goal.speed_scaling;
       }
     }
   }
@@ -404,7 +410,7 @@ TEST_F(MoveGroupIntegration, StopCancelsTheControllerGoal)
   ASSERT_EQ(sent.wait_for(20s), std::future_status::ready);
   auto handle = sent.get();
   auto result = joints_client_->async_get_result(handle);
-  ASSERT_TRUE(wait_until([this] {return controller_->playing.load();}, 30s));
+  ASSERT_TRUE(wait_until([this] { return controller_->playing.load(); }, 30s));
   joints_client_->async_cancel_goal(handle);
   ASSERT_EQ(result.wait_for(30s), std::future_status::ready);
   EXPECT_EQ(result.get().result->outcome.code, Outcome::CANCELLED);

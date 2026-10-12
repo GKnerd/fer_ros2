@@ -1,6 +1,6 @@
-#include "fer_moveit_config/adapters/robot_mode_monitor.hpp"
-
 #include <stdexcept>
+
+#include "fer_moveit_config/adapters/robot_mode_monitor.hpp"
 
 namespace fer_moveit_config
 {
@@ -10,7 +10,7 @@ RobotModeMonitor::RobotModeMonitor(
   const rclcpp::Node::SharedPtr &, const rclcpp::CallbackGroup::SharedPtr &)
 {
   throw std::runtime_error(
-          "hardware:=real needs franka_msgs; this build has none (core+sim import)");
+    "hardware:=real needs franka_msgs; this build has none (core+sim import)");
 }
 
 }  // namespace fer_moveit_config

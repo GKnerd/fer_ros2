@@ -8,13 +8,12 @@
 #include <vector>
 
 #include "fer_interfaces/msg/outcome.hpp"
+#include "fer_moveit_config/core/checks.hpp"
 #include "moveit/kinematic_constraints/utils.hpp"
 #include "moveit/utils/moveit_error_code.hpp"
 #include "moveit_msgs/msg/contact_information.hpp"
 #include "moveit_msgs/msg/move_it_error_codes.hpp"
 #include "moveit_msgs/msg/planning_scene_components.hpp"
-
-#include "fer_moveit_config/core/checks.hpp"
 
 namespace fer_moveit_config
 {
@@ -36,8 +35,8 @@ constexpr char FREE_PIPELINE[] = "ompl";
 constexpr char STRAIGHT_PIPELINE[] = "pilz_industrial_motion_planner";
 constexpr char STRAIGHT_PLANNER[] = "LIN";
 const std::vector<std::string> HAND_LINKS = {"fer_hand", "fer_leftfinger", "fer_rightfinger"};
-const std::vector<std::string> ARM_JOINTS = {
-  "fer_joint1", "fer_joint2", "fer_joint3", "fer_joint4", "fer_joint5", "fer_joint6", "fer_joint7"};
+const std::vector<std::string> ARM_JOINTS = {"fer_joint1", "fer_joint2", "fer_joint3", "fer_joint4",
+                                             "fer_joint5", "fer_joint6", "fer_joint7"};
 constexpr double JOINT_GOAL_TOLERANCE = 1e-4;
 // move_group times the execution itself; this only catches a move_group that stops answering.
 constexpr double EXECUTION_WATCHDOG_FACTOR = 2.0;
@@ -49,7 +48,8 @@ std::string error_name(const MoveItErrorCodes & code)
 
 uint8_t plan_outcome(const MoveItErrorCodes & code)
 {
-  switch (code.val) {
+  switch (code.val)
+  {
     case MoveItErrorCodes::NO_IK_SOLUTION:
     case MoveItErrorCodes::GOAL_IN_COLLISION:
     case MoveItErrorCodes::INVALID_GOAL_CONSTRAINTS:
@@ -64,11 +64,13 @@ uint8_t plan_outcome(const MoveItErrorCodes & code)
 size_t matrix_entry(AllowedCollisionMatrix & matrix, const std::string & name)
 {
   const auto it = std::find(matrix.entry_names.begin(), matrix.entry_names.end(), name);
-  if (it != matrix.entry_names.end()) {
+  if (it != matrix.entry_names.end())
+  {
     return static_cast<size_t>(it - matrix.entry_names.begin());
   }
   matrix.entry_names.push_back(name);
-  for (auto & row : matrix.entry_values) {
+  for (auto & row : matrix.entry_values)
+  {
     row.enabled.push_back(false);
   }
   matrix.entry_values.emplace_back();
@@ -84,18 +86,20 @@ void allow(AllowedCollisionMatrix & matrix, const std::string & a, const std::st
   matrix.entry_values[j].enabled[i] = true;
 }
 
-template<typename ActionT>
+template <typename ActionT>
 typename rclcpp_action::ClientGoalHandle<ActionT>::SharedPtr send_goal(
   const typename rclcpp_action::Client<ActionT>::SharedPtr & client,
   const typename ActionT::Goal & goal, std::chrono::duration<double> timeout,
   const std::string & what)
 {
   auto future = client->async_send_goal(goal);
-  if (!wait_for(future, timeout)) {
+  if (!wait_for(future, timeout))
+  {
     throw MotionError(Outcome::TIMEOUT, "no answer from move_group (" + what + ")");
   }
   auto handle = future.get();
-  if (!handle) {
+  if (!handle)
+  {
     throw MotionError(Outcome::TIMEOUT, "move_group rejected the " + what + " goal");
   }
   return handle;
@@ -111,30 +115,26 @@ MoveGroupClient::MoveGroupClient(
   goal_orientation_tolerance_(node->declare_parameter("goal_orientation_tolerance", 0.01)),
   timeout_(node->declare_parameter("move_group_timeout", 7.0)),
   move_client_(rclcpp_action::create_client<MoveGroup>(node, "/move_action", group)),
-  execute_client_(rclcpp_action::create_client<ExecuteTrajectory>(
-      node, "/execute_trajectory", group)),
+  execute_client_(
+    rclcpp_action::create_client<ExecuteTrajectory>(node, "/execute_trajectory", group)),
   apply_client_(node->create_client<moveit_msgs::srv::ApplyPlanningScene>(
-      "/apply_planning_scene", rclcpp::ServicesQoS(), group)),
+    "/apply_planning_scene", rclcpp::ServicesQoS(), group)),
   get_client_(node->create_client<moveit_msgs::srv::GetPlanningScene>(
-      "/get_planning_scene", rclcpp::ServicesQoS(), group)),
+    "/get_planning_scene", rclcpp::ServicesQoS(), group)),
   validity_client_(node->create_client<moveit_msgs::srv::GetStateValidity>(
-      "/check_state_validity", rclcpp::ServicesQoS(), group)),
+    "/check_state_validity", rclcpp::ServicesQoS(), group)),
   stop_publisher_(node->create_publisher<std_msgs::msg::String>(
-      "/trajectory_execution_event", rclcpp::ServicesQoS()))
+    "/trajectory_execution_event", rclcpp::ServicesQoS()))
 {
 }
 
-const std::vector<std::string> & MoveGroupClient::joint_names() const
-{
-  return ARM_JOINTS;
-}
+const std::vector<std::string> & MoveGroupClient::joint_names() const { return ARM_JOINTS; }
 
 bool MoveGroupClient::ready() const
 {
   return move_client_->action_server_is_ready() && execute_client_->action_server_is_ready() &&
          apply_client_->service_is_ready() && get_client_->service_is_ready() &&
-         validity_client_->service_is_ready() &&
-         stop_publisher_->get_subscription_count() > 0;
+         validity_client_->service_is_ready() && stop_publisher_->get_subscription_count() > 0;
 }
 
 void MoveGroupClient::sync_scene(const std::vector<WorldObject> & objects)
@@ -147,7 +147,8 @@ void MoveGroupClient::sync_scene(const std::vector<WorldObject> & objects)
 
   std::set<std::string> world_ids;
   std::map<std::string, std::string> attached_links;
-  for (const auto & object : objects) {
+  for (const auto & object : objects)
+  {
     CollisionObject box;
     box.id = object.id;
     box.header.frame_id = object.pose.header.frame_id;
@@ -156,22 +157,27 @@ void MoveGroupClient::sync_scene(const std::vector<WorldObject> & objects)
     box.primitive_poses.resize(1);
     box.primitive_poses[0].orientation.w = 1.0;
     box.operation = CollisionObject::ADD;
-    if (object.status == WorldObject::GRASPED) {
+    if (object.status == WorldObject::GRASPED)
+    {
       AttachedCollisionObject attached;
       attached.link_name = object.held_by;
       attached.object = box;
       attached.touch_links = HAND_LINKS;
       scene.robot_state.attached_collision_objects.push_back(attached);
       attached_links[object.id] = object.held_by;
-    } else {
+    }
+    else
+    {
       scene.world.collision_objects.push_back(box);
       world_ids.insert(object.id);
     }
   }
   // A detached object returns to the world; removed below unless it is FREE again.
   std::set<std::string> leaving;
-  for (const auto & [id, link] : attached_links_) {
-    if (attached_links.count(id) == 0) {
+  for (const auto & [id, link] : attached_links_)
+  {
+    if (attached_links.count(id) == 0)
+    {
       AttachedCollisionObject detach;
       detach.link_name = link;
       detach.object.id = id;
@@ -181,8 +187,10 @@ void MoveGroupClient::sync_scene(const std::vector<WorldObject> & objects)
     }
   }
   leaving.insert(world_ids_.begin(), world_ids_.end());
-  for (const auto & id : leaving) {
-    if (world_ids.count(id) == 0 && attached_links.count(id) == 0) {
+  for (const auto & id : leaving)
+  {
+    if (world_ids.count(id) == 0 && attached_links.count(id) == 0)
+    {
       CollisionObject remove;
       remove.id = id;
       remove.operation = CollisionObject::REMOVE;
@@ -192,11 +200,13 @@ void MoveGroupClient::sync_scene(const std::vector<WorldObject> & objects)
 
   auto pending = apply_client_->async_send_request(request);
   auto future = pending.future.share();
-  if (!wait_for(future, timeout_)) {
+  if (!wait_for(future, timeout_))
+  {
     apply_client_->remove_pending_request(pending.request_id);
     throw MotionError(Outcome::TIMEOUT, "move_group did not answer the planning scene update");
   }
-  if (!future.get()->success) {
+  if (!future.get()->success)
+  {
     throw MotionError(Outcome::NO_PATH, "move_group rejected the planning scene update");
   }
   world_ids_ = std::move(world_ids);
@@ -208,29 +218,36 @@ std::vector<MoveGroupClient::Contact> MoveGroupClient::held_contacts(
 {
   {
     std::lock_guard<std::mutex> lock(scene_mutex_);
-    if (attached_links_.empty()) {
+    if (attached_links_.empty())
+    {
       return {};
     }
   }
   auto request = std::make_shared<moveit_msgs::srv::GetStateValidity::Request>();
   request->robot_state.is_diff = true;
-  if (start) {
+  if (start)
+  {
     request->robot_state.joint_state = *start;
   }
   request->group_name = PLANNING_GROUP;
   auto pending = validity_client_->async_send_request(request);
   auto future = pending.future.share();
-  if (!wait_for(future, timeout_)) {
+  if (!wait_for(future, timeout_))
+  {
     validity_client_->remove_pending_request(pending.request_id);
     throw MotionError(Outcome::TIMEOUT, "move_group did not check the start state");
   }
   std::vector<Contact> contacts;
-  for (const auto & contact : future.get()->contacts) {
-    if (contact.body_type_1 == ContactInformation::ROBOT_ATTACHED &&
+  for (const auto & contact : future.get()->contacts)
+  {
+    if (
+      contact.body_type_1 == ContactInformation::ROBOT_ATTACHED &&
       contact.body_type_2 == ContactInformation::WORLD_OBJECT)
     {
       contacts.emplace_back(contact.contact_body_1, contact.contact_body_2);
-    } else if (contact.body_type_2 == ContactInformation::ROBOT_ATTACHED &&
+    }
+    else if (
+      contact.body_type_2 == ContactInformation::ROBOT_ATTACHED &&
       contact.body_type_1 == ContactInformation::WORLD_OBJECT)
     {
       contacts.emplace_back(contact.contact_body_2, contact.contact_body_1);
@@ -247,18 +264,22 @@ AllowedCollisionMatrix MoveGroupClient::touch_matrix(
     moveit_msgs::msg::PlanningSceneComponents::ALLOWED_COLLISION_MATRIX;
   auto pending = get_client_->async_send_request(request);
   auto future = pending.future.share();
-  if (!wait_for(future, timeout_)) {
+  if (!wait_for(future, timeout_))
+  {
     get_client_->remove_pending_request(pending.request_id);
     throw MotionError(Outcome::TIMEOUT, "move_group did not return its allowed collisions");
   }
   // A scene diff replaces the whole matrix, so the pairs go into a complete copy.
   AllowedCollisionMatrix matrix = future.get()->scene.allowed_collision_matrix;
-  for (const auto & id : ids) {
-    for (const auto & link : HAND_LINKS) {
+  for (const auto & id : ids)
+  {
+    for (const auto & link : HAND_LINKS)
+    {
       allow(matrix, id, link);
     }
   }
-  for (const auto & [held, other] : contacts) {
+  for (const auto & [held, other] : contacts)
+  {
     allow(matrix, held, other);
   }
   return matrix;
@@ -273,10 +294,12 @@ moveit_msgs::msg::RobotTrajectory MoveGroupClient::plan(
   MoveGroup::Goal goal;
   auto & request = goal.request;
   request.group_name = PLANNING_GROUP;
-  if (target.kind == MotionTarget::Kind::JOINTS) {
+  if (target.kind == MotionTarget::Kind::JOINTS)
+  {
     request.pipeline_id = FREE_PIPELINE;
     moveit_msgs::msg::Constraints constraints;
-    for (size_t i = 0; i < ARM_JOINTS.size() && i < target.joints.size(); ++i) {
+    for (size_t i = 0; i < ARM_JOINTS.size() && i < target.joints.size(); ++i)
+    {
       moveit_msgs::msg::JointConstraint joint;
       joint.joint_name = ARM_JOINTS[i];
       joint.position = target.joints[i];
@@ -286,15 +309,18 @@ moveit_msgs::msg::RobotTrajectory MoveGroupClient::plan(
       constraints.joint_constraints.push_back(joint);
     }
     request.goal_constraints = {constraints};
-  } else {
+  }
+  else
+  {
     const bool straight = target.kind == MotionTarget::Kind::POSE_STRAIGHT;
     request.pipeline_id = straight ? STRAIGHT_PIPELINE : FREE_PIPELINE;
     request.planner_id = straight ? STRAIGHT_PLANNER : "";
     request.goal_constraints = {kinematic_constraints::constructGoalConstraints(
-        TCP_LINK, target.pose, goal_position_tolerance_, goal_orientation_tolerance_)};
+      TCP_LINK, target.pose, goal_position_tolerance_, goal_orientation_tolerance_)};
   }
   request.start_state.is_diff = true;
-  if (start) {
+  if (start)
+  {
     request.start_state.joint_state = *start;
   }
   request.max_velocity_scaling_factor = speed_scaling;
@@ -306,44 +332,52 @@ moveit_msgs::msg::RobotTrajectory MoveGroupClient::plan(
   goal.planning_options.planning_scene_diff.robot_state.is_diff = true;
   // Only a straight path keeps them: a free path could drag the held object through the surface.
   std::vector<Contact> contacts;
-  if (target.kind == MotionTarget::Kind::POSE_STRAIGHT) {
+  if (target.kind == MotionTarget::Kind::POSE_STRAIGHT)
+  {
     contacts = held_contacts(start);
   }
-  if (!target.may_touch.empty() || !contacts.empty()) {
+  if (!target.may_touch.empty() || !contacts.empty())
+  {
     goal.planning_options.planning_scene_diff.allowed_collision_matrix =
       touch_matrix(target.may_touch, contacts);
   }
 
   auto handle = send_goal<MoveGroup>(move_client_, goal, timeout_, "planning");
   auto result_future = move_client_->async_get_result(handle);
-  try {
-    if (!wait_for(result_future, timeout_, interrupted)) {
+  try
+  {
+    if (!wait_for(result_future, timeout_, interrupted))
+    {
       move_client_->async_cancel_goal(handle);
       throw MotionError(Outcome::TIMEOUT, "move_group did not return a plan");
     }
-  } catch (const Interrupted &) {
+  }
+  catch (const Interrupted &)
+  {
     // move_group finishes a started plan before it sees the cancel.
     move_client_->async_cancel_goal(handle);
     wait_for(result_future, timeout_);
     throw;
   }
   const auto result = result_future.get().result;
-  if (!result) {
+  if (!result)
+  {
     throw MotionError(Outcome::NO_PATH, "move_group returned no planning result");
   }
-  if (result->error_code.val != MoveItErrorCodes::SUCCESS) {
+  if (result->error_code.val != MoveItErrorCodes::SUCCESS)
+  {
     throw MotionError(
       plan_outcome(result->error_code), "planning failed: " + error_name(result->error_code));
   }
-  if (result->planned_trajectory.joint_trajectory.points.empty()) {
+  if (result->planned_trajectory.joint_trajectory.points.empty())
+  {
     throw MotionError(Outcome::NO_PATH, "move_group returned an empty trajectory");
   }
   return result->planned_trajectory;
 }
 
 void MoveGroupClient::execute(
-  const moveit_msgs::msg::RobotTrajectory & trajectory,
-  const std::function<bool()> & interrupted,
+  const moveit_msgs::msg::RobotTrajectory & trajectory, const std::function<bool()> & interrupted,
   const std::function<void(double)> & on_progress)
 {
   const double duration =
@@ -358,16 +392,20 @@ void MoveGroupClient::execute(
   auto result_future = execute_client_->async_get_result(handle);
 
   const auto start = std::chrono::steady_clock::now();
-  while (result_future.wait_for(POLL_PERIOD) != std::future_status::ready) {
+  while (result_future.wait_for(POLL_PERIOD) != std::future_status::ready)
+  {
     const std::chrono::duration<double> elapsed = std::chrono::steady_clock::now() - start;
-    if (interrupted()) {
+    if (interrupted())
+    {
       stop();
-      if (!wait_for(result_future, timeout_)) {
+      if (!wait_for(result_future, timeout_))
+      {
         throw MotionError(Outcome::EXECUTION_FAILED, "move_group did not confirm the stop");
       }
       throw Interrupted();
     }
-    if (elapsed > limit) {
+    if (elapsed > limit)
+    {
       stop();
       wait_for(result_future, timeout_);
       throw MotionError(Outcome::EXECUTION_FAILED, "no execution result from move_group");
@@ -376,10 +414,12 @@ void MoveGroupClient::execute(
   }
 
   const auto result = result_future.get().result;
-  if (!result) {
+  if (!result)
+  {
     throw MotionError(Outcome::EXECUTION_FAILED, "move_group returned no execution result");
   }
-  switch (result->error_code.val) {
+  switch (result->error_code.val)
+  {
     case MoveItErrorCodes::SUCCESS:
       on_progress(1.0);
       return;
@@ -389,8 +429,8 @@ void MoveGroupClient::execute(
       throw MotionError(Outcome::EXECUTION_FAILED, "motion took too long");
     default:
       throw MotionError(
-        Outcome::EXECUTION_FAILED, "execution failed (" + error_name(result->error_code) +
-        "); is the arm controller active?");
+        Outcome::EXECUTION_FAILED,
+        "execution failed (" + error_name(result->error_code) + "); is the arm controller active?");
   }
 }
 

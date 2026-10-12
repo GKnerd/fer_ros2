@@ -31,7 +31,12 @@ namespace fer_moveit_config
 /// \brief One motion request: a TCP pose in the base frame, or a joint configuration.
 struct MotionTarget
 {
-  enum class Kind {POSE_FREE, POSE_STRAIGHT, JOINTS};
+  enum class Kind
+  {
+    POSE_FREE,
+    POSE_STRAIGHT,
+    JOINTS
+  };
 
   Kind kind{Kind::JOINTS};
   geometry_msgs::msg::PoseStamped pose;
@@ -68,8 +73,7 @@ public:
   /// \brief Execute through move_group; publishes "stop" when \p interrupted.
   /// \throws MotionError EXECUTION_FAILED or TIMEOUT; Interrupted once move_group has stopped.
   void execute(
-    const moveit_msgs::msg::RobotTrajectory & trajectory,
-    const std::function<bool()> & interrupted,
+    const moveit_msgs::msg::RobotTrajectory & trajectory, const std::function<bool()> & interrupted,
     const std::function<void(double)> & on_progress);
 
 private:

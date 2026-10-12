@@ -3,9 +3,8 @@
 
 #include <string>
 
-#include "franka_msgs/msg/franka_state.hpp"
-
 #include "contract_fixture.hpp"
+#include "franka_msgs/msg/franka_state.hpp"
 
 namespace fer_moveit_config
 {
@@ -18,12 +17,12 @@ TEST_F(Contract, ReflexIsRobotError)
   franka_msgs::msg::FrankaState state;
   state.robot_mode = franka_msgs::msg::FrankaState::ROBOT_MODE_REFLEX;
   state.current_errors.joint_reflex = true;
-  ASSERT_TRUE(
-    wait_until(
-      [&] {
-        publisher->publish(state);
-        return robot_mode_->error().has_value();
-      }));
+  ASSERT_TRUE(wait_until(
+    [&]
+    {
+      publisher->publish(state);
+      return robot_mode_->error().has_value();
+    }));
   const auto result = run<MoveToJoints>(joints_client_, joints_goal());
   EXPECT_EQ(result.result->outcome.code, Outcome::ROBOT_ERROR);
   EXPECT_NE(result.result->outcome.message.find("joint_reflex"), std::string::npos);

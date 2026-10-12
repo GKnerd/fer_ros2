@@ -2,22 +2,21 @@
 #include <stdexcept>
 #include <string>
 
-#include "rclcpp/rclcpp.hpp"
-
 #include "fer_moveit_config/adapters/move_group_client.hpp"
 #include "fer_moveit_config/adapters/robot_mode_monitor.hpp"
 #include "fer_moveit_config/adapters/world_model_client.hpp"
 #include "fer_moveit_config/motion_server.hpp"
+#include "rclcpp/rclcpp.hpp"
 
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
   auto node = std::make_shared<rclcpp::Node>("fer_moveit_motion_server");
   const auto hardware = node->declare_parameter("hardware", std::string("mujoco"));
-  if (hardware != "real" && hardware != "mujoco") 
+  if (hardware != "real" && hardware != "mujoco")
   {
-    RCLCPP_FATAL(node->get_logger(), "hardware must be 'real' or 'mujoco', got '%s'",
-      hardware.c_str());
+    RCLCPP_FATAL(
+      node->get_logger(), "hardware must be 'real' or 'mujoco', got '%s'", hardware.c_str());
     rclcpp::shutdown();
     return 1;
   }
@@ -39,8 +38,7 @@ int main(int argc, char ** argv)
       return 1;
     }
   }
-  fer_moveit_config::MotionServer server(
-    node, world_model, move_group, robot_mode.get(), group);
+  fer_moveit_config::MotionServer server(node, world_model, move_group, robot_mode.get(), group);
 
   rclcpp::executors::MultiThreadedExecutor executor(rclcpp::ExecutorOptions(), 4);
   executor.add_node(node);

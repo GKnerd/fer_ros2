@@ -10,18 +10,17 @@
 #include <thread>
 #include <vector>
 
+#include "fakes.hpp"
 #include "fer_interfaces/action/move_to_joints.hpp"
 #include "fer_interfaces/action/move_to_pose.hpp"
 #include "fer_interfaces/msg/outcome.hpp"
 #include "fer_interfaces/srv/check_reachable.hpp"
-#include "rclcpp/rclcpp.hpp"
-#include "rclcpp_action/rclcpp_action.hpp"
-
 #include "fer_moveit_config/adapters/move_group_client.hpp"
 #include "fer_moveit_config/adapters/robot_mode_monitor.hpp"
 #include "fer_moveit_config/adapters/world_model_client.hpp"
 #include "fer_moveit_config/motion_server.hpp"
-#include "fakes.hpp"
+#include "rclcpp/rclcpp.hpp"
+#include "rclcpp_action/rclcpp_action.hpp"
 
 namespace fer_moveit_config
 {
@@ -36,18 +35,20 @@ using Codes = moveit_msgs::msg::MoveItErrorCodes;
 using std::chrono_literals::operator""s;
 using std::chrono_literals::operator""ms;
 
-template<typename FutureT>
+template <typename FutureT>
 inline bool wait(const FutureT & future, std::chrono::duration<double> timeout = 10s)
 {
   return future.wait_for(timeout) == std::future_status::ready;
 }
 
-template<typename Predicate>
+template <typename Predicate>
 inline bool wait_until(Predicate predicate, std::chrono::duration<double> timeout = 10s)
 {
   const auto end = std::chrono::steady_clock::now() + timeout;
-  while (!predicate()) {
-    if (std::chrono::steady_clock::now() > end) {
+  while (!predicate())
+  {
+    if (std::chrono::steady_clock::now() > end)
+    {
       return false;
     }
     std::this_thread::sleep_for(10ms);
@@ -64,18 +65,19 @@ protected:
     rclcpp::init(0, nullptr);
     rclcpp::NodeOptions options;
     options.parameter_overrides({
-        {"world_model_timeout", 0.5},
-        {"move_group_timeout", 1.5},
-        {"rest_timeout", 2.0},
-        {"startup_timeout", 10.0},
-      });
+      {"world_model_timeout", 0.5},
+      {"move_group_timeout", 1.5},
+      {"rest_timeout", 2.0},
+      {"startup_timeout", 10.0},
+    });
     node_ = std::make_shared<rclcpp::Node>("fer_moveit_motion_server", options);
     fakes_ = std::make_shared<rclcpp::Node>("contract_fakes");
     group_ = node_->create_callback_group(rclcpp::CallbackGroupType::Reentrant);
 
     arm_ = std::make_unique<FakeArm>(fakes_);
     move_group_fake_ = std::make_unique<FakeMoveGroup>(fakes_, *arm_);
-    if (with_world_model) {
+    if (with_world_model)
+    {
       world_ = std::make_unique<FakeWorldModel>(fakes_);
       world_->set({box("table", WorldObject::FREE, true), box("cup_1")});
     }
@@ -83,24 +85,24 @@ protected:
 
     world_model_ = std::make_unique<WorldModelClient>(node_, group_);
     move_group_ = std::make_unique<MoveGroupClient>(node_, group_);
-    if (with_robot_mode) {
+    if (with_robot_mode)
+    {
       robot_mode_ = std::make_unique<RobotModeMonitor>(node_, group_);
     }
-    server_ = std::make_unique<MotionServer>(
-      node_, *world_model_, *move_group_, robot_mode_.get(), group_);
+    server_ =
+      std::make_unique<MotionServer>(node_, *world_model_, *move_group_, robot_mode_.get(), group_);
 
     pose_client_ = rclcpp_action::create_client<MoveToPose>(fakes_, "/motion/move_to_pose");
-    joints_client_ =
-      rclcpp_action::create_client<MoveToJoints>(fakes_, "/motion/move_to_joints");
+    joints_client_ = rclcpp_action::create_client<MoveToJoints>(fakes_, "/motion/move_to_joints");
     reachable_client_ = fakes_->create_client<CheckReachable>("/motion/check_reachable");
 
-    executor_ = std::make_shared<rclcpp::executors::MultiThreadedExecutor>(
-      rclcpp::ExecutorOptions(), 8);
+    executor_ =
+      std::make_shared<rclcpp::executors::MultiThreadedExecutor>(rclcpp::ExecutorOptions(), 8);
     executor_->add_node(node_);
     executor_->add_node(fakes_);
-    spinner_ = std::thread([this] {executor_->spin();});
+    spinner_ = std::thread([this] { executor_->spin(); });
 
-    ASSERT_TRUE(wait_until([this] {return server_->ready();}));
+    ASSERT_TRUE(wait_until([this] { return server_->ready(); }));
     ASSERT_TRUE(pose_client_->wait_for_action_server(5s));
     ASSERT_TRUE(joints_client_->wait_for_action_server(5s));
     ASSERT_TRUE(reachable_client_->wait_for_service(5s));
@@ -108,7 +110,8 @@ protected:
 
   void TearDown() override
   {
-    if (executor_) {
+    if (executor_)
+    {
       executor_->cancel();
       spinner_.join();
     }
@@ -139,7 +142,7 @@ protected:
     return goal;
   }
 
-  template<typename ActionT>
+  template <typename ActionT>
   typename rclcpp_action::ClientGoalHandle<ActionT>::SharedPtr send(
     const typename rclcpp_action::Client<ActionT>::SharedPtr & client,
     const typename ActionT::Goal & goal)
@@ -151,7 +154,7 @@ protected:
     return handle;
   }
 
-  template<typename ActionT>
+  template <typename ActionT>
   typename rclcpp_action::ClientGoalHandle<ActionT>::WrappedResult run(
     const typename rclcpp_action::Client<ActionT>::SharedPtr & client,
     const typename ActionT::Goal & goal)

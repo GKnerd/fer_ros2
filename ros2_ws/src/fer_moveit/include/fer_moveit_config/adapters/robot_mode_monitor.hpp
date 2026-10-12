@@ -19,9 +19,7 @@ class RobotModeMonitor
 public:
   /// \throws std::runtime_error in a build without franka_msgs.
   RobotModeMonitor(
-    const rclcpp::Node::SharedPtr & node, 
-    const rclcpp::CallbackGroup::SharedPtr & group
-  );
+    const rclcpp::Node::SharedPtr & node, const rclcpp::CallbackGroup::SharedPtr & group);
 
   /// \return A description when the robot is in reflex or user stop, else nothing.
   std::optional<std::string> error() const

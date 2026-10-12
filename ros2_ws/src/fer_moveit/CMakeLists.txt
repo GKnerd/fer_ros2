@@ -73,6 +73,8 @@ if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   set(ament_cmake_copyright_FOUND TRUE)
   set(ament_cmake_cpplint_FOUND TRUE)
+  set(ament_cmake_uncrustify_FOUND TRUE)
+  set(ament_cmake_clang_format_CONFIG_FILE "${CMAKE_CURRENT_SOURCE_DIR}/.clang-format")
   # Adapted upstream launch file, kept in its original style.
   set(AMENT_LINT_AUTO_FILE_EXCLUDE launch/fer_moveit_launch.py)
   ament_lint_auto_find_test_dependencies()

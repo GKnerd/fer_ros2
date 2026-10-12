@@ -19,18 +19,18 @@ constexpr std::chrono::milliseconds POLL_PERIOD{50};
 class Interrupted : public std::runtime_error
 {
 public:
-  Interrupted()
-  : std::runtime_error("interrupted") {}
+  Interrupted() : std::runtime_error("interrupted") {}
 };
 
 /// \brief A step failed; carries the fer_interfaces Outcome code the goal ends with.
 class MotionError : public std::runtime_error
 {
 public:
-  MotionError(uint8_t code, const std::string & message)
-  : std::runtime_error(message), code_(code) {}
+  MotionError(uint8_t code, const std::string & message) : std::runtime_error(message), code_(code)
+  {
+  }
 
-  uint8_t code() const {return code_;}
+  uint8_t code() const { return code_; }
 
 private:
   uint8_t code_;
@@ -47,17 +47,20 @@ double progress(double elapsed, double duration);
 
 /// \brief Wait for \p future up to \p timeout; throws Interrupted as soon as \p interrupted.
 /// \return false on timeout.
-template<typename FutureT>
+template <typename FutureT>
 bool wait_for(
   const FutureT & future, std::chrono::duration<double> timeout,
-  const std::function<bool()> & interrupted = [] {return false;})
+  const std::function<bool()> & interrupted = [] { return false; })
 {
   const auto deadline = std::chrono::steady_clock::now() + timeout;
-  while (future.wait_for(POLL_PERIOD) != std::future_status::ready) {
-    if (interrupted()) {
+  while (future.wait_for(POLL_PERIOD) != std::future_status::ready)
+  {
+    if (interrupted())
+    {
       throw Interrupted();
     }
-    if (std::chrono::steady_clock::now() > deadline) {
+    if (std::chrono::steady_clock::now() > deadline)
+    {
       return false;
     }
   }

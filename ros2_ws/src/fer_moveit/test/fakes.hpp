@@ -32,9 +32,9 @@ namespace fer_moveit_config
 
 inline const std::vector<std::string> & arm_joints()
 {
-  static const std::vector<std::string> names{
-    "fer_joint1", "fer_joint2", "fer_joint3", "fer_joint4", "fer_joint5", "fer_joint6",
-    "fer_joint7"};
+  static const std::vector<std::string> names{"fer_joint1", "fer_joint2", "fer_joint3",
+                                              "fer_joint4", "fer_joint5", "fer_joint6",
+                                              "fer_joint7"};
   return names;
 }
 
@@ -47,7 +47,9 @@ public:
   {
     publisher_ = node->create_publisher<sensor_msgs::msg::JointState>("/joint_states", 10);
     timer_ = node->create_wall_timer(
-      std::chrono::milliseconds(10), [this, node] {
+      std::chrono::milliseconds(10),
+      [this, node]
+      {
         sensor_msgs::msg::JointState msg;
         msg.header.stamp = node->now();
         msg.name = arm_joints();
@@ -101,35 +103,30 @@ public:
   using ExecuteTrajectory = moveit_msgs::action::ExecuteTrajectory;
   using Codes = moveit_msgs::msg::MoveItErrorCodes;
 
-  FakeMoveGroup(const rclcpp::Node::SharedPtr & node, FakeArm & arm)
-  : node_(node), arm_(arm)
+  FakeMoveGroup(const rclcpp::Node::SharedPtr & node, FakeArm & arm) : node_(node), arm_(arm)
   {
     move_server_ = rclcpp_action::create_server<MoveGroup>(
       node, "/move_action",
-      [](const rclcpp_action::GoalUUID &, std::shared_ptr<const MoveGroup::Goal>) {
-        return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
-      },
-      [](const std::shared_ptr<rclcpp_action::ServerGoalHandle<MoveGroup>>) {
-        return rclcpp_action::CancelResponse::ACCEPT;
-      },
-      [this](const std::shared_ptr<rclcpp_action::ServerGoalHandle<MoveGroup>> handle) {
-        start([this, handle] {plan(handle);});
-      });
+      [](const rclcpp_action::GoalUUID &, std::shared_ptr<const MoveGroup::Goal>)
+      { return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE; },
+      [](const std::shared_ptr<rclcpp_action::ServerGoalHandle<MoveGroup>>)
+      { return rclcpp_action::CancelResponse::ACCEPT; },
+      [this](const std::shared_ptr<rclcpp_action::ServerGoalHandle<MoveGroup>> handle)
+      { start([this, handle] { plan(handle); }); });
     execute_server_ = rclcpp_action::create_server<ExecuteTrajectory>(
       node, "/execute_trajectory",
-      [](const rclcpp_action::GoalUUID &, std::shared_ptr<const ExecuteTrajectory::Goal>) {
-        return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
-      },
-      [](const std::shared_ptr<rclcpp_action::ServerGoalHandle<ExecuteTrajectory>>) {
-        return rclcpp_action::CancelResponse::ACCEPT;
-      },
-      [this](const std::shared_ptr<rclcpp_action::ServerGoalHandle<ExecuteTrajectory>> handle) {
-        start([this, handle] {execute(handle);});
-      });
+      [](const rclcpp_action::GoalUUID &, std::shared_ptr<const ExecuteTrajectory::Goal>)
+      { return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE; },
+      [](const std::shared_ptr<rclcpp_action::ServerGoalHandle<ExecuteTrajectory>>)
+      { return rclcpp_action::CancelResponse::ACCEPT; },
+      [this](const std::shared_ptr<rclcpp_action::ServerGoalHandle<ExecuteTrajectory>> handle)
+      { start([this, handle] { execute(handle); }); });
     stop_sub_ = node->create_subscription<std_msgs::msg::String>(
       "/trajectory_execution_event", rclcpp::ServicesQoS(),
-      [this](const std_msgs::msg::String::ConstSharedPtr & msg) {
-        if (msg->data == "stop") {
+      [this](const std_msgs::msg::String::ConstSharedPtr & msg)
+      {
+        if (msg->data == "stop")
+        {
           ++stops;
           stop_requested_ = true;
         }
@@ -138,7 +135,8 @@ public:
       "/apply_planning_scene",
       [this](
         const std::shared_ptr<moveit_msgs::srv::ApplyPlanningScene::Request> request,
-        std::shared_ptr<moveit_msgs::srv::ApplyPlanningScene::Response> response) {
+        std::shared_ptr<moveit_msgs::srv::ApplyPlanningScene::Response> response)
+      {
         std::lock_guard<std::mutex> lock(mutex);
         applied_scenes.push_back(request->scene);
         response->success = true;
@@ -147,7 +145,8 @@ public:
       "/get_planning_scene",
       [](
         const std::shared_ptr<moveit_msgs::srv::GetPlanningScene::Request>,
-        std::shared_ptr<moveit_msgs::srv::GetPlanningScene::Response> response) {
+        std::shared_ptr<moveit_msgs::srv::GetPlanningScene::Response> response)
+      {
         auto & matrix = response->scene.allowed_collision_matrix;
         matrix.entry_names = {"fer_link0", "fer_link1"};
         matrix.entry_values.resize(2);
@@ -158,15 +157,15 @@ public:
       "/check_state_validity",
       [](
         const std::shared_ptr<moveit_msgs::srv::GetStateValidity::Request>,
-        std::shared_ptr<moveit_msgs::srv::GetStateValidity::Response> response) {
-        response->valid = true;
-      });
+        std::shared_ptr<moveit_msgs::srv::GetStateValidity::Response> response)
+      { response->valid = true; });
   }
 
   ~FakeMoveGroup()
   {
     stopping_ = true;
-    for (auto & thread : threads_) {
+    for (auto & thread : threads_)
+    {
       thread.join();
     }
   }
@@ -188,7 +187,7 @@ public:
   std::atomic<bool> executing{false};
 
 private:
-  template<typename F>
+  template <typename F>
   void start(F && work)
   {
     std::lock_guard<std::mutex> lock(threads_mutex_);
@@ -198,7 +197,8 @@ private:
   void sleep_for(double seconds)
   {
     const auto end = std::chrono::steady_clock::now() + std::chrono::duration<double>(seconds);
-    while (!stopping_ && std::chrono::steady_clock::now() < end) {
+    while (!stopping_ && std::chrono::steady_clock::now() < end)
+    {
       std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
   }
@@ -214,29 +214,34 @@ private:
     }
     sleep_for(plan_delay);
     auto result = std::make_shared<MoveGroup::Result>();
-    result->error_code.val = (fail_plan_call < 0 || fail_plan_call == call) ?
-      plan_error.load() : Codes::SUCCESS;
-    if (result->error_code.val != Codes::SUCCESS) {
+    result->error_code.val =
+      (fail_plan_call < 0 || fail_plan_call == call) ? plan_error.load() : Codes::SUCCESS;
+    if (result->error_code.val != Codes::SUCCESS)
+    {
       handle->abort(result);
       return;
     }
     std::vector<double> from = arm_.positions();
-    if (!goal.request.start_state.joint_state.position.empty()) {
+    if (!goal.request.start_state.joint_state.position.empty())
+    {
       from = goal.request.start_state.joint_state.position;
     }
     std::vector<double> to = from;
     const auto & joints = goal.request.goal_constraints.at(0).joint_constraints;
-    for (size_t i = 0; i < to.size(); ++i) {
+    for (size_t i = 0; i < to.size(); ++i)
+    {
       to[i] = joints.size() == to.size() ? joints[i].position : from[i] + 0.1;
     }
     auto & trajectory = result->planned_trajectory.joint_trajectory;
     trajectory.joint_names = arm_joints();
     constexpr int POINTS = 10;
     const double duration = trajectory_duration;
-    for (int k = 0; k < POINTS; ++k) {
+    for (int k = 0; k < POINTS; ++k)
+    {
       const double s = static_cast<double>(k) / (POINTS - 1);
       trajectory_msgs::msg::JointTrajectoryPoint point;
-      for (size_t i = 0; i < to.size(); ++i) {
+      for (size_t i = 0; i < to.size(); ++i)
+      {
         point.positions.push_back(from[i] + s * (to[i] - from[i]));
         point.velocities.push_back(k == POINTS - 1 ? 0.0 : (to[i] - from[i]) / duration);
       }
@@ -262,17 +267,20 @@ private:
     const auto & first = points.front();
     const auto & last = points.back();
     const auto begin = std::chrono::steady_clock::now();
-    while (!stopping_) {
-      const double t = std::chrono::duration<double>(
-        std::chrono::steady_clock::now() - begin).count();
+    while (!stopping_)
+    {
+      const double t =
+        std::chrono::duration<double>(std::chrono::steady_clock::now() - begin).count();
       const double s = std::min(t / duration, 1.0);
       std::vector<double> positions;
       std::vector<double> velocities;
-      for (size_t i = 0; i < first.positions.size(); ++i) {
+      for (size_t i = 0; i < first.positions.size(); ++i)
+      {
         positions.push_back(first.positions[i] + s * (last.positions[i] - first.positions[i]));
         velocities.push_back(s < 1.0 ? (last.positions[i] - first.positions[i]) / duration : 0.0);
       }
-      if (stop_requested_) {
+      if (stop_requested_)
+      {
         // The controller decelerates; move_group reports PREEMPTED right away.
         executing = false;
         result->error_code.val = Codes::PREEMPTED;
@@ -282,16 +290,20 @@ private:
         return;
       }
       arm_.set(positions, velocities);
-      if (s >= 1.0) {
+      if (s >= 1.0)
+      {
         break;
       }
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
     executing = false;
     result->error_code.val = execute_error;
-    if (execute_error == Codes::SUCCESS) {
+    if (execute_error == Codes::SUCCESS)
+    {
       handle->succeed(result);
-    } else {
+    }
+    else
+    {
       handle->abort(result);
     }
   }
@@ -320,7 +332,8 @@ public:
       "/world_model/query_objects",
       [this](
         const std::shared_ptr<fer_interfaces::srv::QueryObjects::Request>,
-        std::shared_ptr<fer_interfaces::srv::QueryObjects::Response> response) {
+        std::shared_ptr<fer_interfaces::srv::QueryObjects::Response> response)
+      {
         std::lock_guard<std::mutex> lock(mutex_);
         response->objects = objects_;
       });

@@ -47,8 +47,7 @@ TEST(Checks, WaitForThrowsWhenInterrupted)
 {
   std::promise<int> promise;
   auto future = promise.get_future().share();
-  EXPECT_THROW(
-    wait_for(future, std::chrono::seconds(5), [] {return true;}), Interrupted);
+  EXPECT_THROW(wait_for(future, std::chrono::seconds(5), [] { return true; }), Interrupted);
 }
 
 }  // namespace fer_moveit_config
