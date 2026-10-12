@@ -6,21 +6,31 @@ robot and for MuJoCo simulation. The hardware is selected with one argument,
 
 ## Launch files
 
-Each level includes the one below it and adds one part of the stack.
+Each level includes the one below it and adds one part of the stack. The
+manipulation levels and the old skill levels both build on `fer_moveit.launch.py`.
 
 | Launch file | Starts |
 |---|---|
 | `fer_real_ros2_control.launch.py` / `fer_mujoco_ros2_control.launch.py` | description, `robot_state_publisher`, ros2_control, controllers, gripper |
 | `fer_moveit.launch.py` | + MoveIt (`fer_moveit_config`) |
-| `fer_moveit_skills.launch.py` | + skill server (`fer_skills`) |
-| `fer_moveit_skills_bt.launch.py` | + behavior tree server (`fer_behavior_trees`) and world model (`fer_world_model`) |
+| `fer_manipulation.launch.py` | + world model (`fer_world_model`, mock perception with `perception:=mock`), grasp planner (`fer_grasp_planner`), motion server (`fer_moveit_config`), gripper server (`fer_gripper_server`); activates the controllers |
+| `fer_manipulation_bt.launch.py` | + behavior tree server (`fer_bt_server` in `fer_behavior_trees`, `/execute_tree`) |
+| `fer_moveit_skills.launch.py` | old stack: + skill server (`fer_skills`) |
+| `fer_moveit_skills_bt.launch.py` | old stack: + behavior tree server and world model |
 
 ```bash
 # simulation
-ros2 launch fer_ros2_bringup fer_moveit_skills_bt.launch.py hardware:=mujoco
+ros2 launch fer_ros2_bringup fer_manipulation_bt.launch.py hardware:=mujoco
 
 # real robot
-ros2 launch fer_ros2_bringup fer_moveit_skills_bt.launch.py hardware:=real robot_ip:=<FCI address>
+ros2 launch fer_ros2_bringup fer_manipulation_bt.launch.py hardware:=real robot_ip:=<FCI address>
+```
+
+To change a tree without restarting the simulation, run `fer_manipulation.launch.py`
+and start the BT server on its own, restarting only that:
+
+```bash
+ros2 launch fer_behavior_trees fer_bt_server.launch.py use_sim_time:=true
 ```
 
 - `hardware` defaults to `mujoco`. `robot_ip` is required for `real`.
@@ -31,10 +41,26 @@ ros2 launch fer_ros2_bringup fer_moveit_skills_bt.launch.py hardware:=real robot
   actuators.
 - On the real robot the whole bringup shuts down if the gripper node exits.
 
+## Running a tree
+
+Send the goal once the gripper server has logged that it is ready; it starts after
+the controller switch.
+
+```bash
+ros2 action send_goal /execute_tree btcpp_ros2_interfaces/action/ExecuteTree \
+  "{target_tree: PickPlace, payload: '{\"target_class\": \"box\", \"pick_attempts\": 2, \"speed_scaling\": 0.1}'}"
+```
+
+`speed_scaling` is optional; without it the trees move at the BT server's
+`speed_scaling` parameter (0.3).
+
 ## Controllers
 
 Only the broadcasters start active. Motion and gripper controllers are loaded
-inactive and switched on by hand:
+inactive. `fer_manipulation.launch.py` activates
+`<arm_control_type>_trajectory_controller` and, on `mujoco`,
+`gripper_<hand_control_type>_controller` (default `effort`, which the gripper
+server needs). Below that level they are switched on by hand:
 
 ```bash
 ros2 control switch_controllers --activate effort_trajectory_controller gripper_position_controller

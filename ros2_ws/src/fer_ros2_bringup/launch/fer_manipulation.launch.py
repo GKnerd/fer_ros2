@@ -1,4 +1,4 @@
-"""Hardware + MoveIt + the FER manipulation servers + the behavior tree server.
+"""Hardware + MoveIt + the FER manipulation servers.
 
 Includes:
   - fer_moveit.launch.py                (hardware, ros2_control, move_group, RViz)
@@ -6,7 +6,6 @@ Includes:
   - grasp_planner.launch.py             (/grasp/candidates, /place/candidates)
   - fer_moveit_motion_server.launch.py  (/motion/*)
   - gripper_server.launch.py            (/gripper/*)
-  - fer_bt_server.launch.py             (/execute_tree)
 
 The hardware launch loads the motion and gripper controllers inactive. Once that spawner
 exits, this launch activates <arm_control_type>_trajectory_controller and, for
@@ -92,11 +91,6 @@ def launch_setup(context, *args, **kwargs):
         "params_file": LaunchConfiguration("gripper_params_file"),
     })
 
-    bt_launch = include("fer_behavior_trees", "fer_bt_server.launch.py", {
-        "use_sim_time": use_sim_time,
-        "log_level": server_log_level,
-    })
-
     # Controller activation, after the hardware launch has loaded them inactive
     controllers = [f"{arm_control_type}_trajectory_controller"]
     if hardware == "mujoco":
@@ -121,7 +115,6 @@ def launch_setup(context, *args, **kwargs):
         world_model_launch,
         grasp_planner_launch,
         motion_server_launch,
-        bt_launch,
         RegisterEventHandler(OnProcessExit(on_exit=after_inactive_spawner)),
         RegisterEventHandler(
             OnProcessExit(target_action=activate_controllers, on_exit=after_activation)),
