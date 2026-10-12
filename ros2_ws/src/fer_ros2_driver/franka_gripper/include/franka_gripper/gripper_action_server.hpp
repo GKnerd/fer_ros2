@@ -14,27 +14,28 @@
 
 #pragma once
 
-#include <chrono>
-#include <functional>
-#include <future>
-#include <memory>
-#include <string>
-#include <thread>
-
 #include <franka/exception.h>
 #include <franka/gripper.h>
 #include <franka/gripper_state.h>
+
+#include <chrono>
 #include <control_msgs/action/gripper_command.hpp>
 #include <franka_msgs/action/grasp.hpp>
 #include <franka_msgs/action/homing.hpp>
 #include <franka_msgs/action/move.hpp>
 #include <franka_msgs/msg/gripper_state.hpp>
+#include <functional>
+#include <future>
+#include <memory>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
 #include <sensor_msgs/msg/joint_state.hpp>
 #include <std_srvs/srv/trigger.hpp>
+#include <string>
+#include <thread>
 
-namespace franka_gripper {
+namespace franka_gripper
+{
 
 /// checks whether an asynchronous command has finished
 /// @tparam T the expected return type of the future
@@ -42,13 +43,15 @@ namespace franka_gripper {
 /// @param future_wait_timeout how long to wait for the result before returning false
 /// @return whether the asynchronous function has already finished
 template <typename T>
-bool resultIsReady(std::future<T>& t, std::chrono::nanoseconds future_wait_timeout) {
+bool resultIsReady(std::future<T> & t, std::chrono::nanoseconds future_wait_timeout)
+{
   return t.wait_for(future_wait_timeout) == std::future_status::ready;
 }
 
 /// ROS node that offers multiple actions to use the gripper.
-class GripperActionServer : public rclcpp::Node {
- public:
+class GripperActionServer : public rclcpp::Node
+{
+public:
   using Homing = franka_msgs::action::Homing;
   using GoalHandleHoming = rclcpp_action::ServerGoalHandle<Homing>;
 
@@ -65,15 +68,23 @@ class GripperActionServer : public rclcpp::Node {
 
   /// creates an instance of a GripperActionServer
   /// @param options options for node initialization
-  explicit GripperActionServer(const rclcpp::NodeOptions& options = rclcpp::NodeOptions());
+  explicit GripperActionServer(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
 
- private:
+private:
   /// describes the different tasks. Each task corresponds to one action server
-  enum class Task { kHoming, kMove, kGrasp, kGripperCommand };
+  enum class Task
+  {
+    kHoming,
+    kMove,
+    kGrasp,
+    kGripperCommand
+  };
 
   /// returns a string version of the Task enum
-  static std::string getTaskName(Task task) {
-    switch (task) {
+  static std::string getTaskName(Task task)
+  {
+    switch (task)
+    {
       case Task::kHoming:
         return {"Homing"};
       case Task::kMove:
@@ -85,7 +96,7 @@ class GripperActionServer : public rclcpp::Node {
       default:
         throw std::invalid_argument("getTaskName is not implemented for this case");
     }
-  };
+  }
 
   const double k_default_grasp_epsilon = 0.005;    // default inner and outer grasp epsilon in meter
   const double k_default_speed = 0.1;              // default gripper speed in m/s
@@ -114,7 +125,7 @@ class GripperActionServer : public rclcpp::Node {
 
   /// stops the gripper and writes the result into the response
   /// @param[out] response  will be updated with the success status and error message
-  void stopServiceCallback(const std::shared_ptr<Trigger::Response>& response);
+  void stopServiceCallback(const std::shared_ptr<Trigger::Response> & response);
 
   /// accepts any cancel request
   rclcpp_action::CancelResponse handleCancel(Task task);
@@ -123,24 +134,25 @@ class GripperActionServer : public rclcpp::Node {
   rclcpp_action::GoalResponse handleGoal(Task task);
 
   /// performs homing
-  void executeHoming(const std::shared_ptr<GoalHandleHoming>& goal_handle);
+  void executeHoming(const std::shared_ptr<GoalHandleHoming> & goal_handle);
 
   /// performs move
-  void executeMove(const std::shared_ptr<GoalHandleMove>& goal_handle);
+  void executeMove(const std::shared_ptr<GoalHandleMove> & goal_handle);
 
   /// performs grasp
-  void executeGrasp(const std::shared_ptr<GoalHandleGrasp>& goal_handle);
+  void executeGrasp(const std::shared_ptr<GoalHandleGrasp> & goal_handle);
 
   /// Performs the moveit grasp command
   /// @param goal_handle
   /// @param command_handler eiter a grasp or move command defined by the onExecuteGripperCommand
   /// method
-  void executeGripperCommand(const std::shared_ptr<GoalHandleGripperCommand>& goal_handle,
-                             const std::function<bool()>& command_handler);
+  void executeGripperCommand(
+    const std::shared_ptr<GoalHandleGripperCommand> & goal_handle,
+    const std::function<bool()> & command_handler);
 
   /// Defines a function for either grasping or moving the gripper, depending on the current gripper
   /// state and the commanded goal. Then it calls executeGripperCommand to execute that function
-  void onExecuteGripperCommand(const std::shared_ptr<GoalHandleGripperCommand>& goal_handle);
+  void onExecuteGripperCommand(const std::shared_ptr<GoalHandleGripperCommand> & goal_handle);
 
   /// Executes a gripper command
   /// @tparam T A gripper action message type (Move, Grasp, Homing)
@@ -149,19 +161,22 @@ class GripperActionServer : public rclcpp::Node {
   /// @param[in] command_handler a function that performs the the task. Returns true on success.
   /// This function is allowed to throw a franka::Exception
   template <typename T>
-  void executeCommand(const std::shared_ptr<rclcpp_action::ServerGoalHandle<T>>& goal_handle,
-                      Task task,
-                      const std::function<bool()>& command_handler) {
+  void executeCommand(
+    const std::shared_ptr<rclcpp_action::ServerGoalHandle<T>> & goal_handle, Task task,
+    const std::function<bool()> & command_handler)
+  {
     const auto kTaskName = getTaskName(task);
     RCLCPP_INFO(this->get_logger(), "Gripper %s...", kTaskName.c_str());
 
     auto command_execution_thread = withResultGenerator<T>(command_handler);
 
     std::future<std::shared_ptr<typename T::Result>> result_future =
-        std::async(std::launch::async, command_execution_thread);
+      std::async(std::launch::async, command_execution_thread);
 
-    while (!resultIsReady(result_future, future_wait_timeout_) && rclcpp::ok()) {
-      if (goal_handle->is_canceling()) {
+    while (!resultIsReady(result_future, future_wait_timeout_) && rclcpp::ok())
+    {
+      if (goal_handle->is_canceling())
+      {
         gripper_->stop();
         auto result = result_future.get();
         RCLCPP_INFO(get_logger(), "Gripper %s canceled", kTaskName.c_str());
@@ -170,12 +185,16 @@ class GripperActionServer : public rclcpp::Node {
       }
       publishGripperWidthFeedback(goal_handle);
     }
-    if (rclcpp::ok()) {
+    if (rclcpp::ok())
+    {
       const auto kResult = result_future.get();
-      if (kResult->success) {
+      if (kResult->success)
+      {
         RCLCPP_INFO(get_logger(), "Gripper %s succeeded", kTaskName.c_str());
         goal_handle->succeed(kResult);
-      } else {
+      }
+      else
+      {
         RCLCPP_INFO(get_logger(), "Gripper %s failed", kTaskName.c_str());
         goal_handle->abort(kResult);
       }
@@ -190,13 +209,18 @@ class GripperActionServer : public rclcpp::Node {
   /// @return[in] enhanced command_handler that now returns a result an does not throw a
   /// franka::exception anymore
   template <typename T>
-  auto withResultGenerator(const std::function<bool()>& command_handler)
-      -> std::function<std::shared_ptr<typename T::Result>()> {
-    return [command_handler]() {
+  auto withResultGenerator(const std::function<bool()> & command_handler)
+    -> std::function<std::shared_ptr<typename T::Result>()>
+  {
+    return [command_handler]()
+    {
       auto result = std::make_shared<typename T::Result>();
-      try {
+      try
+      {
         result->success = command_handler();
-      } catch (const franka::Exception& e) {
+      }
+      catch (const franka::Exception & e)
+      {
         result->success = false;
         result->error = e.what();
       }
@@ -209,7 +233,8 @@ class GripperActionServer : public rclcpp::Node {
   /// @param[in] goal_handle The goal handle from the action server
   template <typename T>
   void publishGripperWidthFeedback(
-      const std::shared_ptr<rclcpp_action::ServerGoalHandle<T>>& goal_handle) {
+    const std::shared_ptr<rclcpp_action::ServerGoalHandle<T>> & goal_handle)
+  {
     auto gripper_feedback = std::make_shared<typename T::Feedback>();
     std::lock_guard<std::mutex> guard(gripper_state_mutex_);
     gripper_feedback->current_width = current_gripper_state_.width;
@@ -218,6 +243,6 @@ class GripperActionServer : public rclcpp::Node {
 
   /// Publishes the gripper width as feedback for the GripperCommand action
   void publishGripperCommandFeedback(
-      const std::shared_ptr<rclcpp_action::ServerGoalHandle<GripperCommand>>& goal_handle);
+    const std::shared_ptr<rclcpp_action::ServerGoalHandle<GripperCommand>> & goal_handle);
 };
 }  // namespace franka_gripper

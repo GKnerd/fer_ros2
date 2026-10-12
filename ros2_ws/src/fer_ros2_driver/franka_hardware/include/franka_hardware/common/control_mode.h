@@ -5,9 +5,11 @@
 #include <ostream>
 #include <type_traits>
 
-namespace franka_hardware {
+namespace franka_hardware
+{
 
-enum class ControlMode {
+enum class ControlMode
+{
   None = 0,
   JointTorque = (1 << 0),
   JointPosition = (1 << 1),
@@ -16,34 +18,43 @@ enum class ControlMode {
   CartesianPose = (1 << 4),
 };
 
-std::ostream& operator<<(std::ostream& ostream, ControlMode mode);
+std::ostream & operator<<(std::ostream & ostream, ControlMode mode);
 
 // Implement operators for BitmaskType concept
-constexpr ControlMode operator&(ControlMode left, ControlMode right) {
-  return static_cast<ControlMode>(static_cast<std::underlying_type_t<ControlMode>>(left) &
-                                  static_cast<std::underlying_type_t<ControlMode>>(right));
+constexpr ControlMode operator&(ControlMode left, ControlMode right)
+{
+  return static_cast<ControlMode>(
+    static_cast<std::underlying_type_t<ControlMode>>(left) &
+    static_cast<std::underlying_type_t<ControlMode>>(right));
 }
 
-constexpr ControlMode operator|(ControlMode left, ControlMode right) {
-  return static_cast<ControlMode>(static_cast<std::underlying_type_t<ControlMode>>(left) |
-                                  static_cast<std::underlying_type_t<ControlMode>>(right));
+constexpr ControlMode operator|(ControlMode left, ControlMode right)
+{
+  return static_cast<ControlMode>(
+    static_cast<std::underlying_type_t<ControlMode>>(left) |
+    static_cast<std::underlying_type_t<ControlMode>>(right));
 }
 
-constexpr ControlMode operator^(ControlMode left, ControlMode right) {
-  return static_cast<ControlMode>(static_cast<std::underlying_type_t<ControlMode>>(left) ^
-                                  static_cast<std::underlying_type_t<ControlMode>>(right));
+constexpr ControlMode operator^(ControlMode left, ControlMode right)
+{
+  return static_cast<ControlMode>(
+    static_cast<std::underlying_type_t<ControlMode>>(left) ^
+    static_cast<std::underlying_type_t<ControlMode>>(right));
 }
 
-constexpr ControlMode operator~(ControlMode mode) {
+constexpr ControlMode operator~(ControlMode mode)
+{
   return static_cast<ControlMode>(~static_cast<std::underlying_type_t<ControlMode>>(mode));
 }
 
-constexpr ControlMode& operator&=(ControlMode& left, ControlMode right) {
+constexpr ControlMode & operator&=(ControlMode & left, ControlMode right)
+{
   return left = left & right;
 }
 
-constexpr ControlMode& operator|=(ControlMode& left, ControlMode right) {
+constexpr ControlMode & operator|=(ControlMode & left, ControlMode right)
+{
   return left = left | right;
 }
 
-}  // namespace franka_hw
+}  // namespace franka_hardware

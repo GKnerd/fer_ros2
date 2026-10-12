@@ -14,22 +14,28 @@
 
 #pragma once
 
-#include <array>
-#include "franka_hardware/common/model_base.hpp"
 #include <franka/model.h>
 
-namespace franka_hardware {
+#include <array>
+
+#include "franka_hardware/common/model_base.hpp"
+
+namespace franka_hardware
+{
 
 /**
  * This class is a thin wrapper around a @ref franka::Model and delegates all calls to
  * that
  */
-class ModelFranka : public virtual ModelBase{  // NOLINT(cppcoreguidelines-pro-type-member-init,
-               // cppcoreguidelines-special-member-functions)
- public:
-  ModelFranka(franka::Model* model) : model_(model) {}
- private:
-  franka::Model* model_;
+class ModelFranka : public virtual ModelBase
+{  // NOLINT(cppcoreguidelines-pro-type-member-init,
+   // cppcoreguidelines-special-member-functions)
+
+public:
+  ModelFranka(franka::Model * model) : model_(model) {}
+
+private:
+  franka::Model * model_;
   /**
    * Create a new Model instance wrapped around a franka::Model
    */
@@ -47,11 +53,11 @@ class ModelFranka : public virtual ModelBase{  // NOLINT(cppcoreguidelines-pro-t
    * @return Vectorized 4x4 pose matrix, column-major.
    */
   virtual std::array<double, 16> poseImpl(
-      franka::Frame frame,
-      const std::array<double, 7>& q,        // NOLINT(readability-identifier-length)
-      const std::array<double, 16>& F_T_EE,  // NOLINT(readability-identifier-naming)
-      const std::array<double, 16>& EE_T_K)  // NOLINT(readability-identifier-naming)
-      const override final {
+    franka::Frame frame, const std::array<double, 7> & q,  // NOLINT(readability-identifier-length)
+    const std::array<double, 16> & F_T_EE,                 // NOLINT(readability-identifier-naming)
+    const std::array<double, 16> & EE_T_K)                 // NOLINT(readability-identifier-naming)
+    const override final
+  {
     return model_->pose(frame, q, F_T_EE, EE_T_K);
   }
 
@@ -68,11 +74,11 @@ class ModelFranka : public virtual ModelBase{  // NOLINT(cppcoreguidelines-pro-t
    * @return Vectorized 6x7 Jacobian, column-major.
    */
   virtual std::array<double, 42> bodyJacobianImpl(
-      franka::Frame frame,
-      const std::array<double, 7>& q,        // NOLINT(readability-identifier-length)
-      const std::array<double, 16>& F_T_EE,  // NOLINT(readability-identifier-naming)
-      const std::array<double, 16>& EE_T_K)  // NOLINT(readability-identifier-naming)
-      const override final {
+    franka::Frame frame, const std::array<double, 7> & q,  // NOLINT(readability-identifier-length)
+    const std::array<double, 16> & F_T_EE,                 // NOLINT(readability-identifier-naming)
+    const std::array<double, 16> & EE_T_K)                 // NOLINT(readability-identifier-naming)
+    const override final
+  {
     return model_->bodyJacobian(frame, q, F_T_EE, EE_T_K);
   }
 
@@ -87,11 +93,11 @@ class ModelFranka : public virtual ModelBase{  // NOLINT(cppcoreguidelines-pro-t
    * @return Vectorized 6x7 Jacobian, column-major.
    */
   virtual std::array<double, 42> zeroJacobianImpl(
-      franka::Frame frame,
-      const std::array<double, 7>& q,        // NOLINT(readability-identifier-length)
-      const std::array<double, 16>& F_T_EE,  // NOLINT(readability-identifier-naming)
-      const std::array<double, 16>& EE_T_K)  // NOLINT(readability-identifier-naming)
-      const override final {
+    franka::Frame frame, const std::array<double, 7> & q,  // NOLINT(readability-identifier-length)
+    const std::array<double, 16> & F_T_EE,                 // NOLINT(readability-identifier-naming)
+    const std::array<double, 16> & EE_T_K)                 // NOLINT(readability-identifier-naming)
+    const override final
+  {
     return model_->zeroJacobian(frame, q, F_T_EE, EE_T_K);
   }
 
@@ -109,11 +115,12 @@ class ModelFranka : public virtual ModelBase{  // NOLINT(cppcoreguidelines-pro-t
    * @return Vectorized 7x7 mass matrix, column-major.
    */
   virtual std::array<double, 49> massImpl(
-      const std::array<double, 7>& q,        // NOLINT(readability-identifier-length)
-      const std::array<double, 9>& I_total,  // NOLINT(readability-identifier-naming)
-      double m_total,
-      const std::array<double, 3>& F_x_Ctotal)  // NOLINT(readability-identifier-naming)
-      const noexcept override final {
+    const std::array<double, 7> & q,        // NOLINT(readability-identifier-length)
+    const std::array<double, 9> & I_total,  // NOLINT(readability-identifier-naming)
+    double m_total,
+    const std::array<double, 3> & F_x_Ctotal)  // NOLINT(readability-identifier-naming)
+    const noexcept override final
+  {
     return model_->mass(q, I_total, m_total, F_x_Ctotal);
   }
 
@@ -133,12 +140,13 @@ class ModelFranka : public virtual ModelBase{  // NOLINT(cppcoreguidelines-pro-t
    * @return Coriolis force vector.
    */
   virtual std::array<double, 7> coriolisImpl(
-      const std::array<double, 7>& q,        // NOLINT(readability-identifier-length)
-      const std::array<double, 7>& dq,       // NOLINT(readability-identifier-length)
-      const std::array<double, 9>& I_total,  // NOLINT(readability-identifier-naming)
-      double m_total,
-      const std::array<double, 3>& F_x_Ctotal)  // NOLINT(readability-identifier-naming)
-      const noexcept override final {
+    const std::array<double, 7> & q,        // NOLINT(readability-identifier-length)
+    const std::array<double, 7> & dq,       // NOLINT(readability-identifier-length)
+    const std::array<double, 9> & I_total,  // NOLINT(readability-identifier-naming)
+    double m_total,
+    const std::array<double, 3> & F_x_Ctotal)  // NOLINT(readability-identifier-naming)
+    const noexcept override final
+  {
     return model_->coriolis(q, dq, I_total, m_total, F_x_Ctotal);
   }
 
@@ -155,18 +163,19 @@ class ModelFranka : public virtual ModelBase{  // NOLINT(cppcoreguidelines-pro-t
    * @return Gravity vector.
    */
   virtual std::array<double, 7> gravityImpl(
-      const std::array<double, 7>& q,  // NOLINT(readability-identifier-length)
-      double m_total,
-      const std::array<double, 3>& F_x_Ctotal,  // NOLINT(readability-identifier-naming)
-      const std::array<double, 3>& gravity_earth) const noexcept override final {
+    const std::array<double, 7> & q,  // NOLINT(readability-identifier-length)
+    double m_total,
+    const std::array<double, 3> & F_x_Ctotal,  // NOLINT(readability-identifier-naming)
+    const std::array<double, 3> & gravity_earth) const noexcept override final
+  {
     return model_->gravity(q, m_total, F_x_Ctotal, gravity_earth);
   }
 
-//  protected:
-//   ModelFranka() = default;
+  //  protected:
+  //   ModelFranka() = default;
 
-//  private:
-//   franka::Model* model_;
+  //  private:
+  //   franka::Model* model_;
 };
 
 }  // namespace franka_hardware

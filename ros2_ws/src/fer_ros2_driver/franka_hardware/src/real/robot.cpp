@@ -12,52 +12,60 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <franka_hardware/real/robot.hpp>
+#include <franka/control_tools.h>
 
 #include <cassert>
-#include <mutex>
-
+#include <franka_hardware/real/robot.hpp>
 #include <iostream>
-#include <franka/control_tools.h>
+#include <mutex>
 #include <rclcpp/logging.hpp>
 
-namespace franka_hardware {
+namespace franka_hardware
+{
 
-Robot::Robot(const std::string& robot_ip, const rclcpp::Logger& logger) {
+Robot::Robot(const std::string & robot_ip, const rclcpp::Logger & logger)
+{
   franka::RealtimeConfig rt_config = franka::RealtimeConfig::kEnforce;
-  
+
   // measurement code
   robot_ip_ = robot_ip;
   tau_msmt_.reserve(max_count_);
   // measurement code
-  
-  if (!franka::hasRealtimeKernel()) {
+
+  if (!franka::hasRealtimeKernel())
+  {
     rt_config = franka::RealtimeConfig::kIgnore;
     RCLCPP_WARN(
-        logger,
-        "You are not using a real-time kernel. Using a real-time kernel is strongly recommended!");
+      logger,
+      "You are not using a real-time kernel. Using a real-time kernel is strongly recommended!");
   }
-  try{
+  try
+  {
     robot_ = std::make_unique<franka::Robot>(robot_ip, rt_config);
     setDefaultParams();
   }
-  catch(franka::ControlException& e){
-    RCLCPP_ERROR(logger, "Robot is in control error state! Please trigger automatic recovery first.");
+  catch (franka::ControlException & e)
+  {
+    RCLCPP_ERROR(
+      logger, "Robot is in control error state! Please trigger automatic recovery first.");
     RCLCPP_ERROR(logger, "Error: %s\nType: %s", e.what(), typeid(e).name());
     setError(true);
   }
-  catch(franka::CommandException& e){
-    RCLCPP_ERROR(logger, "Robot is in command error state! Please trigger automatic recovery first.");
+  catch (franka::CommandException & e)
+  {
+    RCLCPP_ERROR(
+      logger, "Robot is in command error state! Please trigger automatic recovery first.");
     RCLCPP_ERROR(logger, "Error: %s\nType: %s", e.what(), typeid(e).name());
     setError(true);
   }
-  catch(std::exception& e){
+  catch (std::exception & e)
+  {
     RCLCPP_ERROR(logger, "Unrecoverable error.\nError:%s\nType: %s", e.what(), typeid(e).name());
     throw franka::Exception("ERROR");
   }
   // will need a boolean to set this for the first time;
   // after the necessary runtime services, this part can be removed.
-  
+
   tau_command_.fill({});
   joint_velocity_command_.fill({});
   cartesian_position_command_.fill({});
@@ -66,15 +74,14 @@ Robot::Robot(const std::string& robot_ip, const rclcpp::Logger& logger) {
   franka_hardware_model_ = std::make_unique<ModelFranka>(model_.get());
 }
 
-Robot::~Robot() {
-  stopRobot();
-}
+Robot::~Robot() { stopRobot(); }
 
-void Robot::write(const std::array<double, 7>& efforts, 
-                  const std::array<double, 7>& joint_positions, 
-                  const std::array<double, 7>& joint_velocities,
-                  const std::array<double, 16>& cartesian_positions,
-                  const std::array<double, 6>& cartesian_velocities) {
+void Robot::write(
+  const std::array<double, 7> & efforts, const std::array<double, 7> & joint_positions,
+  const std::array<double, 7> & joint_velocities,
+  const std::array<double, 16> & cartesian_positions,
+  const std::array<double, 6> & cartesian_velocities)
+{
   std::lock_guard<std::mutex> lock(write_mutex_);
   tau_command_ = efforts;
   joint_position_command_ = joint_positions;
@@ -83,30 +90,36 @@ void Robot::write(const std::array<double, 7>& efforts,
   cartesian_velocity_command_ = cartesian_velocities;
 }
 
-franka::RobotState Robot::read() {
+franka::RobotState Robot::read()
+{
   std::lock_guard<std::mutex> lock(read_mutex_);
-  if(hasError() || isStopped()){ // either the robot is in error, or it doesn't have an active control/read loop running
-    try{
+  if (
+    hasError() ||
+    isStopped())  // either the robot is in error, or it doesn't have an active control/read loop running
+  {
+    try
+    {
       current_state_ = robot_->readOnce();
-      if(hasError()){
+      if (hasError())
+      {
         stopRobot();
       }
     }
-    catch(franka::InvalidOperationException& e){
+    catch (franka::InvalidOperationException & e)
+    {
       std::cout << "Invalid Operation Exception: " << e.what() << std::endl;
     }
   }
   return {current_state_};
 }
-franka_hardware::ModelFranka* Robot::getModel() {
-  return franka_hardware_model_.get();
-}
+franka_hardware::ModelFranka * Robot::getModel() { return franka_hardware_model_.get(); }
 
-void Robot::stopRobot() {
-  if (!stopped_) 
+void Robot::stopRobot()
+{
+  if (!stopped_)
   {
     finish_ = true;
-    if (control_thread_ && control_thread_->joinable()) 
+    if (control_thread_ && control_thread_->joinable())
     {
       control_thread_->join();
     }
@@ -114,24 +127,28 @@ void Robot::stopRobot() {
     finish_ = false;
     stopped_ = true;
     std::cout << "Stopping" << std::endl;
-  } 
-  else if (control_thread_ && control_thread_->joinable()) 
+  }
+  else if (control_thread_ && control_thread_->joinable())
   {
     control_thread_->join();
   }
 }
 
 // Joint-level controls
-void Robot::initializeTorqueControl() {
+void Robot::initializeTorqueControl()
+{
   ensureStopped();
   stopped_ = false;
   std::cout << "Initializing joint torque control" << std::endl;
   logged_ = false;
   cycle_count_ = 0;
-  const auto kTorqueControl = [this]() {
-    try{
+  const auto kTorqueControl = [this]()
+  {
+    try
+    {
       robot_->control(
-        [this](const franka::RobotState& state, const franka::Duration& /*period*/) {
+        [this](const franka::RobotState & state, const franka::Duration & /*period*/)
+        {
           {
             std::lock_guard<std::mutex> lock(read_mutex_);
             current_state_ = state;
@@ -157,8 +174,9 @@ void Robot::initializeTorqueControl() {
         },
         true, franka::kMaxCutoffFrequency);
     }
-    catch(franka::ControlException& e){
-      std::cout <<  e.what() << std::endl;
+    catch (franka::ControlException & e)
+    {
+      std::cout << e.what() << std::endl;
       setError(true);
       stopped_ = true;
     }
@@ -166,55 +184,63 @@ void Robot::initializeTorqueControl() {
   control_thread_ = std::make_unique<std::thread>(kTorqueControl);
 }
 
-void Robot::initializeJointPositionControl() {
+void Robot::initializeJointPositionControl()
+{
   ensureStopped();
   stopped_ = false;
   std::cout << "Initializing joint position control" << std::endl;
-  const auto kJointPositionControl = [this]() {
-    try{
-
-    robot_->control(
-      [this](const franka::RobotState& state, const franka::Duration& /*period*/) {
+  const auto kJointPositionControl = [this]()
+  {
+    try
+    {
+      robot_->control(
+        [this](const franka::RobotState & state, const franka::Duration & /*period*/)
         {
-          std::lock_guard<std::mutex> lock(read_mutex_);
-          current_state_ = state;
-        }
-        std::lock_guard<std::mutex> lock(write_mutex_);
-        franka::JointPositions out(joint_position_command_);
-        out.motion_finished = finish_;
-        return out;
-      });
+          {
+            std::lock_guard<std::mutex> lock(read_mutex_);
+            current_state_ = state;
+          }
+          std::lock_guard<std::mutex> lock(write_mutex_);
+          franka::JointPositions out(joint_position_command_);
+          out.motion_finished = finish_;
+          return out;
+        });
     }
-    catch(franka::ControlException& e){
-      std::cout <<  e.what() << std::endl;
+    catch (franka::ControlException & e)
+    {
+      std::cout << e.what() << std::endl;
       setError(true);
       stopped_ = true;
     }
-      
   };
   control_thread_ = std::make_unique<std::thread>(kJointPositionControl);
 }
 
-void Robot::initializeJointVelocityControl() {
+void Robot::initializeJointVelocityControl()
+{
   ensureStopped();
   stopped_ = false;
   std::cout << "Initializing joint velocity control" << std::endl;
-  const auto kJointVelocityControl = [this]() {
-    try{
+  const auto kJointVelocityControl = [this]()
+  {
+    try
+    {
       robot_->control(
-          [this](const franka::RobotState& state, const franka::Duration& /*period*/) {
-            {
-              std::lock_guard<std::mutex> lock(read_mutex_);
-              current_state_ = state;
-            }
-            std::lock_guard<std::mutex> lock(write_mutex_);
-            franka::JointVelocities out(joint_velocity_command_);
-            out.motion_finished = finish_;
-            return out;
-          });
-      }
-    catch(franka::ControlException& e){
-      std::cout <<  e.what() << std::endl;
+        [this](const franka::RobotState & state, const franka::Duration & /*period*/)
+        {
+          {
+            std::lock_guard<std::mutex> lock(read_mutex_);
+            current_state_ = state;
+          }
+          std::lock_guard<std::mutex> lock(write_mutex_);
+          franka::JointVelocities out(joint_velocity_command_);
+          out.motion_finished = finish_;
+          return out;
+        });
+    }
+    catch (franka::ControlException & e)
+    {
+      std::cout << e.what() << std::endl;
       setError(true);
       stopped_ = true;
     }
@@ -223,26 +249,31 @@ void Robot::initializeJointVelocityControl() {
 }
 
 // Cartesian controls
-void Robot::initializeCartesianVelocityControl() {
+void Robot::initializeCartesianVelocityControl()
+{
   ensureStopped();
   stopped_ = false;
   std::cout << "Initializing cartesian velocity control" << std::endl;
-  const auto kCartesianVelocityControl = [this]() {
-    try{
+  const auto kCartesianVelocityControl = [this]()
+  {
+    try
+    {
       robot_->control(
-          [this](const franka::RobotState& state, const franka::Duration& /*period*/) {
-            {
-              std::lock_guard<std::mutex> lock(read_mutex_);
-              current_state_ = state;
-            }
-            std::lock_guard<std::mutex> lock(write_mutex_);
-            franka::CartesianVelocities out(cartesian_velocity_command_);
-            out.motion_finished = finish_;
-            return out;
-          });
-      }
-    catch(franka::ControlException& e){
-      std::cout <<  e.what() << std::endl;
+        [this](const franka::RobotState & state, const franka::Duration & /*period*/)
+        {
+          {
+            std::lock_guard<std::mutex> lock(read_mutex_);
+            current_state_ = state;
+          }
+          std::lock_guard<std::mutex> lock(write_mutex_);
+          franka::CartesianVelocities out(cartesian_velocity_command_);
+          out.motion_finished = finish_;
+          return out;
+        });
+    }
+    catch (franka::ControlException & e)
+    {
+      std::cout << e.what() << std::endl;
       setError(true);
       stopped_ = true;
     }
@@ -250,26 +281,31 @@ void Robot::initializeCartesianVelocityControl() {
   control_thread_ = std::make_unique<std::thread>(kCartesianVelocityControl);
 }
 
-void Robot::initializeCartesianPositionControl() {
+void Robot::initializeCartesianPositionControl()
+{
   ensureStopped();
   stopped_ = false;
   std::cout << "Initializing cartesian position control" << std::endl;
-  const auto kCartesianPositionControl = [this]() {
-    try{
+  const auto kCartesianPositionControl = [this]()
+  {
+    try
+    {
       robot_->control(
-          [this](const franka::RobotState& state, const franka::Duration& /*period*/) {
-            {
-              std::lock_guard<std::mutex> lock(read_mutex_);
-              current_state_ = state;
-            }
-            std::lock_guard<std::mutex> lock(write_mutex_);
-            franka::CartesianPose out(cartesian_position_command_);
-            out.motion_finished = finish_;
-            return out;
-          });
-      }
-    catch(franka::ControlException& e){
-      std::cout <<  e.what() << std::endl;
+        [this](const franka::RobotState & state, const franka::Duration & /*period*/)
+        {
+          {
+            std::lock_guard<std::mutex> lock(read_mutex_);
+            current_state_ = state;
+          }
+          std::lock_guard<std::mutex> lock(write_mutex_);
+          franka::CartesianPose out(cartesian_position_command_);
+          out.motion_finished = finish_;
+          return out;
+        });
+    }
+    catch (franka::ControlException & e)
+    {
+      std::cout << e.what() << std::endl;
       setError(true);
       stopped_ = true;
     }
@@ -277,51 +313,56 @@ void Robot::initializeCartesianPositionControl() {
   control_thread_ = std::make_unique<std::thread>(kCartesianPositionControl);
 }
 
-void Robot::initializeContinuousReading() {
+void Robot::initializeContinuousReading()
+{
   std::cout << "Initializing continuous reading" << std::endl;
   ensureStopped();
   stopped_ = false;
-  const auto kReading = [this]() {
-    try{
-      robot_->read([this](const franka::RobotState& state) {
+  const auto kReading = [this]()
+  {
+    try
+    {
+      robot_->read(
+        [this](const franka::RobotState & state)
         {
-          std::lock_guard<std::mutex> lock(read_mutex_);
-          current_state_ = state;
-        }
-        if(current_state_.robot_mode == franka::RobotMode::kReflex){
-          this->has_error_ = true;
-          throw franka::ControlException("Reflex!");
-        }
-        return !finish_;
-      }); // robot_->read()
-
+          {
+            std::lock_guard<std::mutex> lock(read_mutex_);
+            current_state_ = state;
+          }
+          if (current_state_.robot_mode == franka::RobotMode::kReflex)
+          {
+            this->has_error_ = true;
+            throw franka::ControlException("Reflex!");
+          }
+          return !finish_;
+        });  // robot_->read()
     }
-    catch(franka::ControlException& e){
+    catch (franka::ControlException & e)
+    {
       std::cout << "Control Exception: " << e.what() << std::endl;
       setError(true);
-      stopped_ = true;  
+      stopped_ = true;
     }
-    catch(franka::InvalidOperationException& e){
+    catch (franka::InvalidOperationException & e)
+    {
       std::cout << "Invalid Operation Exception: " << e.what() << std::endl;
       setError(true);
-      stopped_ = true;  
+      stopped_ = true;
     }
-    
+
     return;
   };
   control_thread_ = std::make_unique<std::thread>(kReading);
 }
 
-
-bool Robot::isStopped() const {
-  return stopped_;
-}
+bool Robot::isStopped() const { return stopped_; }
 
 //##############################//
 // Internal param setters       //
 //##############################//
 
-void Robot::setJointStiffness(const franka_msgs::srv::SetJointStiffness::Request::SharedPtr& req) {
+void Robot::setJointStiffness(const franka_msgs::srv::SetJointStiffness::Request::SharedPtr & req)
+{
   std::lock_guard<std::mutex> lock(write_mutex_);
   std::array<double, 7> joint_stiffness{};
   std::copy(req->joint_stiffness.cbegin(), req->joint_stiffness.cend(), joint_stiffness.begin());
@@ -329,15 +370,18 @@ void Robot::setJointStiffness(const franka_msgs::srv::SetJointStiffness::Request
 }
 
 void Robot::setCartesianStiffness(
-    const franka_msgs::srv::SetCartesianStiffness::Request::SharedPtr& req) {
+  const franka_msgs::srv::SetCartesianStiffness::Request::SharedPtr & req)
+{
   std::lock_guard<std::mutex> lock(write_mutex_);
   std::array<double, 6> cartesian_stiffness{};
-  std::copy(req->cartesian_stiffness.cbegin(), req->cartesian_stiffness.cend(),
-            cartesian_stiffness.begin());
+  std::copy(
+    req->cartesian_stiffness.cbegin(), req->cartesian_stiffness.cend(),
+    cartesian_stiffness.begin());
   robot_->setCartesianImpedance(cartesian_stiffness);
 }
 
-void Robot::setLoad(const franka_msgs::srv::SetLoad::Request::SharedPtr& req) {
+void Robot::setLoad(const franka_msgs::srv::SetLoad::Request::SharedPtr & req)
+{
   std::lock_guard<std::mutex> lock(write_mutex_);
   double mass(req->mass);
   std::array<double, 3> center_of_mass{};  // NOLINT [readability-identifier-naming]
@@ -348,7 +392,8 @@ void Robot::setLoad(const franka_msgs::srv::SetLoad::Request::SharedPtr& req) {
   robot_->setLoad(mass, center_of_mass, load_inertia);
 }
 
-void Robot::setTCPFrame(const franka_msgs::srv::SetTCPFrame::Request::SharedPtr& req) {
+void Robot::setTCPFrame(const franka_msgs::srv::SetTCPFrame::Request::SharedPtr & req)
+{
   std::lock_guard<std::mutex> lock(write_mutex_);
 
   std::array<double, 16> transformation{};  // NOLINT [readability-identifier-naming]
@@ -356,7 +401,8 @@ void Robot::setTCPFrame(const franka_msgs::srv::SetTCPFrame::Request::SharedPtr&
   robot_->setEE(transformation);
 }
 
-void Robot::setStiffnessFrame(const franka_msgs::srv::SetStiffnessFrame::Request::SharedPtr& req) {
+void Robot::setStiffnessFrame(const franka_msgs::srv::SetStiffnessFrame::Request::SharedPtr & req)
+{
   std::lock_guard<std::mutex> lock(write_mutex_);
 
   std::array<double, 16> transformation{};
@@ -365,73 +411,85 @@ void Robot::setStiffnessFrame(const franka_msgs::srv::SetStiffnessFrame::Request
 }
 
 void Robot::setForceTorqueCollisionBehavior(
-    const franka_msgs::srv::SetForceTorqueCollisionBehavior::Request::SharedPtr& req) {
+  const franka_msgs::srv::SetForceTorqueCollisionBehavior::Request::SharedPtr & req)
+{
   std::lock_guard<std::mutex> lock(write_mutex_);
 
   std::array<double, 7> lower_torque_thresholds_nominal{};
-  std::copy(req->lower_torque_thresholds_nominal.cbegin(),
-            req->lower_torque_thresholds_nominal.cend(), lower_torque_thresholds_nominal.begin());
+  std::copy(
+    req->lower_torque_thresholds_nominal.cbegin(), req->lower_torque_thresholds_nominal.cend(),
+    lower_torque_thresholds_nominal.begin());
   std::array<double, 7> upper_torque_thresholds_nominal{};
-  std::copy(req->upper_torque_thresholds_nominal.cbegin(),
-            req->upper_torque_thresholds_nominal.cend(), upper_torque_thresholds_nominal.begin());
+  std::copy(
+    req->upper_torque_thresholds_nominal.cbegin(), req->upper_torque_thresholds_nominal.cend(),
+    upper_torque_thresholds_nominal.begin());
   std::array<double, 6> lower_force_thresholds_nominal{};
-  std::copy(req->lower_force_thresholds_nominal.cbegin(),
-            req->lower_force_thresholds_nominal.cend(), lower_force_thresholds_nominal.begin());
+  std::copy(
+    req->lower_force_thresholds_nominal.cbegin(), req->lower_force_thresholds_nominal.cend(),
+    lower_force_thresholds_nominal.begin());
   std::array<double, 6> upper_force_thresholds_nominal{};
-  std::copy(req->upper_force_thresholds_nominal.cbegin(),
-            req->upper_force_thresholds_nominal.cend(), upper_force_thresholds_nominal.begin());
+  std::copy(
+    req->upper_force_thresholds_nominal.cbegin(), req->upper_force_thresholds_nominal.cend(),
+    upper_force_thresholds_nominal.begin());
 
-  robot_->setCollisionBehavior(lower_torque_thresholds_nominal, upper_torque_thresholds_nominal,
-                               lower_force_thresholds_nominal, upper_force_thresholds_nominal);
+  robot_->setCollisionBehavior(
+    lower_torque_thresholds_nominal, upper_torque_thresholds_nominal,
+    lower_force_thresholds_nominal, upper_force_thresholds_nominal);
 }
 
 void Robot::setFullCollisionBehavior(
-    const franka_msgs::srv::SetFullCollisionBehavior::Request::SharedPtr& req) {
+  const franka_msgs::srv::SetFullCollisionBehavior::Request::SharedPtr & req)
+{
   std::lock_guard<std::mutex> lock(write_mutex_);
 
   std::array<double, 7> lower_torque_thresholds_acceleration{};
-  std::copy(req->lower_torque_thresholds_acceleration.cbegin(),
-            req->lower_torque_thresholds_acceleration.cend(),
-            lower_torque_thresholds_acceleration.begin());
+  std::copy(
+    req->lower_torque_thresholds_acceleration.cbegin(),
+    req->lower_torque_thresholds_acceleration.cend(), lower_torque_thresholds_acceleration.begin());
   std::array<double, 7> upper_torque_thresholds_acceleration{};
-  std::copy(req->upper_torque_thresholds_acceleration.cbegin(),
-            req->upper_torque_thresholds_acceleration.cend(),
-            upper_torque_thresholds_acceleration.begin());
+  std::copy(
+    req->upper_torque_thresholds_acceleration.cbegin(),
+    req->upper_torque_thresholds_acceleration.cend(), upper_torque_thresholds_acceleration.begin());
   std::array<double, 7> lower_torque_thresholds_nominal{};
-  std::copy(req->lower_torque_thresholds_nominal.cbegin(),
-            req->lower_torque_thresholds_nominal.cend(), lower_torque_thresholds_nominal.begin());
+  std::copy(
+    req->lower_torque_thresholds_nominal.cbegin(), req->lower_torque_thresholds_nominal.cend(),
+    lower_torque_thresholds_nominal.begin());
   std::array<double, 7> upper_torque_thresholds_nominal{};
-  std::copy(req->upper_torque_thresholds_nominal.cbegin(),
-            req->upper_torque_thresholds_nominal.cend(), upper_torque_thresholds_nominal.begin());
+  std::copy(
+    req->upper_torque_thresholds_nominal.cbegin(), req->upper_torque_thresholds_nominal.cend(),
+    upper_torque_thresholds_nominal.begin());
   std::array<double, 6> lower_force_thresholds_acceleration{};
-  std::copy(req->lower_force_thresholds_acceleration.cbegin(),
-            req->lower_force_thresholds_acceleration.cend(),
-            lower_force_thresholds_acceleration.begin());
+  std::copy(
+    req->lower_force_thresholds_acceleration.cbegin(),
+    req->lower_force_thresholds_acceleration.cend(), lower_force_thresholds_acceleration.begin());
   std::array<double, 6> upper_force_thresholds_acceleration{};
-  std::copy(req->upper_force_thresholds_acceleration.cbegin(),
-            req->upper_force_thresholds_acceleration.cend(),
-            upper_force_thresholds_acceleration.begin());
+  std::copy(
+    req->upper_force_thresholds_acceleration.cbegin(),
+    req->upper_force_thresholds_acceleration.cend(), upper_force_thresholds_acceleration.begin());
   std::array<double, 6> lower_force_thresholds_nominal{};
-  std::copy(req->lower_force_thresholds_nominal.cbegin(),
-            req->lower_force_thresholds_nominal.cend(), lower_force_thresholds_nominal.begin());
+  std::copy(
+    req->lower_force_thresholds_nominal.cbegin(), req->lower_force_thresholds_nominal.cend(),
+    lower_force_thresholds_nominal.begin());
   std::array<double, 6> upper_force_thresholds_nominal{};
-  std::copy(req->upper_force_thresholds_nominal.cbegin(),
-            req->upper_force_thresholds_nominal.cend(), upper_force_thresholds_nominal.begin());
+  std::copy(
+    req->upper_force_thresholds_nominal.cbegin(), req->upper_force_thresholds_nominal.cend(),
+    upper_force_thresholds_nominal.begin());
   robot_->setCollisionBehavior(
-      lower_torque_thresholds_acceleration, upper_torque_thresholds_acceleration,
-      lower_torque_thresholds_nominal, upper_torque_thresholds_nominal,
-      lower_force_thresholds_acceleration, upper_force_thresholds_acceleration,
-      lower_force_thresholds_nominal, upper_force_thresholds_nominal);
+    lower_torque_thresholds_acceleration, upper_torque_thresholds_acceleration,
+    lower_torque_thresholds_nominal, upper_torque_thresholds_nominal,
+    lower_force_thresholds_acceleration, upper_force_thresholds_acceleration,
+    lower_force_thresholds_nominal, upper_force_thresholds_nominal);
 }
 
-void Robot::setDefaultParams(){
+void Robot::setDefaultParams()
+{
   robot_->setJointImpedance({{3000, 3000, 3000, 2500, 2500, 2000, 2000}});
   robot_->setCartesianImpedance({{3000, 3000, 3000, 300, 300, 300}});
   robot_->setCollisionBehavior(
-        {{20.0, 20.0, 18.0, 18.0, 16.0, 14.0, 12.0}}, {{20.0, 20.0, 18.0, 18.0, 16.0, 14.0, 12.0}},
-        {{20.0, 20.0, 18.0, 18.0, 16.0, 14.0, 12.0}}, {{20.0, 20.0, 18.0, 18.0, 16.0, 14.0, 12.0}},
-        {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}}, {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}},
-        {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}}, {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}});
+    {{20.0, 20.0, 18.0, 18.0, 16.0, 14.0, 12.0}}, {{20.0, 20.0, 18.0, 18.0, 16.0, 14.0, 12.0}},
+    {{20.0, 20.0, 18.0, 18.0, 16.0, 14.0, 12.0}}, {{20.0, 20.0, 18.0, 18.0, 16.0, 14.0, 12.0}},
+    {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}}, {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}},
+    {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}}, {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}});
   init_params_set = true;
 }
 

@@ -7,26 +7,36 @@
 #include <string>
 #include <vector>
 
-namespace franka_hardware {
+namespace franka_hardware
+{
 
-std::ostream& operator<<(std::ostream& ostream, ControlMode mode) {
-  if (mode == ControlMode::None) {
+std::ostream & operator<<(std::ostream & ostream, ControlMode mode)
+{
+  if (mode == ControlMode::None)
+  {
     ostream << "<none>";
-  } else {
+  }
+  else
+  {
     std::vector<std::string> names;
-    if ((mode & ControlMode::JointTorque) != ControlMode::None) {
+    if ((mode & ControlMode::JointTorque) != ControlMode::None)
+    {
       names.emplace_back("joint_torque");
     }
-    if ((mode & ControlMode::JointPosition) != ControlMode::None) {
+    if ((mode & ControlMode::JointPosition) != ControlMode::None)
+    {
       names.emplace_back("joint_position");
     }
-    if ((mode & ControlMode::JointVelocity) != ControlMode::None) {
+    if ((mode & ControlMode::JointVelocity) != ControlMode::None)
+    {
       names.emplace_back("joint_velocity");
     }
-    if ((mode & ControlMode::CartesianVelocity) != ControlMode::None) {
+    if ((mode & ControlMode::CartesianVelocity) != ControlMode::None)
+    {
       names.emplace_back("cartesian_velocity");
     }
-    if ((mode & ControlMode::CartesianPose) != ControlMode::None) {
+    if ((mode & ControlMode::CartesianPose) != ControlMode::None)
+    {
       names.emplace_back("cartesian_pose");
     }
     std::copy(names.cbegin(), names.cend() - 1, std::ostream_iterator<std::string>(ostream, ", "));
@@ -35,4 +45,4 @@ std::ostream& operator<<(std::ostream& ostream, ControlMode mode) {
   return ostream;
 }
 
-}  // namespace franka_hw
+}  // namespace franka_hardware

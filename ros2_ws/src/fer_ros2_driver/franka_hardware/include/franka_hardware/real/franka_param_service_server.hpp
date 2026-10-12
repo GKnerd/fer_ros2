@@ -15,10 +15,10 @@
 #pragma once
 
 #include <memory>
+#include <rclcpp/rclcpp.hpp>
 
 #include "franka/exception.h"
 #include "franka_hardware/real/robot.hpp"
-
 #include "franka_msgs/srv/set_cartesian_stiffness.hpp"
 #include "franka_msgs/srv/set_force_torque_collision_behavior.hpp"
 #include "franka_msgs/srv/set_full_collision_behavior.hpp"
@@ -27,18 +27,19 @@
 #include "franka_msgs/srv/set_stiffness_frame.hpp"
 #include "franka_msgs/srv/set_tcp_frame.hpp"
 
-#include <rclcpp/rclcpp.hpp>
-
 /**
  * Node implementing the service server
  */
-namespace franka_hardware {
+namespace franka_hardware
+{
 
-class FrankaParamServiceServer : public rclcpp::Node {
- public:
-  FrankaParamServiceServer(const rclcpp::NodeOptions& options, std::shared_ptr<Robot> robot, std::string prefix="");
+class FrankaParamServiceServer : public rclcpp::Node
+{
+public:
+  FrankaParamServiceServer(
+    const rclcpp::NodeOptions & options, std::shared_ptr<Robot> robot, std::string prefix = "");
 
- private:
+private:
   /**
    * @brief generic templated param setter function
    *
@@ -48,30 +49,36 @@ class FrankaParamServiceServer : public rclcpp::Node {
    * @param response franka_msgs::srv set parameter response type
    */
   template <typename request_type, typename response_type>
-  void setGenericRobotParam(const std::function<void(request_type)>& param_setter_function,
-                            const request_type& request,
-                            const response_type& response) {
-    try {
+  void setGenericRobotParam(
+    const std::function<void(request_type)> & param_setter_function, const request_type & request,
+    const response_type & response)
+  {
+    try
+    {
       param_setter_function(request);
       response->success = true;
-    } catch (const franka::CommandException& command_exception) {
-      RCLCPP_ERROR(this->get_logger(), "Command exception thrown during parameter setting %s",
-                   command_exception.what());
+    }
+    catch (const franka::CommandException & command_exception)
+    {
+      RCLCPP_ERROR(
+        this->get_logger(), "Command exception thrown during parameter setting %s",
+        command_exception.what());
       response->success = false;
       response->error = "command exception error";
-    } catch (const franka::NetworkException& network_exception) {
-      RCLCPP_ERROR(this->get_logger(), "Network exception thrown during parameter setting %s",
-                   network_exception.what());
+    }
+    catch (const franka::NetworkException & network_exception)
+    {
+      RCLCPP_ERROR(
+        this->get_logger(), "Network exception thrown during parameter setting %s",
+        network_exception.what());
       response->success = false;
       response->error = "network exception error";
     }
   }
-  
 
-  
-//##############################//
-// Internal param setters       //
-//##############################//
+  //##############################//
+  // Internal param setters       //
+  //##############################//
 
   /**
    * @brief Callback function for set_joint_stiffness service
@@ -80,8 +87,8 @@ class FrankaParamServiceServer : public rclcpp::Node {
    * @param response shared_ptr to setJointStiffness service msgs response
    */
   void setJointStiffnessCallback(
-      const franka_msgs::srv::SetJointStiffness::Request::SharedPtr& request,
-      const franka_msgs::srv::SetJointStiffness::Response::SharedPtr& response);
+    const franka_msgs::srv::SetJointStiffness::Request::SharedPtr & request,
+    const franka_msgs::srv::SetJointStiffness::Response::SharedPtr & response);
 
   /**
    * @brief Callback function for set_cartesian_stiffness service
@@ -90,8 +97,8 @@ class FrankaParamServiceServer : public rclcpp::Node {
    * @param response shared_ptr to SetCartesianStiffness service msgs response
    */
   void setCartesianStiffnessCallback(
-      const franka_msgs::srv::SetCartesianStiffness::Request::SharedPtr& request,
-      const franka_msgs::srv::SetCartesianStiffness::Response::SharedPtr& response);
+    const franka_msgs::srv::SetCartesianStiffness::Request::SharedPtr & request,
+    const franka_msgs::srv::SetCartesianStiffness::Response::SharedPtr & response);
 
   /**
    * @brief Callback function for set_cartesian_stiffness service
@@ -99,8 +106,9 @@ class FrankaParamServiceServer : public rclcpp::Node {
    * @param request shared_ptr to SetCartesianStiffness service msgs request
    * @param response shared_ptr to SetCartesianStiffness service msgs response
    */
-  void setTCPFrameCallback(const franka_msgs::srv::SetTCPFrame::Request::SharedPtr& request,
-                           const franka_msgs::srv::SetTCPFrame::Response::SharedPtr& response);
+  void setTCPFrameCallback(
+    const franka_msgs::srv::SetTCPFrame::Request::SharedPtr & request,
+    const franka_msgs::srv::SetTCPFrame::Response::SharedPtr & response);
 
   /**
    * @brief Callback function for set_stiffness_frame service
@@ -109,8 +117,8 @@ class FrankaParamServiceServer : public rclcpp::Node {
    * @param response shared_ptr to SetStiffnessFrame service msgs response
    */
   void setStiffnessFrameCallback(
-      const franka_msgs::srv::SetStiffnessFrame::Request::SharedPtr& request,
-      const franka_msgs::srv::SetStiffnessFrame::Response::SharedPtr& response);
+    const franka_msgs::srv::SetStiffnessFrame::Request::SharedPtr & request,
+    const franka_msgs::srv::SetStiffnessFrame::Response::SharedPtr & response);
 
   /**
    * @brief Callback function for set_force_torque_collision_behavior service
@@ -119,8 +127,8 @@ class FrankaParamServiceServer : public rclcpp::Node {
    * @param response shared_ptr to SetForceTorqueCollisionBehavior service msgs response
    */
   void setForceTorqueCollisionBehaviorCallback(
-      const franka_msgs::srv::SetForceTorqueCollisionBehavior::Request::SharedPtr& request,
-      const franka_msgs::srv::SetForceTorqueCollisionBehavior::Response::SharedPtr& response);
+    const franka_msgs::srv::SetForceTorqueCollisionBehavior::Request::SharedPtr & request,
+    const franka_msgs::srv::SetForceTorqueCollisionBehavior::Response::SharedPtr & response);
 
   /**
    * @brief Callback function for set_full_collision_behavior service
@@ -129,8 +137,8 @@ class FrankaParamServiceServer : public rclcpp::Node {
    * @param response shared_ptr to SetFullCollisionBehavior service msgs response
    */
   void setFullCollisionBehaviorCallback(
-      const franka_msgs::srv::SetFullCollisionBehavior::Request::SharedPtr& request,
-      const franka_msgs::srv::SetFullCollisionBehavior::Response::SharedPtr& response);
+    const franka_msgs::srv::SetFullCollisionBehavior::Request::SharedPtr & request,
+    const franka_msgs::srv::SetFullCollisionBehavior::Response::SharedPtr & response);
 
   /**
    * @brief Callback function for set_load_callback service
@@ -138,22 +146,23 @@ class FrankaParamServiceServer : public rclcpp::Node {
    * @param request shared_ptr to SetLoad service msgs request
    * @param response shared_ptr to SetLoad service msgs response
    */
-  void setLoadCallback(const franka_msgs::srv::SetLoad::Request::SharedPtr& request,
-                       const franka_msgs::srv::SetLoad::Response::SharedPtr& response);
-    
+  void setLoadCallback(
+    const franka_msgs::srv::SetLoad::Request::SharedPtr & request,
+    const franka_msgs::srv::SetLoad::Response::SharedPtr & response);
+
   // Inclusion of virtual void functions with 1 argument causes the library loading to fail for some reason.
   // Anyway, for now the methods are implemented in Robot, so they aren't really necessary.
 
   std::shared_ptr<Robot> robot_;
   rclcpp::Service<franka_msgs::srv::SetJointStiffness>::SharedPtr set_joint_stiffness_service_;
   rclcpp::Service<franka_msgs::srv::SetCartesianStiffness>::SharedPtr
-      set_cartesian_stiffness_service_;
+    set_cartesian_stiffness_service_;
   rclcpp::Service<franka_msgs::srv::SetLoad>::SharedPtr set_load_service_;
   rclcpp::Service<franka_msgs::srv::SetTCPFrame>::SharedPtr set_tcp_frame_service_;
   rclcpp::Service<franka_msgs::srv::SetStiffnessFrame>::SharedPtr set_stiffness_frame_service_;
   rclcpp::Service<franka_msgs::srv::SetForceTorqueCollisionBehavior>::SharedPtr
-      set_force_torque_collision_behavior_service_;
+    set_force_torque_collision_behavior_service_;
   rclcpp::Service<franka_msgs::srv::SetFullCollisionBehavior>::SharedPtr
-      set_full_collision_behavior_service_;
+    set_full_collision_behavior_service_;
 };
 }  // namespace franka_hardware

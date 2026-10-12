@@ -16,22 +16,24 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-namespace franka_hardware {
+namespace franka_hardware
+{
 
-class FrankaExecutor : public rclcpp::executors::MultiThreadedExecutor {
- public:
+class FrankaExecutor : public rclcpp::executors::MultiThreadedExecutor
+{
+public:
   // Create an instance and start the internal thread
   FrankaExecutor();
-  FrankaExecutor(const FrankaExecutor&) = delete;
-  FrankaExecutor(FrankaExecutor&&) = delete;
+  FrankaExecutor(const FrankaExecutor &) = delete;
+  FrankaExecutor(FrankaExecutor &&) = delete;
 
-  FrankaExecutor& operator=(const FrankaExecutor&) = delete;
-  FrankaExecutor& operator=(FrankaExecutor&&) = delete;
+  FrankaExecutor & operator=(const FrankaExecutor &) = delete;
+  FrankaExecutor & operator=(FrankaExecutor &&) = delete;
 
   // Stops the internal executor and joins with the internal thread
   ~FrankaExecutor() override;
 
- private:
+private:
   std::thread executor_spin_;
 
   // Executor thread starts spining the multithreadedExecutor

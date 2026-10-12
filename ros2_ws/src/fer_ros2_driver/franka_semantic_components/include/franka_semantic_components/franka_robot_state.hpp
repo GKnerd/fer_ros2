@@ -1,4 +1,3 @@
-
 // Copyright (c) 2023 Franka Emika GmbH
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,11 +23,13 @@
 #include "franka_msgs/msg/franka_state.hpp"
 #include "semantic_components/semantic_component_interface.hpp"
 
-namespace franka_semantic_components {
+namespace franka_semantic_components
+{
 class FrankaRobotState
-    : public semantic_components::SemanticComponentInterface<franka_msgs::msg::FrankaState> {
- public:
-  explicit FrankaRobotState(const std::string& name, const std::string& robot_name);
+: public semantic_components::SemanticComponentInterface<franka_msgs::msg::FrankaState>
+{
+public:
+  explicit FrankaRobotState(const std::string & name, const std::string & robot_name);
 
   virtual ~FrankaRobotState() = default;
 
@@ -36,12 +37,13 @@ class FrankaRobotState
    * Constructs and return a FrankaRobotState message from the current values.
    * \return FrankaRobotState message from values;
    */
-  bool get_values_as_message(franka_msgs::msg::FrankaState& message);
-  franka::RobotState* get_robot_state_ptr();
- protected:
-  franka::RobotState* robot_state_ptr;
+  bool get_values_as_message(franka_msgs::msg::FrankaState & message);
+  franka::RobotState * get_robot_state_ptr();
 
- private:
+protected:
+  franka::RobotState * robot_state_ptr;
+
+private:
   std::string robot_name_{"panda"};
   const std::string state_interface_name_{"robot_state"};
 };

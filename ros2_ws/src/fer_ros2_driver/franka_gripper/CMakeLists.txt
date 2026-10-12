@@ -40,7 +40,7 @@ ament_target_dependencies(gripper_server
         sensor_msgs
         std_srvs
         control_msgs)
-        
+
 rclcpp_components_register_node(gripper_server PLUGIN "franka_gripper::GripperActionServer" EXECUTABLE franka_gripper_node)
 
 install(TARGETS

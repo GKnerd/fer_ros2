@@ -14,19 +14,23 @@
 
 #pragma once
 
-#include <array>
 #include <franka/model.h>
 
-namespace franka_hardware {
+#include <array>
+
+namespace franka_hardware
+{
 
 /**
  * An interface class to be inherited by the ModelFranka and ModelSim.
  * Defines the _Impl functions that need to be overriden, which is
  * called by the public non-Impl versions of those functions.
  */
-class ModelBase {  // NOLINT(cppcoreguidelines-pro-type-member-init,
-               // cppcoreguidelines-special-member-functions)
- public:
+class ModelBase
+{  // NOLINT(cppcoreguidelines-pro-type-member-init,
+   // cppcoreguidelines-special-member-functions)
+
+public:
   /**
    * Create a new Model instance wrapped around a franka::Model
    */
@@ -48,11 +52,11 @@ class ModelBase {  // NOLINT(cppcoreguidelines-pro-type-member-init,
    * @return Vectorized 4x4 pose matrix, column-major.
    */
   [[nodiscard]] std::array<double, 16> pose(
-      franka::Frame frame,
-      const std::array<double, 7>& q,        // NOLINT(readability-identifier-length)
-      const std::array<double, 16>& F_T_EE,  // NOLINT(readability-identifier-naming)
-      const std::array<double, 16>& EE_T_K)  // NOLINT(readability-identifier-naming)
-      const {
+    franka::Frame frame, const std::array<double, 7> & q,  // NOLINT(readability-identifier-length)
+    const std::array<double, 16> & F_T_EE,                 // NOLINT(readability-identifier-naming)
+    const std::array<double, 16> & EE_T_K)                 // NOLINT(readability-identifier-naming)
+    const
+  {
     return poseImpl(frame, q, F_T_EE, EE_T_K);
   }
 
@@ -69,11 +73,11 @@ class ModelBase {  // NOLINT(cppcoreguidelines-pro-type-member-init,
    * @return Vectorized 6x7 Jacobian, column-major.
    */
   [[nodiscard]] std::array<double, 42> bodyJacobian(
-      franka::Frame frame,
-      const std::array<double, 7>& q,        // NOLINT(readability-identifier-length)
-      const std::array<double, 16>& F_T_EE,  // NOLINT(readability-identifier-naming)
-      const std::array<double, 16>& EE_T_K)  // NOLINT(readability-identifier-naming)
-      const {
+    franka::Frame frame, const std::array<double, 7> & q,  // NOLINT(readability-identifier-length)
+    const std::array<double, 16> & F_T_EE,                 // NOLINT(readability-identifier-naming)
+    const std::array<double, 16> & EE_T_K)                 // NOLINT(readability-identifier-naming)
+    const
+  {
     return bodyJacobianImpl(frame, q, F_T_EE, EE_T_K);
   }
 
@@ -88,11 +92,11 @@ class ModelBase {  // NOLINT(cppcoreguidelines-pro-type-member-init,
    * @return Vectorized 6x7 Jacobian, column-major.
    */
   [[nodiscard]] std::array<double, 42> zeroJacobian(
-      franka::Frame frame,
-      const std::array<double, 7>& q,        // NOLINT(readability-identifier-length)
-      const std::array<double, 16>& F_T_EE,  // NOLINT(readability-identifier-naming)
-      const std::array<double, 16>& EE_T_K)  // NOLINT(readability-identifier-naming)
-      const {
+    franka::Frame frame, const std::array<double, 7> & q,  // NOLINT(readability-identifier-length)
+    const std::array<double, 16> & F_T_EE,                 // NOLINT(readability-identifier-naming)
+    const std::array<double, 16> & EE_T_K)                 // NOLINT(readability-identifier-naming)
+    const
+  {
     return zeroJacobianImpl(frame, q, F_T_EE, EE_T_K);
   }
 
@@ -110,11 +114,12 @@ class ModelBase {  // NOLINT(cppcoreguidelines-pro-type-member-init,
    * @return Vectorized 7x7 mass matrix, column-major.
    */
   [[nodiscard]] std::array<double, 49> mass(
-      const std::array<double, 7>& q,        // NOLINT(readability-identifier-length)
-      const std::array<double, 9>& I_total,  // NOLINT(readability-identifier-naming)
-      double m_total,
-      const std::array<double, 3>& F_x_Ctotal)  // NOLINT(readability-identifier-naming)
-      const noexcept {
+    const std::array<double, 7> & q,        // NOLINT(readability-identifier-length)
+    const std::array<double, 9> & I_total,  // NOLINT(readability-identifier-naming)
+    double m_total,
+    const std::array<double, 3> & F_x_Ctotal)  // NOLINT(readability-identifier-naming)
+    const noexcept
+  {
     return massImpl(q, I_total, m_total, F_x_Ctotal);
   }
 
@@ -134,12 +139,13 @@ class ModelBase {  // NOLINT(cppcoreguidelines-pro-type-member-init,
    * @return Coriolis force vector.
    */
   [[nodiscard]] std::array<double, 7> coriolis(
-      const std::array<double, 7>& q,        // NOLINT(readability-identifier-length)
-      const std::array<double, 7>& dq,       // NOLINT(readability-identifier-length)
-      const std::array<double, 9>& I_total,  // NOLINT(readability-identifier-naming)
-      double m_total,
-      const std::array<double, 3>& F_x_Ctotal)  // NOLINT(readability-identifier-naming)
-      const noexcept {
+    const std::array<double, 7> & q,        // NOLINT(readability-identifier-length)
+    const std::array<double, 7> & dq,       // NOLINT(readability-identifier-length)
+    const std::array<double, 9> & I_total,  // NOLINT(readability-identifier-naming)
+    double m_total,
+    const std::array<double, 3> & F_x_Ctotal)  // NOLINT(readability-identifier-naming)
+    const noexcept
+  {
     return coriolisImpl(q, dq, I_total, m_total, F_x_Ctotal);
   }
 
@@ -156,10 +162,11 @@ class ModelBase {  // NOLINT(cppcoreguidelines-pro-type-member-init,
    * @return Gravity vector.
    */
   [[nodiscard]] std::array<double, 7> gravity(
-      const std::array<double, 7>& q,  // NOLINT(readability-identifier-length)
-      double m_total,
-      const std::array<double, 3>& F_x_Ctotal,  // NOLINT(readability-identifier-naming)
-      const std::array<double, 3>& gravity_earth) const noexcept {
+    const std::array<double, 7> & q,  // NOLINT(readability-identifier-length)
+    double m_total,
+    const std::array<double, 3> & F_x_Ctotal,  // NOLINT(readability-identifier-naming)
+    const std::array<double, 3> & gravity_earth) const noexcept
+  {
     return gravityImpl(q, m_total, F_x_Ctotal, gravity_earth);
   }
   /**
@@ -172,8 +179,9 @@ class ModelBase {  // NOLINT(cppcoreguidelines-pro-type-member-init,
    *
    * @return Vectorized 4x4 pose matrix, column-major.
    */
-  [[nodiscard]] virtual std::array<double, 16> pose(franka::Frame frame,
-                                                    const franka::RobotState& robot_state) const {
+  [[nodiscard]] virtual std::array<double, 16> pose(
+    franka::Frame frame, const franka::RobotState & robot_state) const
+  {
     return pose(frame, robot_state.q, robot_state.F_T_EE, robot_state.EE_T_K);
   }
 
@@ -188,8 +196,8 @@ class ModelBase {  // NOLINT(cppcoreguidelines-pro-type-member-init,
    * @return Vectorized 6x7 Jacobian, column-major.
    */
   [[nodiscard]] virtual std::array<double, 42> bodyJacobian(
-      franka::Frame frame,
-      const franka::RobotState& robot_state) const {
+    franka::Frame frame, const franka::RobotState & robot_state) const
+  {
     return bodyJacobian(frame, robot_state.q, robot_state.F_T_EE, robot_state.EE_T_K);
   }
 
@@ -204,8 +212,8 @@ class ModelBase {  // NOLINT(cppcoreguidelines-pro-type-member-init,
    * @return Vectorized 6x7 Jacobian, column-major.
    */
   [[nodiscard]] virtual std::array<double, 42> zeroJacobian(
-      franka::Frame frame,
-      const franka::RobotState& robot_state) const {
+    franka::Frame frame, const franka::RobotState & robot_state) const
+  {
     return zeroJacobian(frame, robot_state.q, robot_state.F_T_EE, robot_state.EE_T_K);
   }
 
@@ -216,7 +224,8 @@ class ModelBase {  // NOLINT(cppcoreguidelines-pro-type-member-init,
    *
    * @return Vectorized 7x7 mass matrix, column-major.
    */
-  [[nodiscard]] virtual std::array<double, 49> mass(const franka::RobotState& robot_state) const {
+  [[nodiscard]] virtual std::array<double, 49> mass(const franka::RobotState & robot_state) const
+  {
     return mass(robot_state.q, robot_state.I_total, robot_state.m_total, robot_state.F_x_Ctotal);
   }
 
@@ -228,10 +237,11 @@ class ModelBase {  // NOLINT(cppcoreguidelines-pro-type-member-init,
    *
    * @return Coriolis force vector.
    */
-  [[nodiscard]] virtual std::array<double, 7> coriolis(
-      const franka::RobotState& robot_state) const {
-    return coriolis(robot_state.q, robot_state.dq, robot_state.I_total, robot_state.m_total,
-                    robot_state.F_x_Ctotal);
+  [[nodiscard]] virtual std::array<double, 7> coriolis(const franka::RobotState & robot_state) const
+  {
+    return coriolis(
+      robot_state.q, robot_state.dq, robot_state.I_total, robot_state.m_total,
+      robot_state.F_x_Ctotal);
   }
 
   /**
@@ -246,10 +256,11 @@ class ModelBase {  // NOLINT(cppcoreguidelines-pro-type-member-init,
    * @return Gravity vector.
    */
   [[nodiscard]] std::array<double, 7> gravity(
-      const std::array<double, 7>& q,  // NOLINT(readability-identifier-length)
-      double m_total,
-      const std::array<double, 3>& F_x_Ctotal  // NOLINT(readability-identifier-naming)
-  ) const {
+    const std::array<double, 7> & q,  // NOLINT(readability-identifier-length)
+    double m_total,
+    const std::array<double, 3> & F_x_Ctotal  // NOLINT(readability-identifier-naming)
+  ) const
+  {
     return gravity(q, m_total, F_x_Ctotal, {0, 0, -9.81});
   }
 
@@ -262,8 +273,8 @@ class ModelBase {  // NOLINT(cppcoreguidelines-pro-type-member-init,
    * @return Gravity vector.
    */
   [[nodiscard]] virtual std::array<double, 7> gravity(
-      const franka::RobotState& robot_state,
-      const std::array<double, 3>& gravity_earth) const {
+    const franka::RobotState & robot_state, const std::array<double, 3> & gravity_earth) const
+  {
     return gravity(robot_state.q, robot_state.m_total, robot_state.F_x_Ctotal, gravity_earth);
   }
 
@@ -274,7 +285,8 @@ class ModelBase {  // NOLINT(cppcoreguidelines-pro-type-member-init,
    *
    * @return Gravity vector.
    */
-  [[nodiscard]] virtual std::array<double, 7> gravity(const franka::RobotState& robot_state) const {
+  [[nodiscard]] virtual std::array<double, 7> gravity(const franka::RobotState & robot_state) const
+  {
 #ifdef ENABLE_BASE_ACCELERATION
     return gravity(robot_state.q, robot_state.m_total, robot_state.F_x_Ctotal, robot_state.O_ddP_O);
 #else
@@ -282,43 +294,39 @@ class ModelBase {  // NOLINT(cppcoreguidelines-pro-type-member-init,
 #endif
   }
 
- private:
+private:
   virtual std::array<double, 16> poseImpl(
-      franka::Frame frame,
-      const std::array<double, 7>& q,        // NOLINT(readability-identifier-length)
-      const std::array<double, 16>& F_T_EE,  // NOLINT(readability-identifier-naming)
-      const std::array<double, 16>& EE_T_K) const = 0;  // NOLINT(readability-identifier-naming)
-  
+    franka::Frame frame, const std::array<double, 7> & q,  // NOLINT(readability-identifier-length)
+    const std::array<double, 16> & F_T_EE,                 // NOLINT(readability-identifier-naming)
+    const std::array<double, 16> & EE_T_K) const = 0;      // NOLINT(readability-identifier-naming)
+
   virtual std::array<double, 42> bodyJacobianImpl(
-      franka::Frame frame,
-      const std::array<double, 7>& q,        // NOLINT(readability-identifier-length)
-      const std::array<double, 16>& F_T_EE,  // NOLINT(readability-identifier-naming)
-      const std::array<double, 16>& EE_T_K) const = 0;  // NOLINT(readability-identifier-naming)
-  
+    franka::Frame frame, const std::array<double, 7> & q,  // NOLINT(readability-identifier-length)
+    const std::array<double, 16> & F_T_EE,                 // NOLINT(readability-identifier-naming)
+    const std::array<double, 16> & EE_T_K) const = 0;      // NOLINT(readability-identifier-naming)
+
   virtual std::array<double, 42> zeroJacobianImpl(
-      franka::Frame frame,
-      const std::array<double, 7>& q,        // NOLINT(readability-identifier-length)
-      const std::array<double, 16>& F_T_EE,  // NOLINT(readability-identifier-naming)
-      const std::array<double, 16>& EE_T_K) const = 0; // NOLINT(readability-identifier-naming)
-  
+    franka::Frame frame, const std::array<double, 7> & q,  // NOLINT(readability-identifier-length)
+    const std::array<double, 16> & F_T_EE,                 // NOLINT(readability-identifier-naming)
+    const std::array<double, 16> & EE_T_K) const = 0;      // NOLINT(readability-identifier-naming)
+
   virtual std::array<double, 49> massImpl(
-      const std::array<double, 7>& q,        // NOLINT(readability-identifier-length)
-      const std::array<double, 9>& I_total,  // NOLINT(readability-identifier-naming)
-      double m_total,
-      const std::array<double, 3>& F_x_Ctotal) const = 0;  // NOLINT(readability-identifier-naming)
-  
+    const std::array<double, 7> & q,        // NOLINT(readability-identifier-length)
+    const std::array<double, 9> & I_total,  // NOLINT(readability-identifier-naming)
+    double m_total,
+    const std::array<double, 3> & F_x_Ctotal) const = 0;  // NOLINT(readability-identifier-naming)
+
   virtual std::array<double, 7> coriolisImpl(
-      const std::array<double, 7>& q,        // NOLINT(readability-identifier-length)
-      const std::array<double, 7>& dq,       // NOLINT(readability-identifier-length)
-      const std::array<double, 9>& I_total,  // NOLINT(readability-identifier-naming)
-      double m_total,
-      const std::array<double, 3>& F_x_Ctotal) const = 0;
-  
+    const std::array<double, 7> & q,        // NOLINT(readability-identifier-length)
+    const std::array<double, 7> & dq,       // NOLINT(readability-identifier-length)
+    const std::array<double, 9> & I_total,  // NOLINT(readability-identifier-naming)
+    double m_total, const std::array<double, 3> & F_x_Ctotal) const = 0;
+
   virtual std::array<double, 7> gravityImpl(
-      const std::array<double, 7>& q,  // NOLINT(readability-identifier-length)
-      double m_total,
-      const std::array<double, 3>& F_x_Ctotal,  // NOLINT(readability-identifier-naming)
-      const std::array<double, 3>& gravity_earth) const = 0;
+    const std::array<double, 7> & q,  // NOLINT(readability-identifier-length)
+    double m_total,
+    const std::array<double, 3> & F_x_Ctotal,  // NOLINT(readability-identifier-naming)
+    const std::array<double, 3> & gravity_earth) const = 0;
 };
 
 }  // namespace franka_hardware

@@ -14,29 +14,36 @@
 
 #include "franka_hardware/common/franka_executor.hpp"
 
-namespace franka_hardware {
+namespace franka_hardware
+{
 using namespace std::chrono_literals;
 
-FrankaExecutor::FrankaExecutor() : executor_spin_([this] { run(); }) {
-  while (!this->spinning) {
+FrankaExecutor::FrankaExecutor() : executor_spin_([this] { run(); })
+{
+  while (!this->spinning)
+  {
     // Need to wait until the executor starts spinning
     std::this_thread::sleep_for(100ms);
   }
 }
 
-FrankaExecutor::~FrankaExecutor() {
+FrankaExecutor::~FrankaExecutor()
+{
   // if the executor still spinning cancel it
   this->shutdown();
   executor_spin_.join();
 }
 
-void FrankaExecutor::run() {
+void FrankaExecutor::run()
+{
   // spin the executor
   spin();
 }
 
-void FrankaExecutor::shutdown() {
-  if (this->spinning) {
+void FrankaExecutor::shutdown()
+{
+  if (this->spinning)
+  {
     this->cancel();
   }
 }
