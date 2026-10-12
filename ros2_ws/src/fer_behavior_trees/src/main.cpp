@@ -2,18 +2,20 @@
 #include <memory>
 #include <stdexcept>
 
-#include "rclcpp/rclcpp.hpp"
-
 #include "fer_behavior_trees/server.hpp"
+#include "rclcpp/rclcpp.hpp"
 
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
   auto node = std::make_shared<rclcpp::Node>("fer_bt_server");
   std::unique_ptr<fer_behavior_trees::Server> server;
-  try {
+  try
+  {
     server = std::make_unique<fer_behavior_trees::Server>(node);
-  } catch (const std::exception & e) {
+  }
+  catch (const std::exception & e)
+  {
     RCLCPP_FATAL(node->get_logger(), "%s", e.what());
     rclcpp::shutdown();
     return 1;

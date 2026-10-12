@@ -21,19 +21,15 @@ namespace fer_behavior_trees
 /// \brief Tries the candidates in order with `/motion/check_reachable` and outputs the first
 /// one the arm can execute: approach free, then target and retreat straight, the hand
 /// allowed to touch `object_id`.
-template<class CandidateT>
+template <class CandidateT>
 class FindReachable : public BT::StatefulActionNode
 {
 public:
-
   using CheckReachable = fer_interfaces::srv::CheckReachable;
   using Targets = std::array<geometry_msgs::msg::PoseStamped, 3>;
 
   FindReachable(
-    const std::string & name,
-    const BT::NodeConfig & config,
-    const BT::RosNodeParams & params
-  );
+    const std::string & name, const BT::NodeConfig & config, const BT::RosNodeParams & params);
 
   /// \brief Ports of the node: \p addition, `object_id`, `candidates` and `outcome`.
   static BT::PortsList base_ports(BT::PortsList addition);
@@ -62,7 +58,7 @@ private:
   std::chrono::milliseconds timeout_;
   std::vector<CandidateT> candidates_;
   std::string object_id_;
-  double speed_scaling_{0.3}; 
+  double speed_scaling_{0.3};
   size_t index_{0};
   rclcpp::Client<CheckReachable>::SharedFuture future_;
   int64_t request_id_{0};

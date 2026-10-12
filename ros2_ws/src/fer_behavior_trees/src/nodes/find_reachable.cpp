@@ -15,18 +15,15 @@ using fer_interfaces::msg::PlaceCandidate;
 using fer_interfaces::msg::PoseTarget;
 using geometry_msgs::msg::PoseStamped;
 
-template<class CandidateT>
+template <class CandidateT>
 FindReachable<CandidateT>::FindReachable(
-  const std::string & name,
-  const BT::NodeConfig & config,
-  const BT::RosNodeParams & params
-)
+  const std::string & name, const BT::NodeConfig & config, const BT::RosNodeParams & params)
 : BT::StatefulActionNode(name, config),
   logger_(rclcpp::get_logger("fer_bt_server")),
   timeout_(params.server_timeout)
 {
   auto node = params.nh.lock();
-  if (!node) 
+  if (!node)
   {
     throw BT::RuntimeError("FindReachable: the ROS node went out of scope");
   }
@@ -34,26 +31,28 @@ FindReachable<CandidateT>::FindReachable(
   logger_ = node->get_logger();
   group_ = node->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive, false);
   executor_.add_callback_group(group_, node->get_node_base_interface());
-  client_ = node->create_client<CheckReachable>(params.default_port_value, rclcpp::ServicesQoS(), group_);
+  client_ =
+    node->create_client<CheckReachable>(params.default_port_value, rclcpp::ServicesQoS(), group_);
 
-  if (!client_->wait_for_service(params.wait_for_server_timeout)) 
+  if (!client_->wait_for_service(params.wait_for_server_timeout))
   {
-    RCLCPP_ERROR(logger_, "%s: '%s' is not available", name.c_str(),
-      params.default_port_value.c_str());
+    RCLCPP_ERROR(
+      logger_, "%s: '%s' is not available", name.c_str(), params.default_port_value.c_str());
   }
 }
 
-template<class CandidateT>
+template <class CandidateT>
 BT::PortsList FindReachable<CandidateT>::base_ports(BT::PortsList addition)
 {
   addition.insert(BT::InputPort<std::string>("object_id", "Object the hand may touch"));
-  addition.insert(BT::InputPort<double>("speed_scaling",0.3, "Speed Scaling of the planned trajectory (0, 1]"));
+  addition.insert(
+    BT::InputPort<double>("speed_scaling", 0.3, "Speed Scaling of the planned trajectory (0, 1]"));
   addition.insert(BT::InputPort<std::vector<CandidateT>>("candidates", "Best first"));
   addition.insert(BT::OutputPort<int>("outcome", "fer_interfaces Outcome code"));
   return addition;
 }
 
-template<class CandidateT>
+template <class CandidateT>
 BT::NodeStatus FindReachable<CandidateT>::onStart()
 {
   const auto candidates = getInput<std::vector<CandidateT>>("candidates");
@@ -79,7 +78,7 @@ BT::NodeStatus FindReachable<CandidateT>::onStart()
   return BT::NodeStatus::RUNNING;
 }
 
-template<class CandidateT>
+template <class CandidateT>
 BT::NodeStatus FindReachable<CandidateT>::onRunning()
 {
   executor_.spin_some();
@@ -102,8 +101,9 @@ BT::NodeStatus FindReachable<CandidateT>::onRunning()
     setOutput("outcome", static_cast<int>(Outcome::OK));
     return BT::NodeStatus::SUCCESS;
   }
-  RCLCPP_INFO(logger_, "%s: candidate %zu: outcome %d: %s", name().c_str(), index_,
-    response->outcome.code, response->outcome.message.c_str());
+  RCLCPP_INFO(
+    logger_, "%s: candidate %zu: outcome %d: %s", name().c_str(), index_, response->outcome.code,
+    response->outcome.message.c_str());
   if (++index_ < candidates_.size())
   {
     send();
@@ -112,7 +112,7 @@ BT::NodeStatus FindReachable<CandidateT>::onRunning()
   return fail(response->outcome.code, "no candidate is reachable");
 }
 
-template<class CandidateT>
+template <class CandidateT>
 void FindReachable<CandidateT>::onHalted()
 {
   if (pending_)
@@ -122,7 +122,7 @@ void FindReachable<CandidateT>::onHalted()
   }
 }
 
-template<class CandidateT>
+template <class CandidateT>
 void FindReachable<CandidateT>::send()
 {
   auto request = std::make_shared<CheckReachable::Request>();
@@ -146,7 +146,7 @@ void FindReachable<CandidateT>::send()
   sent_ = std::chrono::steady_clock::now();
 }
 
-template<class CandidateT>
+template <class CandidateT>
 BT::NodeStatus FindReachable<CandidateT>::fail(uint8_t code, const std::string & message)
 {
   setOutput("outcome", static_cast<int>(code));
@@ -159,14 +159,13 @@ template class FindReachable<PlaceCandidate>;
 
 BT::PortsList FindReachableGrasp::providedPorts()
 {
-  return base_ports(
-    {
-      BT::OutputPort<std::vector<double>>("pregrasp_joints", "Arm configuration at pre-grasp"),
-      BT::OutputPort<PoseStamped>("pregrasp_pose", ""),
-      BT::OutputPort<PoseStamped>("grasp_pose", ""),
-      BT::OutputPort<PoseStamped>("lift_pose", ""),
-      BT::OutputPort<double>("width", "Into Grasp.width"),
-      BT::OutputPort<double>("force", "Into Grasp.force"),
+  return base_ports({
+    BT::OutputPort<std::vector<double>>("pregrasp_joints", "Arm configuration at pre-grasp"),
+    BT::OutputPort<PoseStamped>("pregrasp_pose", ""),
+    BT::OutputPort<PoseStamped>("grasp_pose", ""),
+    BT::OutputPort<PoseStamped>("lift_pose", ""),
+    BT::OutputPort<double>("width", "Into Grasp.width"),
+    BT::OutputPort<double>("force", "Into Grasp.force"),
   });
 }
 
@@ -188,11 +187,10 @@ void FindReachableGrasp::write_outputs(
 
 BT::PortsList FindReachablePlace::providedPorts()
 {
-  return base_ports(
-    {
-      BT::OutputPort<std::vector<double>>("preplace_joints", "Arm configuration at pre-place"),
-      BT::OutputPort<PoseStamped>("place_pose", ""),
-      BT::OutputPort<PoseStamped>("retreat_pose", ""),
+  return base_ports({
+    BT::OutputPort<std::vector<double>>("preplace_joints", "Arm configuration at pre-place"),
+    BT::OutputPort<PoseStamped>("place_pose", ""),
+    BT::OutputPort<PoseStamped>("retreat_pose", ""),
   });
 }
 

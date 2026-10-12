@@ -1,5 +1,6 @@
 <root BTCPP_format="4">
-  <!-- Payload: {"target_class": "<class>", "pick_attempts": <n>}.
+  <!-- Payload: {"target_class": "<class>", "pick_attempts": <n>, "speed_scaling": <(0, 1]>};
+       speed_scaling is optional, default the server parameter (0.3).
        Every FREE object of target_class is picked (up to pick_attempts tries) and placed in
        a row. A failed pick moves on to the next object; a failed place ends the tree.
        SUCCESS only if every object was placed. -->
@@ -20,7 +21,7 @@
           <Script code="all_placed := false"/>
         </IfThenElse>
       </LoopString>
-      <MoveToJoints joints="{@home}"/>
+      <MoveToJoints joints="{@home}" speed_scaling="{@speed_scaling}"/>
       <ScriptCondition code="all_placed"/>
     </Sequence>
   </BehaviorTree>

@@ -1,13 +1,10 @@
 #include "fer_behavior_trees/place_object_client_node.hpp"
 
-
-PlaceObjectSkill::PlaceObjectSkill(const std::string& name,
-                                   const BT::NodeConfig& conf,
-                                   const BT::RosNodeParams& params)
-  : BT::RosActionNode<PlaceObject>(name, conf, params)
+PlaceObjectSkill::PlaceObjectSkill(
+  const std::string & name, const BT::NodeConfig & conf, const BT::RosNodeParams & params)
+: BT::RosActionNode<PlaceObject>(name, conf, params)
 {
 }
-
 
 BT::PortsList PlaceObjectSkill::providedPorts()
 {
@@ -24,23 +21,23 @@ BT::PortsList PlaceObjectSkill::providedPorts()
   });
 }
 
-bool PlaceObjectSkill::setGoal(Goal& goal)
+bool PlaceObjectSkill::setGoal(Goal & goal)
 {
   auto object_id = getInput<std::string>("object_id");
-  if(!object_id)
+  if (!object_id)
   {
-    RCLCPP_ERROR(logger(), "%s: missing required input [object_id]: %s",
-                 name().c_str(), object_id.error().c_str());
+    RCLCPP_ERROR(
+      logger(), "%s: missing required input [object_id]: %s", name().c_str(),
+      object_id.error().c_str());
     return false;
   }
 
   auto x = getInput<double>("x");
   auto y = getInput<double>("y");
   auto z = getInput<double>("z");
-  if(!x || !y || !z)
+  if (!x || !y || !z)
   {
-    RCLCPP_ERROR(logger(), "%s: missing required place position [x/y/z]",
-                 name().c_str());
+    RCLCPP_ERROR(logger(), "%s: missing required place position [x/y/z]", name().c_str());
     return false;
   }
 
@@ -54,42 +51,41 @@ bool PlaceObjectSkill::setGoal(Goal& goal)
   goal.place_pose.pose.orientation.z = getInput<double>("qz").value_or(0.0);
   goal.place_pose.pose.orientation.w = getInput<double>("qw").value_or(1.0);
 
-  RCLCPP_INFO(logger(), "%s: sending PlaceObject goal (object_id=%s, frame=%s, "
-              "xyz=[%.3f, %.3f, %.3f])",
-              name().c_str(), goal.object_id.c_str(),
-              goal.place_pose.header.frame_id.c_str(),
-              goal.place_pose.pose.position.x,
-              goal.place_pose.pose.position.y,
-              goal.place_pose.pose.position.z);
+  RCLCPP_INFO(
+    logger(),
+    "%s: sending PlaceObject goal (object_id=%s, frame=%s, "
+    "xyz=[%.3f, %.3f, %.3f])",
+    name().c_str(), goal.object_id.c_str(), goal.place_pose.header.frame_id.c_str(),
+    goal.place_pose.pose.position.x, goal.place_pose.pose.position.y,
+    goal.place_pose.pose.position.z);
   return true;
 }
 
-BT::NodeStatus PlaceObjectSkill::onResultReceived(const WrappedResult& result)
+BT::NodeStatus PlaceObjectSkill::onResultReceived(const WrappedResult & result)
 {
-  RCLCPP_INFO(logger(), "%s: result success=%s message='%s'",
-              name().c_str(),
-              result.result->success ? "true" : "false",
-              result.result->message.c_str());
+  RCLCPP_INFO(
+    logger(), "%s: result success=%s message='%s'", name().c_str(),
+    result.result->success ? "true" : "false", result.result->message.c_str());
 
-  return result.result->success ? BT::NodeStatus::SUCCESS
-                                : BT::NodeStatus::FAILURE;
+  return result.result->success ? BT::NodeStatus::SUCCESS : BT::NodeStatus::FAILURE;
 }
 
 BT::NodeStatus PlaceObjectSkill::onFeedback(const std::shared_ptr<const Feedback> feedback)
 {
-  RCLCPP_INFO(logger(), "%s: phase=%s (%.0f%%)", name().c_str(),
-              feedback->current_phase.c_str(), feedback->progress * 100.0f);
+  RCLCPP_INFO(
+    logger(), "%s: phase=%s (%.0f%%)", name().c_str(), feedback->current_phase.c_str(),
+    feedback->progress * 100.0f);
   return BT::NodeStatus::RUNNING;
 }
 
-BT::NodeStatus PlaceObjectSkill::onFailure(BT::ActionNodeErrorCode error,
-                                           const std::optional<WrappedResult>& result)
+BT::NodeStatus PlaceObjectSkill::onFailure(
+  BT::ActionNodeErrorCode error, const std::optional<WrappedResult> & result)
 {
   RCLCPP_ERROR(logger(), "%s: failure (%s)", name().c_str(), BT::toStr(error));
-  if(result && result->result)
+  if (result && result->result)
   {
-    RCLCPP_ERROR(logger(), "%s: server message='%s'",
-                 name().c_str(), result->result->message.c_str());
+    RCLCPP_ERROR(
+      logger(), "%s: server message='%s'", name().c_str(), result->result->message.c_str());
   }
   return BT::NodeStatus::FAILURE;
 }

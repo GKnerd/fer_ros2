@@ -1,17 +1,12 @@
 #include "fer_behavior_trees/go_home_client_node.hpp"
 
+GoHomeSkill::GoHomeSkill(
+  const std::string & name, const BT::NodeConfig & conf, const BT::RosNodeParams & params)
+: BT::RosActionNode<GoHome>(name, conf, params){
+    // Constructor Init
+  };
 
-
-GoHomeSkill::GoHomeSkill(const std::string& name, 
-    const BT::NodeConfig& conf,
-    const BT::RosNodeParams& params)
-    : 
-    BT::RosActionNode<GoHome>(name, conf, params)
-    {
-        // Constructor Init
-    };
-
-bool GoHomeSkill::setGoal(Goal& goal)
+bool GoHomeSkill::setGoal(Goal & goal)
 {
   (void)goal;  // empty goal — silence -Wunused-parameter
   RCLCPP_INFO(logger(), "%s: sending GoHome goal", name().c_str());
@@ -25,34 +20,29 @@ void GoHomeSkill::onHalt()
   RCLCPP_INFO(logger(), "%s: halted — goal cancelled", name().c_str());
 };
 
-BT::NodeStatus GoHomeSkill::onResultReceived(const WrappedResult& result)
+BT::NodeStatus GoHomeSkill::onResultReceived(const WrappedResult & result)
 {
-  RCLCPP_INFO(logger(), "%s: result success=%s message='%s'",
-              name().c_str(),
-              result.result->success ? "true" : "false",
-              result.result->message.c_str());
+  RCLCPP_INFO(
+    logger(), "%s: result success=%s message='%s'", name().c_str(),
+    result.result->success ? "true" : "false", result.result->message.c_str());
 
-  return result.result->success ? BT::NodeStatus::SUCCESS
-                                : BT::NodeStatus::FAILURE;
+  return result.result->success ? BT::NodeStatus::SUCCESS : BT::NodeStatus::FAILURE;
 };
 
 BT::NodeStatus GoHomeSkill::onFeedback(const std::shared_ptr<const Feedback> feedback)
 {
-  RCLCPP_INFO(logger(), "%s: feedback status='%s'",
-              name().c_str(), feedback->status.c_str());
+  RCLCPP_INFO(logger(), "%s: feedback status='%s'", name().c_str(), feedback->status.c_str());
   return BT::NodeStatus::RUNNING;
 };
 
 BT::NodeStatus GoHomeSkill::onFailure(
-            BT::ActionNodeErrorCode error,
-            const std::optional<WrappedResult>& result
-        )
+  BT::ActionNodeErrorCode error, const std::optional<WrappedResult> & result)
 {
   RCLCPP_ERROR(logger(), "%s: failure (%s)", name().c_str(), BT::toStr(error));
-  if(result && result->result)
+  if (result && result->result)
   {
-    RCLCPP_ERROR(logger(), "%s: server message='%s'",
-                 name().c_str(), result->result->message.c_str());
+    RCLCPP_ERROR(
+      logger(), "%s: server message='%s'", name().c_str(), result->result->message.c_str());
   }
   return BT::NodeStatus::FAILURE;
 };

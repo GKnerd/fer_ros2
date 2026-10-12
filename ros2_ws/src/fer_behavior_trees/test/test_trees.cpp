@@ -24,14 +24,16 @@ class Trees : public ::testing::Test
 protected:
   void SetUp() override
   {
-    add<MoveToPoseNode>("MoveToPose", [](BT::TreeNode & n) {
+    add<MoveToPoseNode>(
+      "MoveToPose",
+      [](BT::TreeNode & n)
+      {
         return std::string(n.getRawPortValue("pose")) + " " +
                n.getInput<std::string>("path").value() + " " +
                n.getInput<std::string>("may_touch").value();
       });
-    add<MoveToJointsNode>("MoveToJoints", [](BT::TreeNode & n) {
-        return std::string(n.getRawPortValue("joints"));
-      });
+    add<MoveToJointsNode>(
+      "MoveToJoints", [](BT::TreeNode & n) { return std::string(n.getRawPortValue("joints")); });
     add<MoveGripperNode>("MoveGripper");
     add<GraspNode>("Grasp", object_id);
     add<ReleaseNode>("Release", object_id);
@@ -39,21 +41,28 @@ protected:
     add<RefineObjectNode>("RefineObject", object_id);
     add<GetGraspCandidatesNode>("GetGraspCandidates", object_id);
     add<FindReachableGrasp>("FindReachableGrasp", object_id);
-    add<GetPlaceCandidatesNode>("GetPlaceCandidates", [](BT::TreeNode & n) {
+    add<GetPlaceCandidatesNode>(
+      "GetPlaceCandidates",
+      [](BT::TreeNode & n)
+      {
         return n.getInput<std::string>("object_id").value() + " " +
                std::to_string(n.getInput<double>("x").value()).substr(0, 4) + " " +
                std::to_string(n.getInput<double>("y").value()).substr(0, 4);
       });
     add<FindReachablePlace>("FindReachablePlace", object_id);
     factory_.registerSimpleAction(
-      "QueryObjects", [this](BT::TreeNode & n) {
+      "QueryObjects",
+      [this](BT::TreeNode & n)
+      {
         log_.push_back("QueryObjects");
         n.setOutput("ids", ids_);
         return NodeStatus::SUCCESS;
-      }, QueryObjectsNode::providedPorts());
+      },
+      QueryObjectsNode::providedPorts());
 
     // Registered in reverse, as the server's directory scan has no order.
-    for (const auto * file : {"pick_place.xml", "place.xml", "pick.xml"}) {
+    for (const auto * file : {"pick_place.xml", "place.xml", "pick.xml"})
+    {
       factory_.registerBehaviorTreeFromFile(std::string(TREES_DIR) + "/" + file);
     }
 
@@ -62,6 +71,7 @@ protected:
     global_->set("view", std::vector<double>(7, 0.1));
     global_->set("target_class", std::string("box"));
     global_->set("pick_attempts", 1);
+    global_->set("speed_scaling", 0.1);
   }
 
   static std::string object_id(BT::TreeNode & n)
@@ -69,29 +79,39 @@ protected:
     return n.getInput<std::string>("object_id").value();
   }
 
-  template<class NodeT>
+  template <class NodeT>
   void add(
     const std::string & id,
-    std::function<std::string(BT::TreeNode &)> describe = [] (BT::TreeNode &) {return "";})
+    std::function<std::string(BT::TreeNode &)> describe = [](BT::TreeNode &) { return ""; })
   {
+    const bool has_speed = NodeT::providedPorts().count("speed_scaling") > 0;
     factory_.registerSimpleAction(
-      id, [this, id, describe](BT::TreeNode & n) {
+      id,
+      [this, id, describe, has_speed](BT::TreeNode & n)
+      {
         const auto detail = describe(n);
         log_.push_back(detail.empty() ? id : id + " " + detail);
+        if (has_speed)
+        {
+          speeds_.push_back(n.getInput<double>("speed_scaling").value());
+        }
         auto & results = results_[id];
-        if (results.empty()) {
+        if (results.empty())
+        {
           return NodeStatus::SUCCESS;
         }
         const auto status = results.front();
         results.pop_front();
         return status;
-      }, NodeT::providedPorts());
+      },
+      NodeT::providedPorts());
   }
 
   NodeStatus run(const std::string & tree_id, const std::string & object = "")
   {
     auto blackboard = BT::Blackboard::create(global_);
-    if (!object.empty()) {
+    if (!object.empty())
+    {
       blackboard->set("object_id", object);
     }
     auto tree = factory_.createTree(tree_id, blackboard);
@@ -108,6 +128,7 @@ protected:
   std::map<std::string, std::deque<NodeStatus>> results_;
   std::vector<std::string> ids_;
   std::vector<std::string> log_;
+  std::vector<double> speeds_;
 };
 
 TEST_F(Trees, PickRunsInOrder)
@@ -201,6 +222,16 @@ TEST_F(Trees, FailedPlaceEndsTheTree)
   EXPECT_EQ(run("PickPlace"), NodeStatus::FAILURE);
   EXPECT_EQ(log_.back(), "Release box_1");
   EXPECT_EQ(count("Grasp box_2"), 0u);
+}
+
+TEST_F(Trees, PickPlaceMovesAtThePayloadSpeed)
+{
+  global_->set("pick_attempts", 2);
+  ids_ = {"box_1"};
+  results_["Grasp"] = {NodeStatus::FAILURE};
+  EXPECT_EQ(run("PickPlace"), NodeStatus::SUCCESS);
+  // Pick with back-out (5), Pick (5), Place (4), home (1).
+  EXPECT_EQ(speeds_, std::vector<double>(15, 0.1));
 }
 
 TEST_F(Trees, NoObjectsIsSuccess)

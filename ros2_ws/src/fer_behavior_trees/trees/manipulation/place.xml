@@ -7,11 +7,12 @@
                           candidates="{place_candidates}"/>
       <FindReachablePlace object_id="{object_id}" candidates="{place_candidates}"
                           preplace_joints="{preplace_joints}" place_pose="{place_pose}"
-                          retreat_pose="{retreat_pose}"/>
-      <MoveToJoints joints="{preplace_joints}"/>
-      <MoveToPose pose="{place_pose}" path="straight"/>
+                          retreat_pose="{retreat_pose}" speed_scaling="{@speed_scaling}"/>
+      <MoveToJoints joints="{preplace_joints}" speed_scaling="{@speed_scaling}"/>
+      <MoveToPose pose="{place_pose}" path="straight" speed_scaling="{@speed_scaling}"/>
       <Release object_id="{object_id}"/>
-      <MoveToPose pose="{retreat_pose}" path="straight" may_touch="{object_id}"/>
+      <MoveToPose pose="{retreat_pose}" path="straight" may_touch="{object_id}"
+                  speed_scaling="{@speed_scaling}"/>
     </Sequence>
   </BehaviorTree>
 

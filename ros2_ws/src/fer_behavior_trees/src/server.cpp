@@ -19,15 +19,18 @@ Server::Server(const rclcpp::Node::SharedPtr & node)
 : BT::TreeExecutionServer(node),
   action_timeout_(node->declare_parameter<int64_t>("action_timeout", 2000)),
   service_timeout_(node->declare_parameter<int64_t>("service_timeout", 5000)),
-  check_reachable_timeout_(node->declare_parameter<int64_t>("check_reachable_timeout", 60000))
+  check_reachable_timeout_(node->declare_parameter<int64_t>("check_reachable_timeout", 60000)),
+  speed_scaling_(node->declare_parameter<double>("speed_scaling", 0.3))
 {
-  for (const auto & name : POSE_NAMES) {
-    const auto joints = node->declare_parameter<std::vector<double>>(
-      "poses." + name, std::vector<double>{});
-    if (joints.size() != 7) {
+  for (const auto & name : POSE_NAMES)
+  {
+    const auto joints =
+      node->declare_parameter<std::vector<double>>("poses." + name, std::vector<double>{});
+    if (joints.size() != 7)
+    {
       throw std::runtime_error(
-              "parameter 'poses." + name + "' needs 7 joint values, got " +
-              std::to_string(joints.size()));
+        "parameter 'poses." + name + "' needs 7 joint values, got " +
+        std::to_string(joints.size()));
     }
     globalBlackboard()->set(name, joints);
   }
@@ -36,9 +39,13 @@ Server::Server(const rclcpp::Node::SharedPtr & node)
 bool Server::onGoalReceived(const std::string & /*tree_name*/, const std::string & payload)
 {
   const std::set<std::string> reserved(POSE_NAMES.begin(), POSE_NAMES.end());
-  try {
-    payload_keys_ = apply_payload(*globalBlackboard(), payload, payload_keys_, reserved);
-  } catch (const PayloadError & e) {
+  try
+  {
+    payload_keys_ = apply_payload(
+      *globalBlackboard(), payload, payload_keys_, reserved, {{"speed_scaling", speed_scaling_}});
+  }
+  catch (const PayloadError & e)
+  {
     RCLCPP_ERROR(node()->get_logger(), "goal rejected: %s", e.what());
     return false;
   }
@@ -54,8 +61,7 @@ void Server::onTreeCreated(BT::Tree & tree)
 
 void Server::registerNodesIntoFactory(BT::BehaviorTreeFactory & factory)
 {
-  register_nodes(
-    factory, node(), action_timeout_, service_timeout_, check_reachable_timeout_);
+  register_nodes(factory, node(), action_timeout_, service_timeout_, check_reachable_timeout_);
 }
 
 void register_nodes(

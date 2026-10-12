@@ -21,13 +21,12 @@ uint8_t outcome_code(BT::ActionNodeErrorCode error);
 uint8_t outcome_code(BT::ServiceNodeErrorCode error);
 
 /// \brief Value of input \p port of \p node, or nullopt with an error logged.
-template<typename T>
-std::optional<T> required_input(const BT::TreeNode & node,
-  const std::string & port,
-  const rclcpp::Logger & logger)
+template <typename T>
+std::optional<T> required_input(
+  const BT::TreeNode & node, const std::string & port, const rclcpp::Logger & logger)
 {
   auto value = node.getInput<T>(port);
-  if (!value) 
+  if (!value)
   {
     RCLCPP_ERROR(logger, "%s: %s", node.name().c_str(), value.error().c_str());
     return std::nullopt;
@@ -36,25 +35,22 @@ std::optional<T> required_input(const BT::TreeNode & node,
 }
 
 /// \brief Writes \p outcome to the `outcome` port; OK is SUCCESS, anything else FAILURE.
-BT::NodeStatus finish(BT::TreeNode & node,
-  const Outcome & outcome,
-  const rclcpp::Logger & logger
-);
+BT::NodeStatus finish(BT::TreeNode & node, const Outcome & outcome, const rclcpp::Logger & logger);
 
 /// \brief Client of a fer_interfaces action whose result starts with `outcome`.
-template<class ActionT>
+template <class ActionT>
 class OutcomeActionNode : public BT::RosActionNode<ActionT>
 {
 public:
   using Base = BT::RosActionNode<ActionT>;
-  using typename Base::WrappedResult;
   using Base::onFailure;
+  using typename Base::WrappedResult;
 
   OutcomeActionNode(
-    const std::string & name,
-    const BT::NodeConfig & config,
-    const BT::RosNodeParams & params)
-  : Base(name, config, params) {}
+    const std::string & name, const BT::NodeConfig & config, const BT::RosNodeParams & params)
+  : Base(name, config, params)
+  {
+  }
 
   /// \brief Ports of the node: \p addition, `outcome` and the action name.
   static BT::PortsList outcome_ports(BT::PortsList addition)
@@ -66,7 +62,8 @@ public:
   /// \brief Cancels the goal once; Tree::haltTree halts every node a second time.
   void halt() override
   {
-    if (this->status() == BT::NodeStatus::RUNNING) {
+    if (this->status() == BT::NodeStatus::RUNNING)
+    {
       Base::halt();
       this->resetStatus();
     }
@@ -80,7 +77,8 @@ public:
   BT::NodeStatus onFailure(
     BT::ActionNodeErrorCode error, const std::optional<WrappedResult> & result) override
   {
-    if (result && result->result) {
+    if (result && result->result)
+    {
       return finish(*this, result->result->outcome, this->logger());
     }
     Outcome outcome;
@@ -91,7 +89,7 @@ public:
 };
 
 /// \brief Client of a fer_interfaces service whose response starts with `outcome`.
-template<class ServiceT>
+template <class ServiceT>
 class OutcomeServiceNode : public BT::RosServiceNode<ServiceT>
 {
 public:
@@ -100,7 +98,9 @@ public:
 
   OutcomeServiceNode(
     const std::string & name, const BT::NodeConfig & config, const BT::RosNodeParams & params)
-  : Base(name, config, params) {}
+  : Base(name, config, params)
+  {
+  }
 
   /// \brief Ports of the node: \p addition, `outcome` and the service name.
   static BT::PortsList outcome_ports(BT::PortsList addition)
@@ -111,7 +111,8 @@ public:
 
   BT::NodeStatus onResponseReceived(const typename Response::SharedPtr & response) override
   {
-    if (response->outcome.code == Outcome::OK) {
+    if (response->outcome.code == Outcome::OK)
+    {
       write_outputs(*response);
     }
     return finish(*this, response->outcome, this->logger());

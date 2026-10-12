@@ -12,7 +12,8 @@ BT::PortsList MoveGripperNode::providedPorts()
 bool MoveGripperNode::setGoal(Goal & goal)
 {
   const auto width = required_input<double>(*this, "width", logger());
-  if (!width) {
+  if (!width)
+  {
     return false;
   }
   goal.width = *width;
@@ -21,12 +22,11 @@ bool MoveGripperNode::setGoal(Goal & goal)
 
 BT::PortsList GraspNode::providedPorts()
 {
-  return outcome_ports(
-    {
-      BT::InputPort<std::string>("object_id", "FREE object to grasp"),
-      BT::InputPort<double>("width", "Expected width of the object between the fingers, m"),
-      BT::InputPort<double>("force", "N"),
-      BT::InputPort<double>("tolerance", 0.005, "Allowed width difference, m"),
+  return outcome_ports({
+    BT::InputPort<std::string>("object_id", "FREE object to grasp"),
+    BT::InputPort<double>("width", "Expected width of the object between the fingers, m"),
+    BT::InputPort<double>("force", "N"),
+    BT::InputPort<double>("tolerance", 0.005, "Allowed width difference, m"),
   });
 }
 
@@ -35,7 +35,8 @@ bool GraspNode::setGoal(Goal & goal)
   const auto object_id = required_input<std::string>(*this, "object_id", logger());
   const auto width = required_input<double>(*this, "width", logger());
   const auto force = required_input<double>(*this, "force", logger());
-  if (!object_id || !width || !force) {
+  if (!object_id || !width || !force)
+  {
     return false;
   }
   goal.object_id = *object_id;
@@ -47,17 +48,17 @@ bool GraspNode::setGoal(Goal & goal)
 
 BT::PortsList ReleaseNode::providedPorts()
 {
-  return outcome_ports(
-    {
-      BT::InputPort<std::string>("object_id", "GRASPED object to release"),
-      BT::InputPort<double>("open_width", 0.08, "m"),
+  return outcome_ports({
+    BT::InputPort<std::string>("object_id", "GRASPED object to release"),
+    BT::InputPort<double>("open_width", 0.08, "m"),
   });
 }
 
 bool ReleaseNode::setGoal(Goal & goal)
 {
   const auto object_id = required_input<std::string>(*this, "object_id", logger());
-  if (!object_id) {
+  if (!object_id)
+  {
     return false;
   }
   goal.object_id = *object_id;

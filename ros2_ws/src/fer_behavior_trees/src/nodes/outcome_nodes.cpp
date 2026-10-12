@@ -6,7 +6,8 @@ namespace fer_behavior_trees
 {
 uint8_t outcome_code(BT::ActionNodeErrorCode error)
 {
-  switch (error) {
+  switch (error)
+  {
     case BT::INVALID_GOAL:
     case BT::GOAL_REJECTED_BY_SERVER:
       return Outcome::INVALID_GOAL;
@@ -22,11 +23,11 @@ uint8_t outcome_code(BT::ServiceNodeErrorCode error)
   return error == BT::INVALID_REQUEST ? Outcome::INVALID_GOAL : Outcome::TIMEOUT;
 }
 
-BT::NodeStatus finish(
-  BT::TreeNode & node, const Outcome & outcome, const rclcpp::Logger & logger)
+BT::NodeStatus finish(BT::TreeNode & node, const Outcome & outcome, const rclcpp::Logger & logger)
 {
   node.setOutput("outcome", static_cast<int>(outcome.code));
-  if (outcome.code == Outcome::OK) {
+  if (outcome.code == Outcome::OK)
+  {
     return BT::NodeStatus::SUCCESS;
   }
   RCLCPP_WARN(

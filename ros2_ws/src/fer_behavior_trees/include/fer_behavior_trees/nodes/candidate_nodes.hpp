@@ -8,8 +8,7 @@
 namespace fer_behavior_trees
 {
 /// \brief `/grasp/candidates`: grasp candidates for a FREE object, best first.
-class GetGraspCandidatesNode
-  : public OutcomeServiceNode<fer_interfaces::srv::GetGraspCandidates>
+class GetGraspCandidatesNode : public OutcomeServiceNode<fer_interfaces::srv::GetGraspCandidates>
 {
 public:
   using OutcomeServiceNode::OutcomeServiceNode;
@@ -22,8 +21,7 @@ protected:
 
 /// \brief `/place/candidates`: hand poses that put a GRASPED object down at (x, y, z), turned
 /// by `yaw` about the vertical, in `frame`.
-class GetPlaceCandidatesNode
-  : public OutcomeServiceNode<fer_interfaces::srv::GetPlaceCandidates>
+class GetPlaceCandidatesNode : public OutcomeServiceNode<fer_interfaces::srv::GetPlaceCandidates>
 {
 public:
   using OutcomeServiceNode::OutcomeServiceNode;

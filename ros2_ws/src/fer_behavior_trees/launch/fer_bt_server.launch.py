@@ -10,6 +10,12 @@ def generate_launch_description() -> LaunchDescription:
     return LaunchDescription([
         DeclareLaunchArgument('use_sim_time', default_value='true'),
         DeclareLaunchArgument('log_level', default_value='info'),
+        DeclareLaunchArgument(
+            'params_file', default_value=PathJoinSubstitution([config, 'fer_bt_server.yaml']),
+            description='BT server parameters.'),
+        DeclareLaunchArgument(
+            'poses_file', default_value=PathJoinSubstitution([config, 'poses.yaml']),
+            description='Named arm configurations (home, view).'),
         Node(
             package='fer_behavior_trees',
             executable='fer_bt_server',
@@ -17,8 +23,8 @@ def generate_launch_description() -> LaunchDescription:
             output='both',
             arguments=['--ros-args', '--log-level', LaunchConfiguration('log_level')],
             parameters=[
-                PathJoinSubstitution([config, 'fer_bt_server.yaml']),
-                PathJoinSubstitution([config, 'poses.yaml']),
+                LaunchConfiguration('params_file'),
+                LaunchConfiguration('poses_file'),
                 {'use_sim_time': LaunchConfiguration('use_sim_time')},
             ],
         ),

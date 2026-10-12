@@ -18,8 +18,9 @@ const std::vector<std::string> POSE_NAMES{"home", "view"};
 
 /// \brief Behavior tree server of the manipulation trees on fer_interfaces.
 ///
-/// The goal payload (a JSON object) goes to the global blackboard; the named poses are
-/// loaded there at startup. Every node status change is printed to stdout.
+/// The goal payload (a JSON object) goes to the global blackboard; `speed_scaling` is the
+/// parameter of that name unless the payload sets it. The named poses are loaded there at
+/// startup. Every node status change is printed to stdout.
 class Server : public BT::TreeExecutionServer
 {
 public:
@@ -35,6 +36,7 @@ private:
   std::chrono::milliseconds action_timeout_;
   std::chrono::milliseconds service_timeout_;
   std::chrono::milliseconds check_reachable_timeout_;
+  double speed_scaling_;
   std::vector<std::string> payload_keys_;
   std::unique_ptr<BT::StdCoutLogger> cout_logger_;
 };

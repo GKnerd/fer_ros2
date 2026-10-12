@@ -8,3 +8,4 @@ fer_bt_server:
     action_timeout: 2000                    # ms, until an action server accepts a goal
     service_timeout: 5000                   # ms, until a service answers
     check_reachable_timeout: 60000          # ms, CheckReachable plans three motions
+    speed_scaling: 0.3                      # (0, 1], when the goal payload has none

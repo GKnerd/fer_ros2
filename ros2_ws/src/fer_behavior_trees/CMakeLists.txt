@@ -95,6 +95,8 @@ if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   set(ament_cmake_copyright_FOUND TRUE)
   set(ament_cmake_cpplint_FOUND TRUE)
+  set(ament_cmake_uncrustify_FOUND TRUE)
+  set(ament_cmake_clang_format_CONFIG_FILE "${CMAKE_CURRENT_SOURCE_DIR}/.clang-format")
   # Old server, removed in 8.7.
   set(AMENT_LINT_AUTO_FILE_EXCLUDE
     include/fer_behavior_trees/bt_server_node.hpp

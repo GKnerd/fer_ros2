@@ -33,7 +33,7 @@ using fer_interfaces::msg::PoseTarget;
 using geometry_msgs::msg::PoseStamped;
 
 /// Action server that records goals and ends each with `code`, or holds it until cancelled.
-template<class ActionT>
+template <class ActionT>
 class FakeAction
 {
 public:
@@ -41,26 +41,25 @@ public:
 
   FakeAction(const rclcpp::Node::SharedPtr & node, const std::string & name)
   {
-    server_ = rclcpp_action::create_server<ActionT>(node, 
-      name,
+    server_ = rclcpp_action::create_server<ActionT>(
+      node, name,
       [this](const rclcpp_action::GoalUUID &, std::shared_ptr<const typename ActionT::Goal> goal)
       {
         std::lock_guard<std::mutex> lock(mutex_);
         goals_.push_back(*goal);
         return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
       },
-      [](const std::shared_ptr<Handle>) {return rclcpp_action::CancelResponse::ACCEPT;},
+      [](const std::shared_ptr<Handle>) { return rclcpp_action::CancelResponse::ACCEPT; },
       [this](const std::shared_ptr<Handle> handle)
       {
         std::lock_guard<std::mutex> lock(mutex_);
-        threads_.emplace_back([this, handle] {execute(handle);});
-      }
-    );
+        threads_.emplace_back([this, handle] { execute(handle); });
+      });
   }
 
   ~FakeAction()
   {
-    for (auto & thread : threads_) 
+    for (auto & thread : threads_)
     {
       thread.join();
     }
@@ -95,7 +94,8 @@ private:
     if (code == Outcome::OK)
     {
       handle->succeed(result);
-    } else 
+    }
+    else
     {
       handle->abort(result);
     }
@@ -114,46 +114,49 @@ protected:
   using GetPlaceCandidates = fer_interfaces::srv::GetPlaceCandidates;
   using QueryObjects = fer_interfaces::srv::QueryObjects;
 
-  static void SetUpTestSuite() {rclcpp::init(0, nullptr);}
-  static void TearDownTestSuite() {rclcpp::shutdown();}
+  static void SetUpTestSuite() { rclcpp::init(0, nullptr); }
+  static void TearDownTestSuite() { rclcpp::shutdown(); }
 
   void SetUp() override
   {
     node_ = std::make_shared<rclcpp::Node>("bt_under_test");
     fakes_ = std::make_shared<rclcpp::Node>("fakes");
-    move_to_pose_ = std::make_unique<FakeAction<fer_interfaces::action::MoveToPose>>(fakes_,
-      "/motion/move_to_pose"
-    );
-    move_to_joints_ = std::make_unique<FakeAction<fer_interfaces::action::MoveToJoints>>(fakes_, 
-      "/motion/move_to_joints"
-    );
-    check_reachable_ = fakes_->create_service<CheckReachable>("/motion/check_reachable",
-      [this](const std::shared_ptr<CheckReachable::Request> request,
-        std::shared_ptr<CheckReachable::Response> response) 
+    move_to_pose_ = std::make_unique<FakeAction<fer_interfaces::action::MoveToPose>>(
+      fakes_, "/motion/move_to_pose");
+    move_to_joints_ = std::make_unique<FakeAction<fer_interfaces::action::MoveToJoints>>(
+      fakes_, "/motion/move_to_joints");
+    check_reachable_ = fakes_->create_service<CheckReachable>(
+      "/motion/check_reachable",
+      [this](
+        const std::shared_ptr<CheckReachable::Request> request,
+        std::shared_ptr<CheckReachable::Response> response)
+      {
+        std::lock_guard<std::mutex> lock(mutex_);
+        reachable_requests_.push_back(*request);
+        const auto call = reachable_requests_.size() - 1;
+        response->outcome.code =
+          call < reachable_codes_.size() ? reachable_codes_[call] : Outcome::OK;
+        if (response->outcome.code == Outcome::OK)
         {
-          std::lock_guard<std::mutex> lock(mutex_);
-          reachable_requests_.push_back(*request);
-          const auto call = reachable_requests_.size() - 1;
-          response->outcome.code = call < reachable_codes_.size() ? reachable_codes_[call] : Outcome::OK;
-          if (response->outcome.code == Outcome::OK)
+          for (size_t i = 0; i < request->targets.size(); ++i)
           {
-            for (size_t i = 0; i < request->targets.size(); ++i) 
-            {
-              fer_interfaces::msg::JointConfiguration configuration;
-              configuration.positions.fill(static_cast<double>(call) + 0.1 * i);
-              response->configurations.push_back(configuration);
-            }
+            fer_interfaces::msg::JointConfiguration configuration;
+            configuration.positions.fill(static_cast<double>(call) + 0.1 * i);
+            response->configurations.push_back(configuration);
           }
         }
-    );
+      });
 
     query_objects_ = fakes_->create_service<QueryObjects>(
       "/world_model/query_objects",
-      [this](const std::shared_ptr<QueryObjects::Request> request,
-      std::shared_ptr<QueryObjects::Response> response) {
+      [this](
+        const std::shared_ptr<QueryObjects::Request> request,
+        std::shared_ptr<QueryObjects::Response> response)
+      {
         std::lock_guard<std::mutex> lock(mutex_);
         query_requests_.push_back(*request);
-        for (const auto * id : {"box_1", "box_2"}) {
+        for (const auto * id : {"box_1", "box_2"})
+        {
           fer_interfaces::msg::WorldObject object;
           object.id = id;
           response->objects.push_back(object);
@@ -161,17 +164,19 @@ protected:
       });
     place_candidates_ = fakes_->create_service<GetPlaceCandidates>(
       "/place/candidates",
-      [this](const std::shared_ptr<GetPlaceCandidates::Request> request,
-      std::shared_ptr<GetPlaceCandidates::Response> response) {
+      [this](
+        const std::shared_ptr<GetPlaceCandidates::Request> request,
+        std::shared_ptr<GetPlaceCandidates::Response> response)
+      {
         std::lock_guard<std::mutex> lock(mutex_);
         place_requests_.push_back(*request);
         response->candidates.resize(2);
       });
 
-    executor_ = std::make_shared<rclcpp::executors::MultiThreadedExecutor>(
-      rclcpp::ExecutorOptions(), 4);
+    executor_ =
+      std::make_shared<rclcpp::executors::MultiThreadedExecutor>(rclcpp::ExecutorOptions(), 4);
     executor_->add_node(fakes_);
-    spinner_ = std::thread([this] {executor_->spin();});
+    spinner_ = std::thread([this] { executor_->spin(); });
     register_nodes(factory_, node_, 2000ms, 2000ms, 5000ms);
     blackboard_ = BT::Blackboard::create();
   }
@@ -198,7 +203,7 @@ protected:
     return tree_.tickWhileRunning();
   }
 
-  int outcome() {return blackboard_->get<int>("outcome");}
+  int outcome() { return blackboard_->get<int>("outcome"); }
 
   static PoseStamped pose(double x)
   {
@@ -287,8 +292,7 @@ TEST_F(Nodes, InvalidPathIsNotSent)
 
 TEST_F(Nodes, MoveToJointsNeedsSevenValues)
 {
-  EXPECT_EQ(
-    run(R"(<MoveToJoints joints="1;2;3" outcome="{outcome}"/>)"), BT::NodeStatus::FAILURE);
+  EXPECT_EQ(run(R"(<MoveToJoints joints="1;2;3" outcome="{outcome}"/>)"), BT::NodeStatus::FAILURE);
   EXPECT_EQ(outcome(), Outcome::INVALID_GOAL);
   EXPECT_TRUE(move_to_joints_->goals().empty());
 
@@ -304,16 +308,19 @@ TEST_F(Nodes, HaltCancelsTheGoal)
   blackboard_->set("pose", pose(0.4));
   create(R"(<MoveToPose pose="{pose}"/>)");
   const auto deadline = std::chrono::steady_clock::now() + 5s;
-  while (move_to_pose_->goals().empty() && std::chrono::steady_clock::now() < deadline) {
+  while (move_to_pose_->goals().empty() && std::chrono::steady_clock::now() < deadline)
+  {
     tree_.tickOnce();
     std::this_thread::sleep_for(10ms);
   }
-  for (int i = 0; i < 20; ++i) {
+  for (int i = 0; i < 20; ++i)
+  {
     tree_.tickOnce();
     std::this_thread::sleep_for(10ms);
   }
   tree_.haltTree();
-  while (!move_to_pose_->cancelled && std::chrono::steady_clock::now() < deadline) {
+  while (!move_to_pose_->cancelled && std::chrono::steady_clock::now() < deadline)
+  {
     std::this_thread::sleep_for(10ms);
   }
   EXPECT_TRUE(move_to_pose_->cancelled);
@@ -328,8 +335,7 @@ TEST_F(Nodes, QueryObjectsOutputsTheIdsOfFreeObjects)
   ASSERT_EQ(query_requests_.size(), 1u);
   EXPECT_EQ(query_requests_[0].class_ids, std::vector<std::string>{"box"});
   EXPECT_EQ(
-    query_requests_[0].statuses,
-    std::vector<uint8_t>{fer_interfaces::msg::WorldObject::FREE});
+    query_requests_[0].statuses, std::vector<uint8_t>{fer_interfaces::msg::WorldObject::FREE});
   EXPECT_FALSE(query_requests_[0].include_fixed);
 }
 
