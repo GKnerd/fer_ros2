@@ -1,4 +1,5 @@
-"""fer_manipulation.launch.py + the behavior tree server (/execute_tree).
+"""
+fer_manipulation.launch.py + the behavior tree server (/execute_tree).
 
 Includes:
   - fer_manipulation.launch.py  (hardware, MoveIt, the manipulation servers)
@@ -15,14 +16,14 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.substitutions import FindPackageShare
 
-HARDWARE = ("real", "mujoco")
-PERCEPTION = ("none", "mock")
+HARDWARE = ('real', 'mujoco')
+PERCEPTION = ('none', 'mock')
 
 
 def include(package: str, file: str, arguments: Dict) -> IncludeLaunchDescription:
     return IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            PathJoinSubstitution([FindPackageShare(package), "launch", file])
+            PathJoinSubstitution([FindPackageShare(package), 'launch', file])
         ),
         launch_arguments=arguments.items(),
     )
@@ -31,27 +32,29 @@ def include(package: str, file: str, arguments: Dict) -> IncludeLaunchDescriptio
 def launch_setup(context, *args, **kwargs):
 
     # Launch Args
-    hardware = LaunchConfiguration("hardware").perform(context)
-    server_log_level = LaunchConfiguration("server_log_level").perform(context)
-    bt_server_params_file = LaunchConfiguration("bt_server_params_file").perform(context)
-    poses_file = LaunchConfiguration("poses_file").perform(context)
+    hardware = LaunchConfiguration('hardware').perform(context)
+    server_log_level = LaunchConfiguration('server_log_level').perform(context)
+    bt_server_params_file = LaunchConfiguration('bt_server_params_file').perform(context)
+    poses_file = LaunchConfiguration('poses_file').perform(context)
     arguments = {
-        "hardware": hardware,
-        "server_log_level": server_log_level,
+        'hardware': hardware,
+        'server_log_level': server_log_level,
         **{name: LaunchConfiguration(name).perform(context) for name in (
-            "robot_ip", "log_level", "use_rviz", "arm_control_type", "hand_control_type",
-            "scene", "perception", "mock_objects_file", "world_model_params_file",
-            "fixtures_file", "grasp_planner_params_file", "catalog_file",
-            "motion_server_params_file", "gripper_params_file")},
+            'robot_ip', 'log_level', 'use_rviz', 'arm_control_type', 'hand_control_type',
+            'scene', 'namespace', 'hand', 'ee_id', 'robot_type', 'arm_prefix', 'no_prefix',
+            'xyz_ee', 'rpy_ee', 'tcp_xyz', 'tcp_rpy', 'safety_distance', 'with_sc', 'xyz',
+            'rpy', 'perception', 'mock_objects_file', 'world_model_params_file',
+            'fixtures_file', 'grasp_planner_params_file', 'catalog_file',
+            'motion_server_params_file', 'gripper_params_file')},
     }
 
-    manipulation_launch = include("fer_ros2_bringup", "fer_manipulation.launch.py", arguments)
+    manipulation_launch = include('fer_ros2_bringup', 'fer_manipulation.launch.py', arguments)
 
-    bt_launch = include("fer_behavior_trees", "fer_bt_server.launch.py", {
-        "use_sim_time": str(hardware == "mujoco").lower(),
-        "log_level": server_log_level,
-        "params_file": bt_server_params_file,
-        "poses_file": poses_file,
+    bt_launch = include('fer_behavior_trees', 'fer_bt_server.launch.py', {
+        'use_sim_time': str(hardware == 'mujoco').lower(),
+        'log_level': server_log_level,
+        'params_file': bt_server_params_file,
+        'poses_file': poses_file,
     })
 
     return [manipulation_launch, bt_launch]
@@ -70,101 +73,178 @@ def generate_declared_arguments() -> List[DeclareLaunchArgument]:
     return [
         # Hardware + MoveIt
         DeclareLaunchArgument(
-            "hardware",
-            default_value="mujoco",
+            'hardware',
+            default_value='mujoco',
             choices=list(HARDWARE),
             description="Hardware backend: 'real' (FER via libfranka) or 'mujoco' (simulation)."
         ),
         DeclareLaunchArgument(
-            "robot_ip",
-            default_value="",
-            description="IP address or hostname of the robot. Required for hardware:=real."
+            'robot_ip',
+            default_value='',
+            description='IP address or hostname of the robot. Required for hardware:=real.'
         ),
         DeclareLaunchArgument(
-            "log_level",
-            default_value="warn",
-            description="Log level of the hardware and MoveIt nodes "
+            'log_level',
+            default_value='warn',
+            description='Log level of the hardware and MoveIt nodes '
                         "('debug', 'info', 'warn', 'error', 'fatal')."
         ),
         DeclareLaunchArgument(
-            "use_rviz",
-            default_value="true",
-            description="Spawn RViz with the MoveIt MotionPlanning display."
+            'use_rviz',
+            default_value='true',
+            description='Spawn RViz with the MoveIt MotionPlanning display.'
         ),
         DeclareLaunchArgument(
-            "arm_control_type",
-            default_value="effort",
+            'arm_control_type',
+            default_value='effort',
             description="Arm trajectory controller to activate and route to: 'effort' or "
                         "'position' (sim), 'effort', 'velocity' or 'position' (real)."
         ),
         DeclareLaunchArgument(
-            "hand_control_type",
-            default_value="effort",
+            'hand_control_type',
+            default_value='effort',
             description="Sim gripper controller to activate: 'position' or 'effort'; must match "
-                        "the controller in gripper_params_file. Ignored for hardware:=real."
+                        'the controller in gripper_params_file. Ignored for hardware:=real.'
         ),
         DeclareLaunchArgument(
-            "scene",
-            default_value=share("fer_ros2_bringup", "scenes", "pick_place_world.xml"),
-            description="MuJoCo scene (MJCF) the robot is inserted into. "
-                        "Ignored for hardware:=real."
+            'scene',
+            default_value=share('fer_ros2_bringup', 'scenes', 'pick_place_world.xml'),
+            description='MuJoCo scene (MJCF) the robot is inserted into. '
+                        'Ignored for hardware:=real.'
+        ),
+        DeclareLaunchArgument(
+            'namespace',
+            default_value='',
+            description='Namespace of move_group.'
+        ),
+        # Description
+        DeclareLaunchArgument(
+            'hand',
+            default_value='true',
+            description="Mount the hand at the flange: 'true' or 'false'."
+        ),
+        DeclareLaunchArgument(
+            'ee_id',
+            default_value='franka_hand',
+            description='End-effector at the flange (MoveIt; real hardware): '
+                        "'none', 'franka_hand', 'cobot_pump'."
+        ),
+        DeclareLaunchArgument(
+            'robot_type',
+            default_value='fer',
+            description='The ID of the robot model to be used. Ignored for hardware:=mujoco.'
+        ),
+        DeclareLaunchArgument(
+            'arm_prefix',
+            default_value='',
+            description='The prefix of the robot. Ignored for hardware:=mujoco.'
+        ),
+        DeclareLaunchArgument(
+            'no_prefix',
+            default_value='false',
+            description="Don't print a prefix for joints, visuals, and links. "
+                        'Ignored for hardware:=mujoco.'
+        ),
+        DeclareLaunchArgument(
+            'xyz_ee',
+            default_value='0 0 0',
+            description='Position offset between ee and parent frame. '
+                        'Ignored for hardware:=mujoco.'
+        ),
+        DeclareLaunchArgument(
+            'rpy_ee',
+            default_value='0 0 -0.7853981633974483',
+            description='Rotation offset between ee and parent frame (default -pi/4 about z). '
+                        'Ignored for hardware:=mujoco.'
+        ),
+        DeclareLaunchArgument(
+            'tcp_xyz',
+            default_value='0 0 0.1034',
+            description='Position offset between ee frame and tcp frame. '
+                        'Ignored for hardware:=mujoco.'
+        ),
+        DeclareLaunchArgument(
+            'tcp_rpy',
+            default_value='0 0 0',
+            description='Rotation offset between ee frame and tcp frame. '
+                        'Ignored for hardware:=mujoco.'
+        ),
+        DeclareLaunchArgument(
+            'safety_distance',
+            default_value='0.03',
+            description='Safety distance for the collision capsules. Ignored for hardware:=mujoco.'
+        ),
+        DeclareLaunchArgument(
+            'with_sc',
+            default_value='false',
+            description='Should self-collision be enabled? Ignored for hardware:=mujoco.'
+        ),
+        DeclareLaunchArgument(
+            'xyz',
+            default_value='0 0 0',
+            description='Position offset with respect to the world. Ignored for hardware:=mujoco.'
+        ),
+        DeclareLaunchArgument(
+            'rpy',
+            default_value='0 0 0',
+            description='Rotation offset with respect to the world. Ignored for hardware:=mujoco.'
         ),
         # Manipulation and BT servers
         DeclareLaunchArgument(
-            "server_log_level",
-            default_value="info",
-            description="Log level of the manipulation and BT servers "
+            'server_log_level',
+            default_value='info',
+            description='Log level of the manipulation and BT servers '
                         "('debug', 'info', 'warn', 'error', 'fatal')."
         ),
         DeclareLaunchArgument(
-            "perception",
-            default_value="mock",
+            'perception',
+            default_value='mock',
             choices=list(PERCEPTION),
             description="'mock' also starts mock_perception with mock_objects_file."
         ),
         DeclareLaunchArgument(
-            "mock_objects_file",
-            default_value=share("fer_world_model", "config", "mock_objects.yaml"),
-            description="Detections published by mock_perception (perception:=mock)."
+            'mock_objects_file',
+            default_value=share('fer_world_model', 'config', 'mock_objects.yaml'),
+            description='Detections published by mock_perception (perception:=mock).'
         ),
         DeclareLaunchArgument(
-            "world_model_params_file",
-            default_value=share("fer_world_model", "config", "world_model.yaml"),
-            description="World model parameters."
+            'world_model_params_file',
+            default_value=share('fer_world_model', 'config', 'world_model.yaml'),
+            description='World model parameters.'
         ),
         DeclareLaunchArgument(
-            "fixtures_file",
-            default_value=share("fer_world_model", "config", "fixtures.yaml"),
+            'fixtures_file',
+            default_value=share('fer_world_model', 'config', 'fixtures.yaml'),
             description="Fixed objects (the table the FER stands on); '' for none."
         ),
         DeclareLaunchArgument(
-            "grasp_planner_params_file",
-            default_value=share("fer_grasp_planner", "config", "grasp_planner.yaml"),
-            description="Grasp planner parameters."
+            'grasp_planner_params_file',
+            default_value=share('fer_grasp_planner', 'config', 'grasp_planner.yaml'),
+            description='Grasp planner parameters.'
         ),
         DeclareLaunchArgument(
-            "catalog_file",
-            default_value=share("fer_grasp_planner", "config", "object_catalog.yaml"),
-            description="Grasp force per object class."
+            'catalog_file',
+            default_value=share('fer_grasp_planner', 'config', 'object_catalog.yaml'),
+            description='Grasp force per object class.'
         ),
         DeclareLaunchArgument(
-            "motion_server_params_file",
-            default_value="",
+            'motion_server_params_file',
+            default_value='',
             description="Motion server parameters; '' selects fer_moveit_motion_server.yaml."
         ),
         DeclareLaunchArgument(
-            "gripper_params_file",
-            default_value="",
+            'gripper_params_file',
+            default_value='',
             description="Gripper server parameters; '' selects gripper_<hardware>.yaml."
         ),
         DeclareLaunchArgument(
-            "bt_server_params_file",
-            default_value=share("fer_behavior_trees", "config", "fer_bt_server.yaml"),
-            description="BT server parameters (timeouts, default speed_scaling)."
+            'bt_server_params_file',
+            default_value=share('fer_behavior_trees', 'config', 'fer_bt_server.yaml'),
+            description='BT server parameters (timeouts, default speed_scaling).'
         ),
         DeclareLaunchArgument(
-            "poses_file",
-            default_value=share("fer_behavior_trees", "config", "poses.yaml"),
-            description="Named arm configurations of the trees (home, view)."
+            'poses_file',
+            default_value=share('fer_behavior_trees', 'config', 'poses.yaml'),
+            description='Named arm configurations of the trees (home, view).'
         ),
     ]

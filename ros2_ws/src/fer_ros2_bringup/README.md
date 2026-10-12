@@ -6,17 +6,14 @@ robot and for MuJoCo simulation. The hardware is selected with one argument,
 
 ## Launch files
 
-Each level includes the one below it and adds one part of the stack. The
-manipulation levels and the old skill levels both build on `fer_moveit.launch.py`.
+Each level includes the one below it and adds one part of the stack.
 
 | Launch file | Starts |
 |---|---|
 | `fer_real_ros2_control.launch.py` / `fer_mujoco_ros2_control.launch.py` | description, `robot_state_publisher`, ros2_control, controllers, gripper |
-| `fer_moveit.launch.py` | + MoveIt (`fer_moveit_config`) |
-| `fer_manipulation.launch.py` | + world model (`fer_world_model`, mock perception with `perception:=mock`), grasp planner (`fer_grasp_planner`), motion server (`fer_moveit_config`), gripper server (`fer_gripper_server`); activates the controllers |
+| `fer_moveit_and_control.launch.py` | + `move_group` and RViz (`fer_moveit`); no controller activated |
+| `fer_manipulation.launch.py` | + world model (`fer_world_model`, mock perception with `perception:=mock`), grasp planner (`fer_grasp_planner`), motion server (`fer_moveit`), gripper server (`fer_gripper_server`); activates the controllers |
 | `fer_manipulation_bt.launch.py` | + behavior tree server (`fer_bt_server` in `fer_behavior_trees`, `/execute_tree`) |
-| `fer_moveit_skills.launch.py` | old stack: + skill server (`fer_skills`) |
-| `fer_moveit_skills_bt.launch.py` | old stack: + behavior tree server and world model |
 
 ```bash
 # simulation
@@ -99,7 +96,7 @@ ros2_control overlay (component name `fer_hardware`):
 `ros2_control` argument must stay `false`.
 
 MuJoCo scenes live in `scenes/`; select one with `scene:=<path>` on
-`fer_mujoco_ros2_control.launch.py` or `fer_moveit.launch.py`. `base_world.xml`
+`fer_mujoco_ros2_control.launch.py` or `fer_moveit_and_control.launch.py`. `base_world.xml`
 (default) is the floor only. `pick_place_world.xml` puts the robot on a table
 (top at `base` z = 0, as `fer_world_model/config/fixtures.yaml`) with free
 objects at the poses of `fer_world_model/config/mock_objects.yaml`.

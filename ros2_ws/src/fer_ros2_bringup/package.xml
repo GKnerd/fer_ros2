@@ -8,7 +8,7 @@
     Wraps the upstream franka_description with one ros2_control overlay per
     hardware backend (hardware:=real|mujoco), and provides the controller
     configuration, MuJoCo scenes, and the layered launch files for hardware,
-    MoveIt, skills and behavior trees.
+    MoveIt, the manipulation servers and behavior trees.
   </description>
   <maintainer email="georg.katranis@gmail.com">Georgios Katranis</maintainer>
   <license>Apache-2.0</license>
@@ -32,14 +32,14 @@
   <exec_depend>franka_hardware</exec_depend>
   <exec_depend>franka_gripper</exec_depend>
   <exec_depend>franka_robot_state_broadcaster</exec_depend>
+  <exec_depend>franka_msgs</exec_depend>
 
   <!-- hardware:=mujoco -->
   <exec_depend>mujoco_vendor</exec_depend>
   <exec_depend>mujoco_ros2_control</exec_depend>
 
   <!-- upper launch levels -->
-  <exec_depend>fer_moveit_config</exec_depend>
-  <exec_depend>fer_skills</exec_depend>
+  <exec_depend>fer_moveit</exec_depend>
   <exec_depend>fer_behavior_trees</exec_depend>
   <exec_depend>fer_world_model</exec_depend>
   <exec_depend>fer_grasp_planner</exec_depend>
