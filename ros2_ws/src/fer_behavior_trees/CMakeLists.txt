@@ -17,37 +17,7 @@ find_package(behaviortree_cpp REQUIRED)
 find_package(behaviortree_ros2 REQUIRED)
 find_package(fer_interfaces REQUIRED)
 find_package(geometry_msgs REQUIRED)
-find_package(control_msgs REQUIRED)
-find_package(fer_skills REQUIRED)
 
-# Old server on fer_skills; removed in 8.7.
-set(BT_SERVER_DEPS
-  rclcpp
-  rclcpp_action
-  behaviortree_ros2
-  geometry_msgs
-  control_msgs
-  fer_skills
-)
-
-add_executable(bt_server_node
-  src/bt_server_node.cpp
-  src/go_home_client_node.cpp
-  src/pick_object_client_node.cpp
-  src/place_object_client_node.cpp
-  src/move_to_pose_client_node.cpp
-  src/control_gripper_client_node.cpp
-)
-
-
-target_include_directories(bt_server_node PRIVATE
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>
-)
-
-ament_target_dependencies(bt_server_node ${BT_SERVER_DEPS})
-
-# New server on fer_interfaces.
 set(dependencies
   rclcpp
   behaviortree_cpp
@@ -74,7 +44,7 @@ ament_target_dependencies(fer_bt ${dependencies})
 add_executable(fer_bt_server src/main.cpp)
 target_link_libraries(fer_bt_server fer_bt)
 
-install(TARGETS bt_server_node fer_bt_server
+install(TARGETS fer_bt_server
   DESTINATION lib/${PROJECT_NAME}
 )
 
@@ -97,22 +67,6 @@ if(BUILD_TESTING)
   set(ament_cmake_cpplint_FOUND TRUE)
   set(ament_cmake_uncrustify_FOUND TRUE)
   set(ament_cmake_clang_format_CONFIG_FILE "${CMAKE_CURRENT_SOURCE_DIR}/.clang-format")
-  # Old server, removed in 8.7.
-  set(AMENT_LINT_AUTO_FILE_EXCLUDE
-    include/fer_behavior_trees/bt_server_node.hpp
-    include/fer_behavior_trees/control_gripper_client_node.hpp
-    include/fer_behavior_trees/go_home_client_node.hpp
-    include/fer_behavior_trees/move_to_pose_client_node.hpp
-    include/fer_behavior_trees/pick_object_client_node.hpp
-    include/fer_behavior_trees/place_object_client_node.hpp
-    src/bt_server_node.cpp
-    src/control_gripper_client_node.cpp
-    src/go_home_client_node.cpp
-    src/move_to_pose_client_node.cpp
-    src/pick_object_client_node.cpp
-    src/place_object_client_node.cpp
-    launch/bt_server.launch.py
-  )
   ament_lint_auto_find_test_dependencies()
 
   find_package(ament_cmake_gtest REQUIRED)

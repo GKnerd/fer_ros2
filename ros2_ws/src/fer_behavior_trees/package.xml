@@ -15,9 +15,6 @@
   <depend>behaviortree_ros2</depend>
   <depend>fer_interfaces</depend>
   <depend>geometry_msgs</depend>
-  <!-- Old server; removed in 8.7. -->
-  <depend>control_msgs</depend>
-  <depend>fer_skills</depend>
 
   <exec_depend>launch</exec_depend>
   <exec_depend>launch_ros</exec_depend>
