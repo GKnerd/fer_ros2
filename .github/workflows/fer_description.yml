@@ -1,4 +1,4 @@
-name: CI
+name: Description
 
 on:
   push:
@@ -16,42 +16,34 @@ jobs:
     container: ros:jazzy-ros-base
     steps:
       - uses: actions/checkout@v4
-        with:
-          path: ws/src/fer_ros2_bringup
 
       - name: Install tools
         run: |
           apt-get update
-          apt-get install -y --no-install-recommends git python3-vcstool
+          apt-get install -y --no-install-recommends git
 
-      - name: Import franka_description at the platform pin
+      - name: Clone franka_description at the Dockerfile pin
         run: |
-          git clone --depth 1 https://github.com/GKnerd/fer_ros2_docker.git platform
-          python3 - <<'EOF'
-          import yaml
-          with open("platform/fer_core.repos") as f:
-              repos = yaml.safe_load(f)["repositories"]
-          entry = repos["ros2_ws/src/franka_description"]
-          with open("franka_description.repos", "w") as f:
-              yaml.safe_dump({"repositories": {"src/franka_description": entry}}, f)
-          EOF
-          vcs import ws < franka_description.repos
+          pin=$(sed -n 's/^ARG FRANKA_DESCRIPTION_COMMIT=//p' docker/Dockerfile)
+          test -n "$pin"
+          git clone https://github.com/frankarobotics/franka_description.git ros2_ws/src/franka_description
+          git -C ros2_ws/src/franka_description checkout "$pin"
 
       - name: Install dependencies
         run: |
           source /opt/ros/jazzy/setup.bash
           rosdep update
-          rosdep install --from-paths ws/src --ignore-src -r -y \
+          rosdep install --from-paths ros2_ws/src/franka_description ros2_ws/src/fer_ros2_bringup --ignore-src -r -y \
             --dependency-types build --dependency-types buildtool --dependency-types test
 
       - name: Build
-        working-directory: ws
+        working-directory: ros2_ws
         run: |
           source /opt/ros/jazzy/setup.bash
           colcon build --packages-select franka_description fer_ros2_bringup
 
       - name: Test
-        working-directory: ws
+        working-directory: ros2_ws
         run: |
           source /opt/ros/jazzy/setup.bash
           source install/setup.bash
