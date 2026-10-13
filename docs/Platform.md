@@ -30,7 +30,7 @@ one hardware overlay.
 
 | Check | MuJoCo (x86_64) | Real FER (Orin) |
 |---|---|---|
-| Fresh clone, image build from scratch | `fer_ros2`, 2026-10-13 | separate repositories, 2026-10-13; `fer_ros2` open |
+| Fresh clone, image build from scratch | `fer_ros2`, 2026-10-13 | `fer_ros2`, 2026-10-13 |
 | Full stack starts (`fer_manipulation_bt.launch.py`) | yes | yes |
 | `PickPlace` with mock perception | SUCCESS (2026-10-12, 2026-10-13) | SUCCESS (2026-10-12; stack run 2026-10-13) |
 | `speed_scaling` from the goal payload | tested | default speed (0.3) tested |
@@ -39,7 +39,7 @@ one hardware overlay.
 `fer_grasp_planner`, `fer_moveit`, `fer_behavior_trees` and `fer_ros2_bringup` (unit tests,
 contract tests against fake neighbours, `move_group` launch test, description invariants,
 `ament_flake8` / `ament_pep257` / clang-format). The driver packages build and run but fail
-`colcon test` on `copyright` and `lint_cmake`.
+`colcon test` on `copyright`.
 
 Not yet verified: see §8.1.
 
@@ -245,9 +245,8 @@ Named poses `home` and `view` in `config/poses.yaml`.
   requests. Package versions and a CHANGELOG for the platform are not settled; only the
   driver has a CHANGELOG.
 - **Releases:** `jazzy-0.1.0` freezes the state before the merge. The first `fer_ros2`
-  release, `jazzy-0.2.0`, follows the check on the Orin. Providing the code outside needs a
-  public repository.
-- **Driver lint:** `copyright` (9 files without a license header) and `lint_cmake`.
+  release is `jazzy-0.2.0`. Providing the code outside needs a public repository.
+- **Driver lint:** `copyright` (9 files without a license header).
 
 ### 8.4 Deferred features
 

@@ -8,8 +8,9 @@ Single repository `fer_ros2` (2026-10-13): the eight package repositories are me
 their full history into `ros2_ws/src`; the state before the merge is tag `jazzy-0.1.0`. The
 Dockerfile clones libfranka and the externals at their pins into `~/deps` and `~/deps_ws`;
 MuJoCo is built with `WITH_MUJOCO=1` (default on x86_64). The description CI runs from the
-repository root. Image built from scratch on x86_64; PickPlace SUCCESS in MuJoCo.
-Next step: the same check on the Orin, then release `jazzy-0.2.0`.
+repository root. Image built from scratch and the stack verified on x86_64 (PickPlace
+SUCCESS in MuJoCo) and on the Orin (real robot).
+Next step: release `jazzy-0.2.0`.
 
 All own C++ code is formatted with clang-format 18 (braces on their own line) since
 2026-10-12: one `.clang-format` in `ros2_ws/src`.
@@ -31,17 +32,15 @@ Not committed: `fer_ros2_driver/Repo_Hotfixes.md` (kept local).
 
 ## Next
 
-1. Orin: fresh clone of `fer_ros2`, `build_image.sh` (MuJoCo off), real stack, PickPlace.
-2. Release `jazzy-0.2.0`: `main` at the verified commit and default branch on GitHub; rules
+1. Release `jazzy-0.2.0`: `main` at the verified commit and default branch on GitHub; rules
    for `jazzy_devel` (pull request, review, CI), `main` (Georg only) and `jazzy-*` tags;
    archive the eight old repositories.
-3. After the release: CI for the whole stack, package versions and changelog. Open points in
+2. After the release: CI for the whole stack, package versions and changelog. Open points in
    `docs/Platform.md` §8.3.
-4. `fer_ros2_driver` packages: `colcon test` still fails on `copyright` (8 files in
-   `franka_hardware`, 1 in `franka_semantic_components` without a license header) and
-   `lint_cmake` (trailing space, `franka_gripper/CMakeLists.txt:43`). Both predate the
-   reformat.
-5. Refinements observed in sim and real runs (`docs/Platform.md` §8.2) and the open items
+3. `fer_ros2_driver` packages: `colcon test` still fails on `copyright` (8 files in
+   `franka_hardware`, 1 in `franka_semantic_components` without a license header). It
+   predates the reformat.
+4. Refinements observed in sim and real runs (`docs/Platform.md` §8.2) and the open items
    below. The three reviews of 2026-10-12 (code issues, tests and CI, reuse from
    `multipanda_ros2`) are not yet in the list below.
 
