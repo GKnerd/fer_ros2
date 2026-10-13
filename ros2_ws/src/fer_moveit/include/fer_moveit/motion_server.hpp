@@ -34,7 +34,7 @@ namespace fer_moveit
 class MotionServer
 {
 public:
-  /// \param robot_mode null when the hardware reports no robot mode (MuJoCo).
+  /// \param robot_mode null when the hardware reports no robot mode (MuJoCo, mock).
   MotionServer(
     const rclcpp::Node::SharedPtr & node, WorldModelClient & world_model,
     MoveGroupClient & move_group, const RobotModeMonitor * robot_mode,

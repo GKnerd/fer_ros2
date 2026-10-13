@@ -6,7 +6,7 @@
   <description>
     Bringup for the Franka Emika Robot (FER) on the real robot and in MuJoCo.
     Wraps the upstream franka_description with one ros2_control overlay per
-    hardware backend (hardware:=real|mujoco), and provides the controller
+    hardware backend (hardware:=real|mujoco|mock), and provides the controller
     configuration, MuJoCo scenes, and the layered launch files for hardware,
     MoveIt, the manipulation servers and behavior trees.
   </description>
@@ -34,6 +34,9 @@
   <exec_depend>franka_robot_state_broadcaster</exec_depend>
   <exec_depend>franka_msgs</exec_depend>
 
+  <!-- hardware:=mock (mock_components/GenericSystem) -->
+  <exec_depend>hardware_interface</exec_depend>
+
   <!-- hardware:=mujoco -->
   <exec_depend>mujoco_vendor</exec_depend>
   <exec_depend>mujoco_ros2_control</exec_depend>
@@ -55,6 +58,8 @@
   <test_depend>python3-yaml</test_depend>
   <test_depend>xacro</test_depend>
   <test_depend>franka_description</test_depend>
+  <test_depend>launch_testing</test_depend>
+  <test_depend>launch_testing_ament_cmake</test_depend>
 
   <export>
     <build_type>ament_cmake</build_type>

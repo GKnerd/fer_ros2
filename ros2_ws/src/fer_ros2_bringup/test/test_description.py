@@ -24,6 +24,7 @@ OVERLAY_TAGS = ('ros2_control', 'mujoco_inputs')
 PLUGINS = {
     'real': 'franka_hardware/FrankaMultiHardwareInterface',
     'mujoco': 'mujoco_ros2_control/MujocoSystemInterface',
+    'mock': 'mock_components/GenericSystem',
 }
 
 
@@ -57,14 +58,14 @@ def upstream():
     return expand(UPSTREAM, robot_ip=ROBOT_IP)
 
 
-@pytest.mark.parametrize('hardware', ['none', 'real', 'mujoco'])
+@pytest.mark.parametrize('hardware', ['none', 'real', 'mujoco', 'mock'])
 def test_model_matches_upstream(upstream, hardware):
     wrapped = expand(WRAPPER, hardware=hardware, robot_ip=ROBOT_IP)
     assert model_only(wrapped) == model_only(upstream)
 
 
 @pytest.mark.parametrize('hand', ['true', 'false'])
-@pytest.mark.parametrize('hardware', ['real', 'mujoco'])
+@pytest.mark.parametrize('hardware', ['real', 'mujoco', 'mock'])
 def test_model_matches_upstream_hand(hardware, hand):
     upstream = expand(UPSTREAM, robot_ip=ROBOT_IP, hand=hand)
     wrapped = expand(WRAPPER, hardware=hardware, robot_ip=ROBOT_IP, hand=hand)
@@ -77,7 +78,7 @@ def test_none_has_no_overlay():
         assert root.findall(tag) == []
 
 
-@pytest.mark.parametrize('hardware', ['real', 'mujoco'])
+@pytest.mark.parametrize('hardware', ['real', 'mujoco', 'mock'])
 def test_exactly_one_backend(hardware):
     root = expand(WRAPPER, hardware=hardware, robot_ip=ROBOT_IP)
     blocks = root.findall('ros2_control')
@@ -87,7 +88,7 @@ def test_exactly_one_backend(hardware):
     assert len(root.findall('mujoco_inputs')) == (1 if hardware == 'mujoco' else 0)
 
 
-@pytest.mark.parametrize('hardware', ['real', 'mujoco'])
+@pytest.mark.parametrize('hardware', ['real', 'mujoco', 'mock'])
 def test_overlay_joints_exist(hardware):
     root = expand(WRAPPER, hardware=hardware, robot_ip=ROBOT_IP)
     joints = model_joints(root)
@@ -107,6 +108,20 @@ def test_real_overlay_contract():
         states = [s.get('name') for s in joint.findall('state_interface')]
         assert commands == ['effort', 'position', 'velocity']
         assert states == ['position', 'velocity', 'effort']
+
+
+@pytest.mark.parametrize('hand', ['true', 'false'])
+def test_mock_overlay_contract(hand):
+    root = expand(WRAPPER, hardware='mock', hand=hand)
+    joints = root.findall('ros2_control/joint')
+    expected = [f'fer_joint{i}' for i in range(1, 8)] + (
+        ['fer_finger_joint1'] if hand == 'true' else [])
+    assert [j.get('name') for j in joints] == expected
+    for joint in joints:
+        commands = [c.get('name') for c in joint.findall('command_interface')]
+        states = [s.get('name') for s in joint.findall('state_interface')]
+        assert commands == ['position']
+        assert states == ['position', 'velocity']
 
 
 @pytest.mark.parametrize('control_type', ['effort', 'position'])

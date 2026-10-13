@@ -48,7 +48,7 @@ def load_yaml(package_name, file_path):
         return None
 
 
-HARDWARE = ("real", "mujoco")
+HARDWARE = ("real", "mujoco", "mock")
 
 
 def select_default_controllers(controllers_yaml, arm_type, hand_type):
@@ -257,7 +257,7 @@ def generate_declared_arguments() -> List[DeclareLaunchArgument]:
             "hardware",
             default_value="mujoco",
             choices=list(HARDWARE),
-            description="Hardware backend whose controllers MoveIt routes to: 'real' or 'mujoco'."
+            description="Hardware backend whose controllers MoveIt routes to: 'real', 'mujoco' or 'mock'."
         ),
         DeclareLaunchArgument(
             "use_sim_time",
@@ -294,12 +294,13 @@ def generate_declared_arguments() -> List[DeclareLaunchArgument]:
             default_value="effort",
             description="Which arm controller is the default for move_group to route "
                         "trajectories to: 'effort' or 'position' (mujoco), "
-                        "'effort', 'velocity' or 'position' (real)."
+                        "'effort', 'velocity' or 'position' (real), 'position' (mock)."
         ),
         DeclareLaunchArgument(
             "hand_control_type",
             default_value="position",
             description="Which gripper controller is the default for move_group: "
-                        "'effort' or 'position'. Ignored for hardware:=real (franka_gripper node)."
+                        "'effort' or 'position' (mujoco), 'position' (mock). "
+                        "Ignored for hardware:=real (franka_gripper node)."
         ),
     ]

@@ -23,6 +23,11 @@ if(BUILD_TESTING)
   ament_add_pytest_test(test_description test/test_description.py
     TIMEOUT 120
   )
+
+  find_package(launch_testing_ament_cmake REQUIRED)
+  add_launch_test(test/manipulation_mock_test.launch.py
+    TIMEOUT 300
+  )
 endif()
 
 ament_package()

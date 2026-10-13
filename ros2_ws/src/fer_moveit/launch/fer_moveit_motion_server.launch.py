@@ -7,7 +7,7 @@ from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 
-HARDWARE = ('real', 'mujoco')
+HARDWARE = ('real', 'mujoco', 'mock')
 
 
 def launch_setup(context, *args, **kwargs) -> List[Node]:
@@ -39,7 +39,8 @@ def generate_declared_arguments() -> List[DeclareLaunchArgument]:
     return [
         DeclareLaunchArgument(
             'hardware', default_value='mujoco', choices=list(HARDWARE),
-            description="'real' (robot mode from franka_robot_state_broadcaster) or 'mujoco'."),
+            description="'real' (robot mode from franka_robot_state_broadcaster), 'mujoco' "
+                        "or 'mock'."),
         DeclareLaunchArgument(
             'log_level', default_value='info',
             description='Node log level (debug|info|warn|error|fatal).'),

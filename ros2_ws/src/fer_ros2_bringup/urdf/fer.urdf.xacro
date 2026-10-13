@@ -8,7 +8,7 @@
     upstream franka_description/robots/fer/fer.urdf.xacro; all of its xacro
     arguments (hand, ee_id, tcp_xyz, rpy_ee, robot_ip, ...) are passed straight
     through. Upstream's own ros2_control block stays off (ros2_control:=false);
-    the backend is selected with hardware:=real|mujoco|none instead.
+    the backend is selected with hardware:=real|mujoco|mock|none instead.
   -->
 
   <xacro:arg name="hardware" default="none" />
@@ -20,8 +20,8 @@
   <xacro:property name="hardware" value="$(arg hardware)"/>
   <xacro:property name="arm_id" value="${modified_prefix}$(arg robot_type)"/>
 
-  <xacro:if value="${hardware not in ['real', 'mujoco', 'none']}">
-    ${xacro.fatal("hardware must be one of real, mujoco, none; got '" + hardware + "'")}
+  <xacro:if value="${hardware not in ['real', 'mujoco', 'mock', 'none']}">
+    ${xacro.fatal("hardware must be one of real, mujoco, mock, none; got '" + hardware + "'")}
   </xacro:if>
 
   <xacro:if value="$(arg ros2_control)">
@@ -50,6 +50,11 @@
         joint_limits="${xacro.load_yaml('$(find franka_description)/robots/fer/joint_limits.yaml')}"
         hand="$(arg hand)"
         hand_control_type="$(arg hand_control_type)"/>
+  </xacro:if>
+
+  <xacro:if value="${hardware == 'mock'}">
+    <xacro:include filename="$(find fer_ros2_bringup)/urdf/control/fer_mock.ros2_control.xacro"/>
+    <xacro:fer_mock_ros2_control arm_id="${arm_id}" hand="$(arg hand)"/>
   </xacro:if>
 
 </robot>

@@ -1,0 +1,26 @@
+# Controllers MoveIt may route to with hardware:=mock (position only, no physics).
+# fer_move_group.launch.py sets `default: true` on the arm and gripper controller
+# chosen by arm_control_type / hand_control_type.
+controller_names:
+  - position_trajectory_controller
+  - gripper_position_controller
+
+position_trajectory_controller:
+  type: FollowJointTrajectory
+  action_ns: follow_joint_trajectory
+  default: true
+  joints:
+    - fer_joint1
+    - fer_joint2
+    - fer_joint3
+    - fer_joint4
+    - fer_joint5
+    - fer_joint6
+    - fer_joint7
+
+gripper_position_controller:
+  type: GripperCommand
+  action_ns: gripper_cmd
+  default: true
+  joints:
+    - fer_finger_joint1

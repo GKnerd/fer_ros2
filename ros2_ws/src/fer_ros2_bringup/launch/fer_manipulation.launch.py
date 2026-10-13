@@ -10,7 +10,7 @@ Includes:
 
 The hardware launch loads the motion and gripper controllers inactive. Once that spawner
 exits, this launch activates <arm_control_type>_trajectory_controller and, for
-hardware:=mujoco, gripper_<hand_control_type>_controller. The gripper server starts after
+hardware:=mujoco|mock, gripper_<hand_control_type>_controller. The gripper server starts after
 the switch, because a gripper controller only offers its action while active.
 """
 from typing import Dict, List
@@ -28,7 +28,7 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.substitutions import FindPackageShare
 
-HARDWARE = ('real', 'mujoco')
+HARDWARE = ('real', 'mujoco', 'mock')
 PERCEPTION = ('none', 'mock')
 
 # Arguments of fer_moveit_and_control.launch.py passed through unchanged.
@@ -99,7 +99,7 @@ def launch_setup(context, *args, **kwargs):
 
     # Controller activation, after the hardware launch has loaded them inactive
     controllers = [f'{arm_control_type}_trajectory_controller']
-    if hardware == 'mujoco':
+    if hardware in ('mujoco', 'mock'):
         controllers.append(f'gripper_{hand_control_type}_controller')
     activate_controllers = ExecuteProcess(
         cmd=['ros2', 'control', 'switch_controllers', '--strict', '--activate', *controllers],
@@ -143,7 +143,8 @@ def generate_declared_arguments() -> List[DeclareLaunchArgument]:
             'hardware',
             default_value='mujoco',
             choices=list(HARDWARE),
-            description="Hardware backend: 'real' (FER via libfranka) or 'mujoco' (simulation)."
+            description="Hardware backend: 'real' (FER via libfranka), 'mujoco' (simulation) or "
+                        "'mock' (mock_components, no physics)."
         ),
         DeclareLaunchArgument(
             'robot_ip',
@@ -165,19 +166,21 @@ def generate_declared_arguments() -> List[DeclareLaunchArgument]:
             'arm_control_type',
             default_value='effort',
             description="Arm trajectory controller to activate and route to: 'effort' or "
-                        "'position' (sim), 'effort', 'velocity' or 'position' (real)."
+                        "'position' (sim), 'effort', 'velocity' or 'position' (real), "
+                        "'position' (mock)."
         ),
         DeclareLaunchArgument(
             'hand_control_type',
             default_value='effort',
-            description="Sim gripper controller to activate: 'position' or 'effort'; must match "
-                        'the controller in gripper_params_file. Ignored for hardware:=real.'
+            description="Gripper controller to activate: 'position' or 'effort' (sim), "
+                        "'position' (mock); must match the controller in gripper_params_file. "
+                        'Ignored for hardware:=real.'
         ),
         DeclareLaunchArgument(
             'scene',
             default_value=share('fer_ros2_bringup', 'scenes', 'pick_place_world.xml'),
             description='MuJoCo scene (MJCF) the robot is inserted into. '
-                        'Ignored for hardware:=real.'
+                        'Ignored unless hardware:=mujoco.'
         ),
         DeclareLaunchArgument(
             'namespace',
@@ -199,62 +202,63 @@ def generate_declared_arguments() -> List[DeclareLaunchArgument]:
         DeclareLaunchArgument(
             'robot_type',
             default_value='fer',
-            description='The ID of the robot model to be used. Ignored for hardware:=mujoco.'
+            description='The ID of the robot model to be used. Ignored unless hardware:=real.'
         ),
         DeclareLaunchArgument(
             'arm_prefix',
             default_value='',
-            description='The prefix of the robot. Ignored for hardware:=mujoco.'
+            description='The prefix of the robot. Ignored unless hardware:=real.'
         ),
         DeclareLaunchArgument(
             'no_prefix',
             default_value='false',
             description="Don't print a prefix for joints, visuals, and links. "
-                        'Ignored for hardware:=mujoco.'
+                        'Ignored unless hardware:=real.'
         ),
         DeclareLaunchArgument(
             'xyz_ee',
             default_value='0 0 0',
             description='Position offset between ee and parent frame. '
-                        'Ignored for hardware:=mujoco.'
+                        'Ignored unless hardware:=real.'
         ),
         DeclareLaunchArgument(
             'rpy_ee',
             default_value='0 0 -0.7853981633974483',
             description='Rotation offset between ee and parent frame (default -pi/4 about z). '
-                        'Ignored for hardware:=mujoco.'
+                        'Ignored unless hardware:=real.'
         ),
         DeclareLaunchArgument(
             'tcp_xyz',
             default_value='0 0 0.1034',
             description='Position offset between ee frame and tcp frame. '
-                        'Ignored for hardware:=mujoco.'
+                        'Ignored unless hardware:=real.'
         ),
         DeclareLaunchArgument(
             'tcp_rpy',
             default_value='0 0 0',
             description='Rotation offset between ee frame and tcp frame. '
-                        'Ignored for hardware:=mujoco.'
+                        'Ignored unless hardware:=real.'
         ),
         DeclareLaunchArgument(
             'safety_distance',
             default_value='0.03',
-            description='Safety distance for the collision capsules. Ignored for hardware:=mujoco.'
+            description='Safety distance for the collision capsules. '
+                        'Ignored unless hardware:=real.'
         ),
         DeclareLaunchArgument(
             'with_sc',
             default_value='false',
-            description='Should self-collision be enabled? Ignored for hardware:=mujoco.'
+            description='Should self-collision be enabled? Ignored unless hardware:=real.'
         ),
         DeclareLaunchArgument(
             'xyz',
             default_value='0 0 0',
-            description='Position offset with respect to the world. Ignored for hardware:=mujoco.'
+            description='Position offset with respect to the world. Ignored unless hardware:=real.'
         ),
         DeclareLaunchArgument(
             'rpy',
             default_value='0 0 0',
-            description='Rotation offset with respect to the world. Ignored for hardware:=mujoco.'
+            description='Rotation offset with respect to the world. Ignored unless hardware:=real.'
         ),
         # Manipulation servers
         DeclareLaunchArgument(

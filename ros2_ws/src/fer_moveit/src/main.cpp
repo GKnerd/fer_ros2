@@ -13,10 +13,11 @@ int main(int argc, char ** argv)
   rclcpp::init(argc, argv);
   auto node = std::make_shared<rclcpp::Node>("fer_moveit_motion_server");
   const auto hardware = node->declare_parameter("hardware", std::string("mujoco"));
-  if (hardware != "real" && hardware != "mujoco")
+  if (hardware != "real" && hardware != "mujoco" && hardware != "mock")
   {
     RCLCPP_FATAL(
-      node->get_logger(), "hardware must be 'real' or 'mujoco', got '%s'", hardware.c_str());
+      node->get_logger(), "hardware must be 'real', 'mujoco' or 'mock', got '%s'",
+      hardware.c_str());
     rclcpp::shutdown();
     return 1;
   }

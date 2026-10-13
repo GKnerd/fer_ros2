@@ -337,9 +337,9 @@ def make_gripper(node: Node, hardware: str, callback_group: CallbackGroup) -> Gr
         # franka_msgs exists with the real profile only.
         from fer_gripper_server.adapters.franka_gripper import FrankaGripper
         return FrankaGripper(node, callback_group)
-    if hardware == 'mujoco':
+    if hardware in ('mujoco', 'mock'):
         return GripperCommandGripper(node, callback_group)
-    raise ValueError(f"hardware must be 'real' or 'mujoco', got '{hardware}'")
+    raise ValueError(f"hardware must be 'real', 'mujoco' or 'mock', got '{hardware}'")
 
 
 def main(args: list[str] | None = None) -> None:
