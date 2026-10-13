@@ -69,7 +69,9 @@ The settings are volatile and are lost on reboot or driver reload.
 
 - `main`: releases only, each tagged `jazzy-<version>`. A plain clone gets the latest release.
 - `jazzy_devel`: development. Changes come in through pull requests, see `CONTRIBUTING.md`.
-- `jazzy-0.1.0` is the last state with separate repositories per package (`.repos` profiles).
+- `jazzy-0.1.0` marks the state before the packages were merged into this repository. The
+  package repositories its `.repos` profiles refer to no longer exist; their full history
+  is in `ros2_ws/src`, and commit `5a17440` holds that state of every package in one tree.
 
 ## Layout
 
