@@ -10,7 +10,12 @@ Dockerfile clones libfranka and the externals at their pins into `~/deps` and `~
 MuJoCo is built with `WITH_MUJOCO=1` (default on x86_64). The description CI runs from the
 repository root. Image built from scratch and the stack verified on x86_64 (PickPlace
 SUCCESS in MuJoCo) and on the Orin (real robot).
-Next step: release `jazzy-0.2.0`.
+
+Released `jazzy-0.2.0` (2026-10-13): `main` is the default branch. Rulesets protect
+`jazzy_devel` (pull request, 1 approval, check `description-invariant`), `main` (updates by
+Georg only) and the `jazzy-*` tags. The eight package repositories were deleted on GitHub;
+their history is in `ros2_ws/src`.
+Next step: CI for the whole stack, package versions and changelog.
 
 All own C++ code is formatted with clang-format 18 (braces on their own line) since
 2026-10-12: one `.clang-format` in `ros2_ws/src`.
@@ -28,19 +33,16 @@ All own C++ code is formatted with clang-format 18 (braces on their own line) si
 | 8.6 Bringup | done |
 | 8.7 Removal and renames | implemented, committed, MuJoCo verified; real-robot check and GitHub renames done, Fresh import verified on PC and Orin |
 
-Not committed: `fer_ros2_driver/Repo_Hotfixes.md` (kept local).
+Kept local, outside git: `Repo_Hotfixes.md` in the old `fer_ros2_docker` folder.
 
 ## Next
 
-1. Release `jazzy-0.2.0`: `main` at the verified commit and default branch on GitHub; rules
-   for `jazzy_devel` (pull request, review, CI), `main` (Georg only) and `jazzy-*` tags;
-   archive the eight old repositories.
-2. After the release: CI for the whole stack, package versions and changelog. Open points in
-   `docs/Platform.md` §8.3.
-3. `fer_ros2_driver` packages: `colcon test` still fails on `copyright` (8 files in
+1. CI for the whole stack, package versions and changelog (all `package.xml` are at
+   0.0.0); decide before the next release. Open points in `docs/Platform.md` §8.3.
+2. `fer_ros2_driver` packages: `colcon test` still fails on `copyright` (8 files in
    `franka_hardware`, 1 in `franka_semantic_components` without a license header). It
    predates the reformat.
-4. Refinements observed in sim and real runs (`docs/Platform.md` §8.2) and the open items
+3. Refinements observed in sim and real runs (`docs/Platform.md` §8.2) and the open items
    below. The three reviews of 2026-10-12 (code issues, tests and CI, reuse from
    `multipanda_ros2`) are not yet in the list below.
 
@@ -107,3 +109,4 @@ Not committed: `fer_ros2_driver/Repo_Hotfixes.md` (kept local).
 | 2026-10-13 | Externals cloned by the Dockerfile at pinned commits into `~/deps_ws`; no vcs, no submodules | A pin changes in the same commit as the code that needs it; code changes do not rebuild the externals |
 | 2026-10-13 | `main` = releases tagged `jazzy-<version>`; `jazzy_devel` = development through pull requests | A plain clone gets verified code; one branch for all work |
 | 2026-10-13 | One `.clang-format` in `ros2_ws/src` | The container sees only `ros2_ws`; the clang-format tests read it by path |
+| 2026-10-13 | Old package repositories deleted, not archived | They served no purpose; their history is in `ros2_ws/src` |
