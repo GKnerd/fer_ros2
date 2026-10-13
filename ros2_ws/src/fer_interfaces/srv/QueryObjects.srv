@@ -1,0 +1,11 @@
+# QueryObjects.srv 
+
+string[] ids
+string[] class_ids
+uint8[] statuses
+bool include_fixed false
+---
+
+Outcome outcome                     # OK (also when nothing matches)
+uint64 revision                     # which world state this answer describes
+WorldObject[] objects

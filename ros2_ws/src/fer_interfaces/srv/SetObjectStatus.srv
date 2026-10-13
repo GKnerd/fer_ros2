@@ -1,0 +1,9 @@
+# SetObjectStatus.srv 
+
+string id
+uint8 status
+string held_by
+geometry_msgs/PoseStamped pose      # required: new pose in the frame matching the new status
+---
+Outcome outcome                     # OK, NOT_FOUND, INVALID_GOAL
+uint64 revision

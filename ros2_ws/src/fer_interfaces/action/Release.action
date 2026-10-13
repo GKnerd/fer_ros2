@@ -1,0 +1,7 @@
+# Release.action
+string object_id                    # must be GRASPED
+float64 open_width 0.08
+---
+Outcome outcome                     # OK, NOT_FOUND, INVALID_STATE, RELEASE_FAILED, CANCELLED
+geometry_msgs/PoseStamped released_pose   # where the world model now believes the object is (base frame)
+---

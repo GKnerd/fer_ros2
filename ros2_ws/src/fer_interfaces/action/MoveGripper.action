@@ -1,0 +1,8 @@
+# MoveGripper.action
+
+float64 width                       # full opening, m
+
+---
+Outcome outcome                     # OK, INVALID_GOAL, GRIPPER_FAILED, CANCELLED
+float64 measured_width
+---
