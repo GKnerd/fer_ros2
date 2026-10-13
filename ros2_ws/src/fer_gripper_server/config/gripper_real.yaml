@@ -1,0 +1,17 @@
+fer_gripper_server:
+  ros__parameters:
+    hardware: real
+    hand_frame: fer_hand_tcp
+    base_frame: base
+    max_width: 0.08              # m
+    max_force: 70.0              # N, Franka Hand continuous force
+    min_hold_width: 0.002        # m, below this nothing is held
+    move_tolerance: 0.003        # m, MoveGripper and Release
+    watch_rate: 10.0             # Hz
+    tf_timeout: 0.2              # s
+    startup_timeout: 10.0        # s
+    world_model_timeout: 2.0     # s
+    action_timeout: 10.0         # s
+    state_timeout: 1.0           # s
+    gripper_namespace: /fer_gripper
+    speed: 0.1                   # m/s
