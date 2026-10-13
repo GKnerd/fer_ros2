@@ -6,4 +6,4 @@ repositories:
   ros2_ws/src/fer_ros2_driver:
     type: git
     url: https://github.com/GKnerd/fer_ros2_driver.git
-    version: jazzy
+    version: jazzy-0.1.0
