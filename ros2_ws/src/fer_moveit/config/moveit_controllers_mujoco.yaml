@@ -1,0 +1,48 @@
+# Controllers MoveIt may route to with hardware:=mujoco.
+# fer_move_group.launch.py sets `default: true` on the arm and gripper controller
+# chosen by arm_control_type / hand_control_type.
+controller_names:
+  - effort_trajectory_controller
+  - position_trajectory_controller
+  - gripper_effort_controller
+  - gripper_position_controller
+
+effort_trajectory_controller:
+  type: FollowJointTrajectory
+  action_ns: follow_joint_trajectory
+  default: true
+  joints:
+    - fer_joint1
+    - fer_joint2
+    - fer_joint3
+    - fer_joint4
+    - fer_joint5
+    - fer_joint6
+    - fer_joint7
+
+position_trajectory_controller:
+  type: FollowJointTrajectory
+  action_ns: follow_joint_trajectory
+  default: false
+  joints:
+    - fer_joint1
+    - fer_joint2
+    - fer_joint3
+    - fer_joint4
+    - fer_joint5
+    - fer_joint6
+    - fer_joint7
+
+gripper_effort_controller:
+  type: GripperCommand
+  action_ns: gripper_cmd
+  default: false
+  joints:
+    - fer_finger_joint1
+
+gripper_position_controller:
+  type: GripperCommand
+  action_ns: gripper_cmd
+  default: true
+  joints:
+    - fer_finger_joint1
