@@ -35,11 +35,11 @@ Not committed: `fer_ros2_driver/Repo_Hotfixes.md` (kept local).
    switched on by hand, plan and execute in RViz); `fer_sanity_check.py` from
    `fer_ros2_bringup/scripts/`.
 2. GitHub: rename `fer_moveit_config` → `fer_moveit` and `fer_ros2` → `fer_ros2_driver`;
-   archive `fer_skills` and `fer_ros2_mjc_bringup`. Update the local remotes, rename the two
-   checkouts, remove the `fer_skills` and `fer_ros2_mjc_bringup` checkouts, push this repo,
-   rebuild from scratch (`--packages-ignore multi_mode_controller multi_mode_controller_impl
-   panda_motion_generators`, `-DFranka_DIR:PATH=/home/fer_ros2/deps/libfranka/build`), and
-   check a fresh `vcs import` of the profiles. Then 8.7 is done.
+   archive `fer_skills` and `fer_ros2_mjc_bringup`; push this repo. Then a fresh clone and
+   `vcs import` on x86_64 (core + real + sim, next to the old tree until a sim run passes)
+   and on the Orin (core + real), each built from scratch with
+   `-DFranka_DIR:PATH=/home/fer_ros2/deps/libfranka/build`. Keep the local-only files
+   (`.claude_container/`, `data/`, `docs/Fer_Real_Time_Control_Manual.md`). Then 8.7 is done.
 3. `fer_ros2_driver` packages: `colcon test` still fails on `copyright` (8 files in
    `franka_hardware`, 1 in `franka_semantic_components` without a license header) and
    `lint_cmake` (trailing space, `franka_gripper/CMakeLists.txt:43`). Both predate the

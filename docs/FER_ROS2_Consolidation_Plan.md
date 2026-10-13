@@ -106,7 +106,7 @@ Every phase is validated against both environments.
 | Repo | Role | Packages |
 |---|---|---|
 | `fer_ros2_docker` | meta-repo (promoted) | none |
-| `fer_ros2_driver` | driver | `franka_hardware`, `franka_gripper`, `franka_msgs`, `franka_semantic_components`, `franka_robot_state_broadcaster`, `franka_bringup` (driver-only launch) |
+| `fer_ros2_driver` | driver | `franka_hardware`, `franka_gripper`, `franka_msgs`, `franka_semantic_components`, `franka_robot_state_broadcaster` |
 | `fer_ros2_bringup` | robot bringup for real and MuJoCo (new repo, grown from `fer_bringup`) | `fer_ros2_bringup` |
 | `fer_moveit` | MoveIt configuration and the MoveIt motion backend `fer_moveit_motion_server` (Phase 8) | `fer_moveit` |
 | `fer_interfaces` | contract: msgs, services, actions (Phase 8) | `fer_interfaces` |
@@ -331,7 +331,8 @@ ROS package changes.
    - the libfranka block runs only if `deps/libfranka` exists;
    - the package skip list of `9940f7a` (`multi_mode_controller`,
      `multi_mode_controller_impl`, `panda_motion_generators`) applies on both
-     architectures.
+     architectures. The packages were removed from the driver in 8.7, and the skip list
+     with them.
 2. **One build and one run script.** `build_image.sh` and `run_container.sh` replace
    the `*_orin.sh` pair:
    - image tag `fer_ros2_docker/ros:jazzy_$(uname -m)`;
@@ -556,8 +557,8 @@ Orin with the robot attached.
 
 After Phases 1–6 are green and both robots are re-validated.
 
-- Delete dead multi-arm configs and launch files in
-  `fer_ros2_driver/franka_bringup/{config,launch}/{mixed,real}/` (`dual_*`, `mixed_*`).
+- Delete dead multi-arm configs and launch files in `fer_ros2_driver/franka_bringup/`.
+  Done in 8.7: `franka_bringup` removed.
 - Align default branches to `jazzy_devel` (§2.6).
 - Delete `GKnerd/fer_speed_and_separation_monitoring`.
 - `fer_ros2_simulation` README note before archiving:
@@ -1123,7 +1124,10 @@ for `fer_interfaces`, `fer_world_model`, `fer_gripper_server`, `fer_grasp_planne
   launches and of `fer_move_group.launch.py`; `fer_manipulation.launch.py` and
   `fer_manipulation_bt.launch.py` declare and forward the same set. `hand` reaches
   `move_group` as `load_gripper`; `use_sim_time` follows `hardware`.
-- `fer_ros2` renamed `fer_ros2_driver`; `fer_bringup/` removed. Its diagnostic scripts
+- `fer_ros2` renamed `fer_ros2_driver`; `fer_bringup/`, `franka_bringup` (could not run:
+  missing description, node and example controllers) and `franka_multi_mode_controller`
+  (did not compile on Jazzy) removed, and the Dockerfile's package skip list with them. The
+  Dockerfile no longer installs MoveIt Task Constructor. `fer_bringup`'s diagnostic scripts
   `fer_sanity_check.py` and `fer_mode_switch_check.py` are in `fer_ros2_bringup/scripts/`
   with the current controller names.
 - `fer_ros2_bringup` passes `ament_flake8` and `ament_pep257`; `test_description` expects
