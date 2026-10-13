@@ -207,7 +207,7 @@ RUN . /opt/ros/$ROS_DISTRO/setup.sh && \
     --cmake-clean-cache \
     --cmake-args -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
-    -DBUILD_TESTING=OFF \
+    -DBUILD_TESTING=ON \
     -DFranka_DIR:PATH=/home/${USER}/deps/libfranka/build
 
 RUN echo "source /home/$USER/ros2_ws/install/setup.bash" >> /home/$USER/.bashrc
