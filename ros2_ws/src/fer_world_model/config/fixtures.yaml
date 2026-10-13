@@ -1,0 +1,10 @@
+# Fixed objects: never matched by detection, never changed or removed.
+# Poses in the base frame, size = bounding box [x, y, z] in m.
+
+fixtures:
+  - id: table
+    class_id: table
+    size: [1.2, 1.2, 0.02]     # top at base z = 0
+    pose:
+      position: {x: 0.3, y: 0.0, z: -0.01}
+      orientation: {x: 0.0, y: 0.0, z: 0.0, w: 1.0}
