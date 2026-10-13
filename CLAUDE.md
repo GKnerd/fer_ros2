@@ -41,7 +41,7 @@ x86_64.
 
 - One repository `fer_ros2` with all own packages, driver included; externals pinned in the
   Dockerfile, no vcs, no submodules. One Dockerfile for both architectures; one bringup
-  (`fer_ros2_bringup`, `hardware:=real|mujoco`).
+  (`fer_ros2_bringup`, `hardware:=real|mujoco|mock`).
 - Robot description is upstream `franka_description`, never an own package.
 - Servers never switch controllers. The user activates them (launch or
   `ros2 control switch_controllers`); a server waits for its controller and fails with a hint.
