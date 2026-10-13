@@ -13,14 +13,10 @@ repositories:
     type: git
     url: https://github.com/GKnerd/fer_ros2_bringup.git
     version: main
-  ros2_ws/src/fer_moveit_config:
+  ros2_ws/src/fer_moveit:
     type: git
-    url: https://github.com/GKnerd/fer_moveit_config.git
+    url: https://github.com/GKnerd/fer_moveit.git
     version: jazzy-devel
-  ros2_ws/src/fer_skills:
-    type: git
-    url: https://github.com/GKnerd/fer_skills.git
-    version: main
   ros2_ws/src/fer_behavior_trees:
     type: git
     url: https://github.com/GKnerd/fer_behavior_trees.git

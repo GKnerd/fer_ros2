@@ -41,6 +41,8 @@ x86_64.
 - Objects are boxes only.
 - Controller names: `<interface>_<type>_controller`.
 - SSM (`speed_and_separation_monitoring`) stays separate.
+- C++ is formatted with clang-format 18 using the repo's .clang-format, with { on its own line everywhere.
+- A top-level launch file declares and forwards every argument of what it includes.
 
 ## Gotchas
 
