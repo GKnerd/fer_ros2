@@ -112,9 +112,9 @@ colcon test --packages-select fer_ros2_bringup --ctest-args -R test_description
 colcon test-result --verbose
 ```
 
-CI takes `franka_description` at the pin in `fer_core.repos` of
-[fer_ros2_docker](https://github.com/GKnerd/fer_ros2_docker).
+CI (`.github/workflows/fer_description.yml` at the repository root) clones
+`franka_description` at the pin in `docker/Dockerfile`.
 
 ## License
 
-Apache-2.0, see `LICENSE`.
+Apache-2.0, see `LICENSE` at the repository root.

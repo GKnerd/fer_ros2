@@ -21,7 +21,7 @@ It also holds the MoveIt motion server of the FER platform,
 - Tested with the **FER** (Franka Emika Robot / Panda).
   Other Franka models (e.g. FR3) have not been tested.
 
-## Repository layout
+## Package layout
 
 ```
 fer_moveit/
@@ -52,7 +52,7 @@ Declared in `package.xml`:
   `pilz_industrial_motion_planner`, `moveit_simple_controller_manager`
 - motion server: `rclcpp`, `rclcpp_action`, `fer_interfaces`, `moveit_msgs`,
   `moveit_core`, `tf2_ros`, `tf2_geometry_msgs`; `franka_msgs` for `hardware:=real`
-  only (built without it on a core+sim import)
+  only (builds without it)
 
 Install everything declared in the manifest with `rosdep`:
 
@@ -243,5 +243,4 @@ third-party file notices.
 
 ## Contributing
 
-Issues and pull requests are welcome at
-<https://github.com/GKnerd/fer_moveit>.
+See `CONTRIBUTING.md` at the repository root.

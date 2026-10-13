@@ -1,7 +1,7 @@
 # fer_grasp_planner
 
 Grasp planner of the FER platform. Serves two services of
-[`fer_interfaces`](https://github.com/GKnerd/fer_interfaces):
+[`fer_interfaces`](../fer_interfaces):
 - `GetGraspCandidates` on `/grasp/candidates`: top-down grasp candidates computed from
   the object's bounding box in the world model;
 - `GetPlaceCandidates` on `/place/candidates`: hand poses that put the held object down

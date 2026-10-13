@@ -106,4 +106,4 @@ from fer_interfaces.msg import Outcome
 
 ## License
 
-Apache-2.0, see `LICENSE`.
+Apache-2.0, see `LICENSE` at the repository root.

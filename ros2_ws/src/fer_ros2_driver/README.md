@@ -5,7 +5,7 @@ ROS 2 **Jazzy** driver stack for the real Franka Emika Robot
 
 ## Provenance
 
-This repository started as unmodified import of the packages below from
+This folder started as an unmodified import of the packages below from
 [`tenfoldpaper/multipanda_ros2`][multipanda], branch `humble`, commit
 [`ad741e3`][pinned-commit], with every subsequent change committed on top.
 That keeps the diff against upstream inspectable and lets upstream fixes
@@ -176,4 +176,4 @@ Apache License 2.0 — see [`LICENSE`](./LICENSE) and [`NOTICE`](./NOTICE).
 [multipanda]: https://github.com/tenfoldpaper/multipanda_ros2/tree/humble
 [pinned-commit]: https://github.com/tenfoldpaper/multipanda_ros2/tree/ad741e3ffcbe44cf47f7138ac8659802a3c9e43b
 [mcbed]: https://github.com/mcbed/franka_ros2/tree/humble
-[fer-moveit]: https://github.com/GKnerd/fer_moveit
+[fer-moveit]: ../fer_moveit
