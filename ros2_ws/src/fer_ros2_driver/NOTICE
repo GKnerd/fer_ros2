@@ -15,7 +15,8 @@ franka_ros2 was originally authored by Franka Emika GmbH:
 
     Copyright 2021 Franka Emika GmbH
 
-The initial commit of this repository is a verbatim, unmodified import of
+The first commit in the history of this folder (originally the initial commit
+of the standalone fer_ros2_driver repository) is a verbatim, unmodified import of
 the packages listed below, taken from multipanda_ros2 at the commit pinned
 above. All subsequent modifications (ROS 2 Jazzy compatibility, removal of
 simulation/MuJoCo/multi-arm code, bug fixes, renaming) are recorded as
