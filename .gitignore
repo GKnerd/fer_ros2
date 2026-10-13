@@ -1,5 +1,3 @@
-ros2_ws
-
 install/
 log/
 build/
@@ -12,6 +10,7 @@ build/
 .rviz2/
 .sdformat/
 core*
+!core*/
 .sudo_as_admin_successful
 .profile
 
@@ -32,6 +31,7 @@ CMakeLists.txt.user
 srv/_*.py
 *.pcd
 *.pyc
+__pycache__/
 qtcreator-*
 *.user
 
@@ -51,16 +51,13 @@ AMENT_IGNORE
 
 .Xauthority
 
-ros2_ws/
 ros_ws/
 
-temp/
+/temp/
 
 data/
 
 .claude_container
-
-deps/
 
 Repo_Hotfixes.md
 Fer_Real_Time_Control_Manual.md
