@@ -44,8 +44,7 @@ Send the goal once the gripper server has logged that it is ready; it starts aft
 the controller switch.
 
 ```bash
-ros2 action send_goal /execute_tree btcpp_ros2_interfaces/action/ExecuteTree \
-  "{target_tree: PickPlace, payload: '{\"target_class\": \"box\", \"pick_attempts\": 2, \"speed_scaling\": 0.1}'}"
+ros2 action send_goal /execute_tree btcpp_ros2_interfaces/action/ExecuteTree "{target_tree: PickPlace, payload: '{\"target_class\": \"box\", \"pick_attempts\": 2, \"speed_scaling\": 0.1}'}"
 ```
 
 `speed_scaling` is optional; without it the trees move at the BT server's
