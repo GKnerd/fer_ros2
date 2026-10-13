@@ -31,22 +31,18 @@ Not committed: `fer_ros2_driver/Repo_Hotfixes.md` (kept local).
 
 ## Next
 
-1. Real robot: `PickPlace` with mock perception at `speed_scaling` 0.1 on
-   `fer_manipulation_bt.launch.py`; `fer_moveit_and_control.launch.py` alone (controller
-   switched on by hand, plan and execute in RViz); `fer_sanity_check.py` from
-   `fer_ros2_bringup/scripts/`.
-2. GitHub: rename `fer_moveit_config` → `fer_moveit` and `fer_ros2` → `fer_ros2_driver`;
-   archive `fer_skills` and `fer_ros2_mjc_bringup`; push this repo. Then a fresh clone and
-   `vcs import` on x86_64 (core + real + sim, next to the old tree until a sim run passes)
-   and on the Orin (core + real), each built from scratch with
-   `-DFranka_DIR:PATH=/home/fer_ros2/deps/libfranka/build`. Keep the local-only files
-   (`.claude_container/`, `data/`, `docs/Fer_Real_Time_Control_Manual.md`). Then 8.7 is done.
+1. Monorepo: decide the layout of the single repository and how to move the component
+   repositories into it (history, branches, profiles, image build). `docs/Platform.md`
+   describes the current layout.
+2. After the move: CI, conventions (branch names, versions, changelog) and a first release.
+   Open points in `docs/Platform.md` §8.3.
 3. `fer_ros2_driver` packages: `colcon test` still fails on `copyright` (8 files in
    `franka_hardware`, 1 in `franka_semantic_components` without a license header) and
    `lint_cmake` (trailing space, `franka_gripper/CMakeLists.txt:43`). Both predate the
    reformat.
-4. Open items, at the end of the migration. The three reviews of 2026-10-12 (code issues,
-   tests and CI, reuse from `multipanda_ros2`) are not yet in the list below.
+4. Refinements observed in sim and real runs (`docs/Platform.md` §8.2) and the open items
+   below. The three reviews of 2026-10-12 (code issues, tests and CI, reuse from
+   `multipanda_ros2`) are not yet in the list below.
 
 ## Open items
 
