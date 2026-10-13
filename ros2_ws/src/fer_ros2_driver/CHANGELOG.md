@@ -1,3 +1,18 @@
+## 2026-10-13
+
+- `franka_multi_mode_controller` removed (`multi_mode_controller`, `multi_mode_control_msgs`,
+  `panda_motion_generators` and the rest of the folder). It did not compile on Jazzy and was
+  excluded from every build; nothing in the platform uses it.
+- `franka_bringup` removed. Nothing depends on it, and its launch files could not run:
+  `franka.launch.py` expands `franka_description/robots/real/panda_arm.urdf.xacro` and starts
+  `franka_control2_node`, neither of which exists, and its controller files load
+  `franka_example_controllers`, which is not in the repo. `fer_ros2_bringup`
+  (`fer_real_ros2_control.launch.py`) brings up the real robot.
+- `franka_semantic_components`: the forward declaration of
+  `multi_mode_controller::MultiModeController` and its `friend` declaration in
+  `franka_robot_model.hpp` removed.
+- README and NOTICE: the imported package list stays; the removed packages are named.
+
 ## 2026-10-12
 
 Phase 8.7 of the platform consolidation.

@@ -25,6 +25,8 @@ inspectable and upstream fixes remain cherry-pickable.
 Packages imported: franka_bringup, franka_example_controllers,
 franka_gripper, franka_hardware, franka_msgs, franka_multi_mode_controller,
 franka_robot_state_broadcaster, franka_semantic_components.
+Removed since: franka_bringup, franka_example_controllers,
+franka_multi_mode_controller.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

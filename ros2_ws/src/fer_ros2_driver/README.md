@@ -15,6 +15,8 @@ Packages carried over from multipanda_ros2:
 `franka_bringup`, `franka_example_controllers`, `franka_gripper`,
 `franka_hardware`, `franka_msgs`, `franka_multi_mode_controller`,
 `franka_robot_state_broadcaster`, `franka_semantic_components`.
+`franka_bringup`, `franka_example_controllers` and `franka_multi_mode_controller`
+have since been removed; the robot is brought up by `fer_ros2_bringup`.
 
 multipanda_ros2 is itself built on top of [mcbed's Humble port][mcbed] of
 `franka_ros2`, which was originally authored by **Franka Emika GmbH**. See
