@@ -40,12 +40,12 @@ jobs:
         working-directory: ros2_ws
         run: |
           source /opt/ros/jazzy/setup.bash
-          colcon build --packages-select franka_description fer_ros2_bringup
+          colcon build --base-paths src/franka_description src/fer_ros2_bringup
 
       - name: Test
         working-directory: ros2_ws
         run: |
           source /opt/ros/jazzy/setup.bash
           source install/setup.bash
-          colcon test --packages-select fer_ros2_bringup --ctest-args -R test_description
+          colcon test --base-paths src/franka_description src/fer_ros2_bringup --packages-select fer_ros2_bringup --ctest-args -R test_description
           colcon test-result --verbose
