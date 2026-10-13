@@ -29,7 +29,7 @@ YELLOW_BOLD="\033[1;33m"
 GREEN_BOLD="\033[1;32m"
 RESET="\033[0m"
 
-PACKAGE_NAME="fer_ros2_docker"
+PACKAGE_NAME="fer_ros2"
 CONTAINER_USER="fer_ros2"
 IMAGE="$PACKAGE_NAME/ros:jazzy_$(uname -m)"
 

@@ -6,7 +6,7 @@
 #    This script is derived from internal Docker tooling developed at
 #    Proximity Robotics & Automation GmbH. It has been adapted for the
 #    Franka Emika Robot (FER) platform: single Dockerfile for x86_64 and
-#    aarch64, architecture-specific image tag, and the deps directory.
+#    aarch64, architecture-specific image tag, and the optional MuJoCo build.
 
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -29,9 +29,16 @@ YELLOW_BOLD="\033[1;33m"
 GREEN_BOLD="\033[1;32m"
 RESET="\033[0m"
 
-PACKAGE_NAME="fer_ros2_docker"
+PACKAGE_NAME="fer_ros2"
 CONTAINER_USER="fer_ros2"
 IMAGE="$PACKAGE_NAME/ros:jazzy_$(uname -m)"
+
+# MuJoCo is built on x86_64 by default; override with WITH_MUJOCO=0 or 1
+if [ "$(uname -m)" = "x86_64" ]; then
+    WITH_MUJOCO="${WITH_MUJOCO:-1}"
+else
+    WITH_MUJOCO="${WITH_MUJOCO:-0}"
+fi
 
 # Set Package root
 if [[ "$(pwd)" == *"/$PACKAGE_NAME/"* ]]; then
@@ -52,7 +59,7 @@ else
     exit 1
 fi
 
-for FOLDER in ros2_ws/src deps env log data; do
+for FOLDER in ros2_ws/src env log data; do
     HOST_PATH="$PACKAGE_ROOT/$FOLDER"
     if [ ! -d "$HOST_PATH" ]; then
         echo -e "${YELLOW_BOLD}Warning: $HOST_PATH does not exist. Creating it...${RESET}"
@@ -63,6 +70,7 @@ done
 docker build \
     --build-arg UID="$uid" \
     --build-arg GID="$gid" \
+    --build-arg WITH_MUJOCO="$WITH_MUJOCO" \
     --network=host \
     -t $IMAGE . \
     -f $PACKAGE_ROOT/docker/Dockerfile \

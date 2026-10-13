@@ -16,7 +16,7 @@ env/
 config/
 .claude_container/
 
-# Host build artifacts — only ros2_ws/src and deps are copied into the image
+# Host build artifacts — only ros2_ws/src is copied into the image
 ros2_ws/build/
 ros2_ws/install/
 ros2_ws/log/
@@ -26,7 +26,6 @@ README.md
 LICENSE
 NOTICE.md
 docs/
-*.repos
 Repo_Hotfixes.md
 Fer_Real_Time_Control_Manual.md
 
