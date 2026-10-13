@@ -1,0 +1,55 @@
+<?xml version='1.0' encoding='utf-8'?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="fer">
+
+  <!--
+    FER description with one ros2_control backend.
+
+    Links, joints, meshes, inertials and kinematics come unmodified from
+    upstream franka_description/robots/fer/fer.urdf.xacro; all of its xacro
+    arguments (hand, ee_id, tcp_xyz, rpy_ee, robot_ip, ...) are passed straight
+    through. Upstream's own ros2_control block stays off (ros2_control:=false);
+    the backend is selected with hardware:=real|mujoco|none instead.
+  -->
+
+  <xacro:arg name="hardware" default="none" />
+  <xacro:arg name="mujoco_control_type" default="effort" />
+  <xacro:arg name="hand_control_type" default="position" />
+
+  <xacro:include filename="$(find franka_description)/robots/fer/fer.urdf.xacro"/>
+
+  <xacro:property name="hardware" value="$(arg hardware)"/>
+  <xacro:property name="arm_id" value="${modified_prefix}$(arg robot_type)"/>
+
+  <xacro:if value="${hardware not in ['real', 'mujoco', 'none']}">
+    ${xacro.fatal("hardware must be one of real, mujoco, none; got '" + hardware + "'")}
+  </xacro:if>
+
+  <xacro:if value="$(arg ros2_control)">
+    ${xacro.fatal("ros2_control:=true enables upstream's ros2_control block; select the backend with hardware:= instead")}
+  </xacro:if>
+
+  <xacro:if value="${hardware == 'real'}">
+    <xacro:include filename="$(find fer_ros2_bringup)/urdf/control/fer_real.ros2_control.xacro"/>
+    <xacro:fer_real_ros2_control arm_id="${arm_id}" robot_ip="$(arg robot_ip)"/>
+  </xacro:if>
+
+  <xacro:if value="${hardware == 'mujoco'}">
+    <xacro:include filename="$(find fer_ros2_bringup)/urdf/control/fer_mujoco.ros2_control.xacro"/>
+    <xacro:include filename="$(find fer_ros2_bringup)/urdf/mujoco/fer_mujoco_inputs.xacro"/>
+
+    <xacro:fer_mujoco_ros2_control
+        arm_id="${arm_id}"
+        hand="$(arg hand)"
+        mujoco_control_type="$(arg mujoco_control_type)"
+        hand_control_type="$(arg hand_control_type)"/>
+
+    <xacro:fer_mujoco_inputs
+        arm_id="${arm_id}"
+        control_type="$(arg mujoco_control_type)"
+        dynamics="${xacro.load_yaml('$(find franka_description)/robots/fer/dynamics.yaml')}"
+        joint_limits="${xacro.load_yaml('$(find franka_description)/robots/fer/joint_limits.yaml')}"
+        hand="$(arg hand)"
+        hand_control_type="$(arg hand_control_type)"/>
+  </xacro:if>
+
+</robot>

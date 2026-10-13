@@ -1,0 +1,9 @@
+# hardware:=real — loaded after fer_controllers.yaml.
+controller_manager:
+  ros__parameters:
+    franka_robot_state_broadcaster:
+      type: franka_robot_state_broadcaster/FrankaRobotStateBroadcaster
+
+franka_robot_state_broadcaster:
+  ros__parameters:
+    arm_id: fer

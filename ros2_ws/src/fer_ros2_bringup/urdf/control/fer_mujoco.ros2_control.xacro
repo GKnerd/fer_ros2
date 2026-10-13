@@ -1,0 +1,74 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- ros2_control overlay for mujoco_ros2_control/MujocoSystemInterface (hardware:=mujoco). -->
+  <xacro:macro name="fer_mujoco_ros2_control"
+                params="arm_id
+                hand:=true
+                mujoco_control_type:='effort'
+                hand_control_type:='position'">
+
+    <ros2_control name="${arm_id}_hardware" type="system">
+      <hardware>
+        <plugin>mujoco_ros2_control/MujocoSystemInterface</plugin>
+      </hardware>
+
+      <xacro:macro name="configure_arm_joint" params="joint_name initial_position">
+        <joint name="${joint_name}">
+          <xacro:if value="${mujoco_control_type == 'effort'}">
+            <command_interface name="effort"/>
+          </xacro:if>
+          <xacro:if value="${mujoco_control_type == 'position'}">
+            <command_interface name="position"/>
+          </xacro:if>
+
+          <state_interface name="position">
+            <param name="initial_value">${initial_position}</param>
+          </state_interface>
+          <state_interface name="velocity">
+            <param name="initial_value">0.0</param>
+          </state_interface>
+          <state_interface name="effort"/>
+        </joint>
+      </xacro:macro>
+
+      <xacro:macro name="configure_hand_joint" params="joint_name initial_position">
+        <joint name="${joint_name}">
+          <xacro:if value="${hand_control_type == 'effort'}">
+            <command_interface name="effort">
+              <param name="initial_value">0.0</param>
+            </command_interface>
+          </xacro:if>
+          <xacro:if value="${hand_control_type == 'position'}">
+            <command_interface name="position">
+              <param name="initial_value">${initial_position}</param>
+            </command_interface>
+          </xacro:if>
+
+          <state_interface name="position">
+            <param name="initial_value">${initial_position}</param>
+          </state_interface>
+          <state_interface name="velocity">
+            <param name="initial_value">0.0</param>
+          </state_interface>
+          <state_interface name="effort">
+             <param name="initial_value">0.0</param>
+          </state_interface>
+        </joint>
+      </xacro:macro>
+
+      <xacro:configure_arm_joint joint_name="${arm_id}_joint1" initial_position="0.0"/>
+      <xacro:configure_arm_joint joint_name="${arm_id}_joint2" initial_position="${-pi/4}"/>
+      <xacro:configure_arm_joint joint_name="${arm_id}_joint3" initial_position="0.0"/>
+      <xacro:configure_arm_joint joint_name="${arm_id}_joint4" initial_position="${-3*pi/4}"/>
+      <xacro:configure_arm_joint joint_name="${arm_id}_joint5" initial_position="0.0"/>
+      <xacro:configure_arm_joint joint_name="${arm_id}_joint6" initial_position="${pi/2}"/>
+      <xacro:configure_arm_joint joint_name="${arm_id}_joint7" initial_position="${pi/4}"/>
+
+      <xacro:if value="${hand}">
+        <xacro:configure_hand_joint joint_name="${arm_id}_finger_joint1" initial_position="0.0"/>
+      </xacro:if>
+
+    </ros2_control>
+  </xacro:macro>
+</robot>
