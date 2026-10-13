@@ -39,12 +39,12 @@ Verified by direct inspection on 2026-09-16.
 |---|---|---|
 | `GKnerd/fer_ros2_docker` | `jazzy` | real meta-repo |
 | `GKnerd/fer_ros2_simulation` | `main` | sim meta-repo |
-| `GKnerd/fer_ros2` | `jazzy` | real driver port (multipanda→Jazzy), incl. `fer_bringup` |
+| `GKnerd/fer_ros2_driver` | `jazzy` | real driver port (multipanda→Jazzy), incl. `fer_bringup` |
 | `GKnerd/fer_ros2_mjc_bringup` | `main` | sim bringup |
-| `GKnerd/fer_moveit_config` | `jazzy-devel` | shared |
+| `GKnerd/fer_moveit` | `jazzy-devel` | shared |
 | `GKnerd/fer_skills` | `main` | shared |
 | `GKnerd/fer_behavior_trees` | `main` | shared |
-| `GKnerd/fer_planning_world_model` | `main` | sim only (package name `fer_world_model`) |
+| `GKnerd/fer_world_model` | `main` | sim only |
 | `GKnerd/speed_and_separation_monitoring` | `main` | sim only |
 | `GKnerd/fer_speed_and_separation_monitoring` | `main` | empty — README only |
 | `GKnerd/fer_ws` | `main` | trial monorepo (subtrees of five repos) |
@@ -58,7 +58,7 @@ Externals: `frankarobotics/franka_description` @ `72baf5b`,
 
 ### 1.2 The dependency fact that drives the design
 
-`fer_skills`, `fer_behavior_trees`, `fer_moveit_config`, `fer_world_model` and
+`fer_skills`, `fer_behavior_trees`, `fer_moveit`, `fer_world_model` and
 `speed_and_separation_monitoring` contain zero references to `franka_msgs`,
 `franka_hardware`, `franka_gripper`, `franka_semantic_components` or
 `franka_robot_state_broadcaster`. Everything above the driver reaches the hardware
@@ -66,14 +66,14 @@ only through ros2_control.
 
 ### 1.3 Confirmed drift
 
-- Four independent `robot_description` producers: `fer_ros2/fer_bringup/urdf/fer.xacro`,
+- Four independent `robot_description` producers: `fer_ros2_driver/fer_bringup/urdf/fer.xacro`,
   `fer_ros2_mjc_bringup/urdf/fer_mujoco.urdf.xacro`,
-  `fer_moveit_config/launch/fer_moveit_launch.py:91`,
+  `fer_moveit/launch/fer_move_group.launch.py`,
   `fer_skills/launch/fer_skills.launch.py:53`.
 - Controller names: real has `effort_joint_trajectory_controller` /
   `vel_joint_trajectory_controller`; sim and MoveIt have
   `joint_effort_traj_controller` / `joint_pos_traj_controller`. No overlap.
-- `use_sim_time` defaults to `true` in `fer_moveit_launch.py:263` and
+- `use_sim_time` defaults to `true` in `fer_move_group.launch.py` and
   `fer_skills.launch.py`; nothing on the real side overrides it.
 - `fer_ros2_mjc_bringup/CMakeLists.txt:10-14` calls `find_package(... REQUIRED)` on
   five packages while compiling nothing — the sole build-time coupling to MuJoCo.
@@ -106,9 +106,9 @@ Every phase is validated against both environments.
 | Repo | Role | Packages |
 |---|---|---|
 | `fer_ros2_docker` | meta-repo (promoted) | none |
-| `fer_ros2_driver` | driver (renamed from `fer_ros2`) | `franka_hardware`, `franka_gripper`, `franka_msgs`, `franka_semantic_components`, `franka_robot_state_broadcaster`, `franka_bringup` (driver-only launch) |
-| `fer_ros2_bringup` | robot bringup for real and MuJoCo (new repo, grown from `fer_ros2/fer_bringup`) | `fer_ros2_bringup` |
-| `fer_moveit_config` | MoveIt configuration and the MoveIt motion backend `fer_moveit_motion_server` (Phase 8; renamed after Phase 8) | `fer_moveit_config` |
+| `fer_ros2_driver` | driver | `franka_hardware`, `franka_gripper`, `franka_msgs`, `franka_semantic_components`, `franka_robot_state_broadcaster`, `franka_bringup` (driver-only launch) |
+| `fer_ros2_bringup` | robot bringup for real and MuJoCo (new repo, grown from `fer_bringup`) | `fer_ros2_bringup` |
+| `fer_moveit` | MoveIt configuration and the MoveIt motion backend `fer_moveit_motion_server` (Phase 8) | `fer_moveit` |
 | `fer_interfaces` | contract: msgs, services, actions (Phase 8) | `fer_interfaces` |
 | `fer_gripper_server` | gripper server (Phase 8) | `fer_gripper_server` |
 | `fer_grasp_planner` | grasp candidates (Phase 8) | `fer_grasp_planner` |
@@ -121,27 +121,27 @@ Every phase is validated against both environments.
 
 ```
 fer_behavior_trees ──┐
-fer_moveit_config  ──┤
+fer_moveit         ──┤
 fer_gripper_server ──┼──> fer_interfaces ──> standard message packages only
 fer_world_model    ──┤
 fer_grasp_planner  ──┘
-fer_moveit_config ──> franka_description (upstream), MoveIt (move_group, moveit_msgs)
-fer_world_model   ──> vision_msgs
+fer_moveit      ──> franka_description (upstream), MoveIt (move_group, moveit_msgs)
+fer_world_model ──> vision_msgs
 
-fer_ros2_bringup (launch levels) ──> franka_description, fer_moveit_config,
+fer_ros2_bringup (launch levels) ──> franka_description, fer_moveit,
                                      fer_gripper_server, fer_world_model,
                                      fer_grasp_planner, fer_behavior_trees
 fer_ros2_bringup (hardware)      ──runtime──> franka_hardware | mujoco_ros2_control
 fer_gripper_server (hardware:=real) ──runtime──> franka_msgs
-fer_moveit_config (hardware:=real)  ──build, if present──> franka_msgs
+fer_moveit (hardware:=real)         ──build, if present──> franka_msgs
 franka_hardware ──> libfranka
 ```
 
 The robot description is upstream `franka_description`, used unmodified. Every
 consumer builds from `franka_description/robots/fer/fer.urdf.xacro`.
-`fer_moveit_config` uses it directly; `fer_ros2_bringup` includes it and adds only
+`fer_moveit` uses it directly; `fer_ros2_bringup` includes it and adds only
 hardware overlays (§3.2). MoveIt and the motion backend therefore never depend on the
-bringup. `fer_moveit_config`, which holds the MoveIt motion backend, is the only package
+bringup. `fer_moveit`, which holds the MoveIt motion backend, is the only package
 above ros2_control that depends on MoveIt.
 
 `fer_ros2_bringup` is the integration package: it sits at the top and depends on
@@ -155,13 +155,13 @@ package; it never depends on application internals.
 | Repo | Fate |
 |---|---|
 | `GKnerd/fer_ros2_docker` | promoted to the platform meta-repo; absorbs the infra and docs of `fer_ros2_simulation` |
-| `GKnerd/fer_ros2` | renamed → `fer_ros2_driver`; loses `fer_bringup` (Phase 1) |
+| `GKnerd/fer_ros2` | renamed → `fer_ros2_driver`; `fer_bringup/` removed (8.7) |
 | `GKnerd/fer_ros2_bringup` | new; `fer_bringup` extended to both backends (Phase 1) |
-| `GKnerd/fer_ros2_mjc_bringup` | contents merged into `fer_ros2_bringup`, then archived |
-| `GKnerd/fer_moveit_config` | one controller mapping per hardware (Phase 1); hosts the MoveIt motion backend (8.3); renamed after Phase 8 |
-| `GKnerd/fer_skills` | archived after Phase 8 |
+| `GKnerd/fer_ros2_mjc_bringup` | contents merged into `fer_ros2_bringup` (Phase 1), archived (8.7) |
+| `GKnerd/fer_moveit_config` | one controller mapping per hardware (Phase 1); hosts the MoveIt motion backend (8.3); renamed → `fer_moveit` (8.7) |
+| `GKnerd/fer_skills` | archived (8.7) |
 | `GKnerd/fer_behavior_trees` | rewritten against `fer_interfaces` (Phase 8) |
-| `GKnerd/fer_world_model` | renamed from `fer_planning_world_model`; MoveIt removed (8.1) |
+| `GKnerd/fer_world_model` | MoveIt removed (8.1) |
 | `GKnerd/fer_interfaces` | new (Phase 8) |
 | `GKnerd/fer_gripper_server` | new (Phase 8) |
 | `GKnerd/fer_grasp_planner` | new (Phase 8) |
@@ -180,7 +180,7 @@ are relative to the platform repo root; every file is imported with a plain
 fer_core.repos    ros2_ws/src/franka_description
                   ros2_ws/src/BehaviorTree.ROS2
                   ros2_ws/src/fer_ros2_bringup
-                  ros2_ws/src/fer_moveit_config
+                  ros2_ws/src/fer_moveit
                   ros2_ws/src/fer_interfaces
                   ros2_ws/src/fer_gripper_server
                   ros2_ws/src/fer_grasp_planner
@@ -189,7 +189,7 @@ fer_core.repos    ros2_ws/src/franka_description
                   ros2_ws/src/speed_and_separation_monitoring
 
 fer_real.repos    deps/libfranka
-                  ros2_ws/src/fer_ros2            (fer_ros2_driver after the rename)
+                  ros2_ws/src/fer_ros2_driver
 
 fer_sim.repos     ros2_ws/src/mujoco_ros2_control
                   ros2_ws/src/mujoco_vendor
@@ -233,7 +233,7 @@ frozen with `vcs export --exact` into `releases/<date-or-tag>.repos`.
 **Dependency declaration.** `fer_ros2_bringup` declares `mujoco_ros2_control` and
 `franka_gripper` as plain `<exec_depend>`. `fer_gripper_server` declares `franka_msgs`
 the same way and imports it only for `hardware:=real`, so it builds and runs with a
-core+sim import. `fer_moveit_config` declares `franka_msgs` as `<depend>`; CMake builds its robot-mode
+core+sim import. `fer_moveit` declares `franka_msgs` as `<depend>`; CMake builds its robot-mode
 monitor when `find_package(franka_msgs QUIET)` finds it, and a stub that refuses
 `hardware:=real` otherwise. The Dockerfile runs
 `rosdep install --from-paths src --ignore-src -r -y`; `-r` continues past the absent
@@ -266,7 +266,7 @@ profile's keys with a warning.
     ├── env/          cyclone_dds.xml, cyclone_<host>.xml (§9), dds_profile.xml
     ├── config/       nic_orin_config.sh
     ├── docs/         all project docs: this plan, the review, the handoff,
-    │                 robotics_stack.md, DDS_Profiles.md,
+    │                 DDS_Profiles.md,
     │                 cross_host_contract.md (§9),
     │                 legacy/ (former READMEs and superseded plans)
     ├── releases/                        ← vcs export --exact snapshots
@@ -297,7 +297,7 @@ fer_ros2_bringup/                        ← repo = package
 ├── launch/
 │   ├── fer_real_ros2_control.launch.py
 │   ├── fer_mujoco_ros2_control.launch.py
-│   ├── fer_moveit.launch.py                 ← manual planning in RViz only
+│   ├── fer_moveit_and_control.launch.py     ← + move_group; manual planning in RViz
 │   ├── fer_manipulation.launch.py           ← Phase 8.6
 │   └── fer_manipulation_bt.launch.py        ← Phase 8.6
 ├── scenes/base_world.xml
@@ -351,8 +351,8 @@ ROS package changes.
 5. **Workspace docs** → `docs/`: this plan. The previous `README.md` →
    `docs/legacy/README_sim.md`.
 6. **`README.md`** rewritten around the profile workflow.
-7. **Rename GitHub repo** `fer_ros2` → `fer_ros2_driver`; update the profile URL
-   and path and the local remote.
+7. **Rename the driver repo** to `fer_ros2_driver`; update the profile URL and path and
+   the local remote. Done in 8.7.
 8. **Archive** `GKnerd/fer_ros2_simulation` and `GKnerd/fer_ws`.
 
 **Verification:** from a clean clone of `fer_ros2_docker` on x86_64, import and build
@@ -363,7 +363,7 @@ Every combination builds with the unchanged `docker/Dockerfile`.
 
 ### Phase 1 — One bringup for the real robot and MuJoCo
 
-`fer_ros2/fer_bringup` becomes the repo `fer_ros2_bringup` and absorbs the
+`fer_bringup` becomes the repo `fer_ros2_bringup` and absorbs the
 simulation parts of `fer_ros2_mjc_bringup`. The hardware is a launch argument,
 `hardware:=real|mujoco`; `fer_ros2_mjc_bringup` is archived afterwards and
 `fer_ros2_driver` loses `fer_bringup/`.
@@ -383,7 +383,7 @@ only description source.
 - Both overlays name the component `fer_hardware`.
 - The real model is unchanged: apart from comments and the component name, the
   new `hardware:=real` URDF equals the former `fer_bringup` URDF.
-- `fer_moveit_config` and `fer_skills` keep building from upstream
+- `fer_moveit` and `fer_skills` keep building from upstream
   `fer.urdf.xacro` with `ros2_control:=false`.
 
 **Controllers.** Naming follows the ros2_control convention
@@ -413,11 +413,11 @@ only description source.
 **Gripper seam.** The real gripper is the `franka_gripper` node `fer_gripper`
 serving `/fer_gripper/gripper_action`; `moveit_simple_controller_manager`
 resolves `<controller_name>/<action_ns>`, so it is routable by configuration.
-- `fer_moveit_config/config/moveit_controllers_real.yaml` — three JTCs and
+- `fer_moveit/config/moveit_controllers_real.yaml` — three JTCs and
   `fer_gripper` (`action_ns: gripper_action`).
-- `fer_moveit_config/config/moveit_controllers_mujoco.yaml` — effort and position
+- `fer_moveit/config/moveit_controllers_mujoco.yaml` — effort and position
   JTCs, both gripper controllers (`action_ns: gripper_cmd`).
-- `fer_moveit_launch.py` takes `hardware` and loads the matching file;
+- `fer_move_group.launch.py` takes `hardware` and loads the matching file;
   `arm_control_type` / `hand_control_type` set `default: true` on
   `<type>_trajectory_controller` / `gripper_<type>_controller`, and a type the
   hardware does not offer aborts the launch. `controller_selection.yaml` is
@@ -431,9 +431,9 @@ resolves `<controller_name>/<action_ns>`, so it is routable by configuration.
 | File | Adds |
 |---|---|
 | `fer_real_ros2_control.launch.py` / `fer_mujoco_ros2_control.launch.py` | description, RSP, ros2_control, controllers, gripper |
-| `fer_moveit.launch.py` | MoveIt |
-| `fer_moveit_skills.launch.py` | skill server |
-| `fer_moveit_skills_bt.launch.py` | BT server, world model |
+| `fer_moveit_and_control.launch.py` | MoveIt |
+| `fer_moveit_skills.launch.py` | skill server (removed in 8.7) |
+| `fer_moveit_skills_bt.launch.py` | BT server, world model (removed in 8.7) |
 
 - The upper three take `hardware:=real|mujoco` (default `mujoco`) and include
   `fer_<hardware>_ros2_control.launch.py`. `use_sim_time` is derived from
@@ -497,7 +497,7 @@ If no interface ends up enabled, `register_urdf_joints` throws (2082-2088).
   `gripper_position_controller` requires a position PID on the finger.
 - `velocity_trajectory_controller` is spawned in MuJoCo as well.
 
-**`fer_moveit_config`**
+**`fer_moveit`**
 - `moveit_controllers_mujoco.yaml` gains `velocity_trajectory_controller`.
 - `hand_control_type` remains the only selection that differs by hardware.
 
@@ -769,9 +769,9 @@ Layout per Testing: `core/grasp.py` (checks, errors, the `Gripper` interface),
 - **Outcomes:** invalid width, force or tolerance → `INVALID_GOAL`; `Grasp` while already
   holding → `INVALID_STATE`; hardware error → `GRIPPER_FAILED` (`RELEASE_FAILED` in
   `Release`); world model not answering → `TIMEOUT`.
-- **Driver (`fer_ros2`, additive):** `franka_msgs/msg/GripperState` (width, max width,
+- **Driver (`fer_ros2_driver`, additive):** `franka_msgs/msg/GripperState` (width, max width,
   `is_grasped`, temperature); `franka_gripper` publishes it on `~/gripper_state` from the
-  same `readOnce()` result as `~/joint_states`. Recorded in the `fer_ros2` CHANGELOG.
+  same `readOnce()` result as `~/joint_states`. Recorded in the `fer_ros2_driver` CHANGELOG.
 - **Bringup:** `gripper_effort_controller` gets PID gains and `allow_stalling: true`
   (`fer_controllers_gripper.yaml`); MuJoCo runs with `hand_control_type:=effort`.
 - **Known limits:** the held object is remembered in memory only; poses use the latest
@@ -788,12 +788,12 @@ Layout per Testing: `core/grasp.py` (checks, errors, the `Gripper` interface),
 - Open: `Grasp` on a physical object in MuJoCo (needs scene objects); real hand —
   grasp and release, `is_grasped` while holding, object taken out → LOST.
 
-#### 8.3 Motion — `fer_moveit_motion_server` in `fer_moveit_config` (C++)
+#### 8.3 Motion — `fer_moveit_motion_server` in `fer_moveit` (C++)
 
 A client of `move_group`: MoveIt keeps the planning scene, plans and executes; the server
 adds validation, the world model, `may_touch`, goal replacement and outcome codes. It lives
-in `fer_moveit_config` because server and MoveIt configuration change together (pipeline
-names, group, tip link, hand links, controller list); the package is renamed after Phase 8.
+in `fer_moveit` because server and MoveIt configuration change together (pipeline
+names, group, tip link, hand links, controller list).
 Node and executable `fer_moveit_motion_server`; another backend (e.g. MPC) is its own
 package. Layout per Testing: `core/checks.cpp` (no ROS), `adapters/`
 (`world_model_client`, `move_group_client`, `robot_mode_monitor`), `motion_server.cpp`,
@@ -846,7 +846,7 @@ package. Layout per Testing: `core/checks.cpp` (no ROS), `adapters/`
 - **`ROBOT_ERROR`:** real only, from `FrankaState.robot_mode`. No conditional
   compilation: CMake builds `robot_mode_monitor.cpp` when `franka_msgs` is found, else a
   stub whose constructor refuses `hardware:=real` (§2.5).
-- **`fer_moveit_config`:** `fer_moveit_launch.py` gets `planning_pipelines`
+- **`fer_moveit`:** `fer_move_group.launch.py` gets `planning_pipelines`
   (`ompl` default, `pilz_industrial_motion_planner`), Cartesian limits under
   `robot_description_planning`, execution duration monitoring on (× 1.1 + 0.5 s);
   `ompl_planning.yaml` group keys fixed (`fer_arm`, `fer_manipulator`, `fer_hand`;
@@ -981,7 +981,7 @@ server), `src/server.cpp`, `main.cpp` builds the node and passes it in.
 - **MuJoCo scene:** `fer_ros2_bringup/scenes/pick_place_world.xml` puts the robot on a
   table (top at `base` z = 0 as in `fixtures.yaml`, floor at −0.75 m) with free objects
   at the poses and sizes of `fer_world_model/config/mock_objects.yaml`. Selected with
-  `scene:=`, which `fer_moveit.launch.py` passes to MuJoCo; `base_world.xml` stays empty.
+  `scene:=`, which `fer_moveit_and_control.launch.py` passes to MuJoCo; `base_world.xml` stays empty.
 - **Nodes**, one per interface: `MoveToPose`, `MoveToJoints`, `MoveGripper`, `Grasp`,
   `Release`, `DetectObjects`, `RefineObject`, `QueryObjects` (ids of the FREE, non-fixed
   objects of a class), `GetGraspCandidates`, `GetPlaceCandidates`. Each writes
@@ -1048,7 +1048,7 @@ Open after the first MuJoCo runs (2026-10-02):
   object contacts in `pick_place_world.xml` (`solref="0.004 1" solimp="0.95 0.99 0.001"`
   on the object classes), then the box back to 15 N.
 - **Execution duration monitoring is off** (`execution_duration_monitoring: False` in
-  `fer_moveit_launch.py`, as in the old MTC pipeline). In MuJoCo `fer_joint7` lags its
+  `fer_move_group.launch.py`, as in the old MTC pipeline). In MuJoCo `fer_joint7` lags its
   reference by up to 0.28 rad and needs about 0.8 s after the trajectory ends to come to
   rest, so moves ran 0.03–0.08 s past the 1.1 × duration + 0.5 s limit. A stuck motion is
   still caught by the motion server's watchdog (2 × duration + 7 s). Proposed: back on with
@@ -1070,7 +1070,7 @@ Open after the first MuJoCo runs (2026-10-02):
 - **A failed `Release` that did let go** is marked `LOST` by the gripper server's watch,
   not FREE. Proposed: confirm a release against the object's width rather than the full
   `open_width`.
-- **Tests not yet run after these changes:** `fer_moveit_config`
+- **Tests not yet run after these changes:** `fer_moveit`
   (`HeldObjectLiftsStraightOffTheSurfaceItRestsOn`, fake `/check_state_validity`) and
   `fer_behavior_trees` (`test_trees` second place slot at x 0.47).
 
@@ -1085,8 +1085,8 @@ Open after the first MuJoCo runs (2026-10-02):
 - `hardware` reaches every node that differs by hardware.
 - `hardware:=mujoco` runs with `hand_control_type:=effort` and activates
   `gripper_effort_controller` before the gripper server starts.
-- `fer_skills` is not started. `fer_manipulation.launch.py` builds on the `fer_moveit`
-  level: `move_group` serves the motion backend.
+- `fer_skills` is not started. `fer_manipulation.launch.py` builds on
+  `fer_moveit_and_control.launch.py`: `move_group` serves the motion backend.
 - `fer_manipulation.launch.py` activates `<arm_control_type>_trajectory_controller` (and on
   MuJoCo `gripper_<hand_control_type>_controller`) after the inactive spawner exits, then
   starts the gripper server.
@@ -1101,18 +1101,44 @@ Open after the first MuJoCo runs (2026-10-02):
 without `speed_scaling` in the payload; real robot — `PickPlace` with mock perception on
 `fer_manipulation.launch.py` (BT server still included, default speed); `colcon test` green
 for `fer_interfaces`, `fer_world_model`, `fer_gripper_server`, `fer_grasp_planner`,
-`fer_moveit_config`, `fer_behavior_trees`, `fer_ros2_bringup`.
+`fer_moveit`, `fer_behavior_trees`, `fer_ros2_bringup`.
 [Done]
 
-#### 8.7 Removal
+#### 8.7 Removal and renames
 
-- `fer_skills` leaves `fer_core.repos`; the repo is archived.
-- `fer_behavior_trees`: old client nodes and trees removed.
-- `fer_ros2_bringup`: `fer_moveit_skills.launch.py`, `fer_moveit_skills_bt.launch.py`
-  removed; `fer_moveit.launch.py` stays as the MoveIt level of the new stack (`move_group`
-  for the motion backend, manual planning in RViz).
-- `fer_moveit_config` renamed together with its C++ namespace; name decided then.
-- `robotics_stack.md` updated.
+- `fer_skills` leaves `fer_core.repos`; the repo is archived. `fer_ros2_mjc_bringup` is
+  archived.
+- `fer_behavior_trees`: the old server `bt_server_node`, its `fer_skills` client nodes and the
+  old trees removed; the `fer_skills` and `control_msgs` dependencies with them.
+- `fer_moveit_config` renamed `fer_moveit`: package, repo, C++ namespace, include path.
+  `fer_moveit_launch.py` renamed `fer_move_group.launch.py`;
+  `fer_moveit_motion_server.launch.py` keeps its name. `move_group` no longer loads the MTC
+  capability `ExecuteTaskSolutionCapability`. Unused arguments `db`, `robot_ip`,
+  `use_fake_hardware` and `fake_sensor_commands` removed (upstream reads the last three only
+  in its `ros2_control` block, which is off).
+- `fer_ros2_bringup`: `fer_moveit_skills.launch.py` and `fer_moveit_skills_bt.launch.py`
+  removed. `fer_moveit.launch.py` renamed `fer_moveit_and_control.launch.py`: the hardware
+  level plus `move_group` and RViz, no controller activated — manual planning in RViz and
+  first runs of a controller. It declares and forwards every argument of the hardware
+  launches and of `fer_move_group.launch.py`; `fer_manipulation.launch.py` and
+  `fer_manipulation_bt.launch.py` declare and forward the same set. `hand` reaches
+  `move_group` as `load_gripper`; `use_sim_time` follows `hardware`.
+- `fer_ros2` renamed `fer_ros2_driver`; `fer_bringup/` removed. Its diagnostic scripts
+  `fer_sanity_check.py` and `fer_mode_switch_check.py` are in `fer_ros2_bringup/scripts/`
+  with the current controller names.
+- `fer_ros2_bringup` passes `ament_flake8` and `ament_pep257`; `test_description` expects
+  the real overlay parameters `ns_1` / `robot_ip_1`, as the driver reads them.
+- Execution duration monitoring stays off. With MoveIt's defaults (on, 1.1 × duration +
+  0.5 s) PickPlace failed in MuJoCo: the pre-grasp moves were stopped on the joint-7 lag.
+  A per-controller `allowed_goal_duration_margin` in `moveit_controllers_mujoco.yaml`
+  (read as `moveit_simple_controller_manager.<controller>.allowed_goal_duration_margin`)
+  would turn it on with slack for MuJoCo only.
+
+**Verification:** `colcon test` green for `fer_behavior_trees`, `fer_moveit` and
+`fer_ros2_bringup`; MuJoCo `PickPlace` SUCCESS with `fer_manipulation_bt.launch.py`
+(2026-10-12). Open: real robot — `PickPlace` with mock perception at `speed_scaling` 0.1,
+`fer_moveit_and_control.launch.py` alone, `fer_sanity_check.py`; a fresh `vcs import` of the
+profiles after the GitHub renames.
 
 **Deferred** — the interfaces already allow them: grasp network, D405 perception node,
 grasp monitor (§11 wrench, drops → LOST), continuous perception, handover and a
@@ -1138,8 +1164,8 @@ streaming motion contract (§10), MPC backend, compliant control.
 | Risk | Mitigation |
 |---|---|
 | Phase 1 changes kinematics unnoticed | Blocking diff against upstream, permanent CI job |
-| Real robot regresses | Driver changes additive only (8.2: `GripperState` publisher), each recorded in the `fer_ros2` CHANGELOG; real URDF compared against the former `fer_bringup` output; hardware re-validation after Phases 1 and 2 |
-| Phase 1 lands in one repo but not the others | Changes to `fer_ros2_bringup`, `fer_moveit_config`, `fer_ros2_driver` and the profiles merged together; `unique-package-names` CI |
+| Real robot regresses | Driver changes additive only (8.2: `GripperState` publisher), each recorded in the `fer_ros2_driver` CHANGELOG; real URDF compared against the former `fer_bringup` output; hardware re-validation after Phases 1 and 2 |
+| Phase 1 lands in one repo but not the others | Changes to `fer_ros2_bringup`, `fer_moveit`, `fer_ros2_driver` and the profiles merged together; `unique-package-names` CI |
 | Consumers pass different arguments to the upstream xacro | Arguments aligned in Phase 1; `description-invariant` CI compares against upstream |
 | Package-level dependency cycle | MoveIt config and motion backend depend on upstream `franka_description`, never on the bringup; `dependency-direction` CI |
 | Position/velocity PID tuning poor | Every motion controller starts inactive; modes are switched on deliberately |

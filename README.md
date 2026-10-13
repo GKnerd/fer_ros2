@@ -11,8 +11,8 @@ Supported hosts: x86_64 workstations and the Jetson Orin AGX (aarch64).
 
 | Manifest | Contents |
 |---|---|
-| `fer_core.repos` | `franka_description`, `BehaviorTree.ROS2`, `fer_ros2_bringup`, `fer_moveit_config`, `fer_skills`, `fer_behavior_trees`, `fer_planning_world_model`, `speed_and_separation_monitoring` |
-| `fer_real.repos` | `libfranka` 0.9.2 (`deps/`), `fer_ros2` (driver) |
+| `fer_core.repos` | `franka_description`, `BehaviorTree.ROS2`, `fer_ros2_bringup`, `fer_moveit`, `fer_behavior_trees`, `fer_world_model`, `speed_and_separation_monitoring`, `fer_interfaces`, `fer_gripper_server`, `fer_grasp_planner` |
+| `fer_real.repos` | `libfranka` 0.9.2 (`deps/`), `fer_ros2_driver` (driver) |
 | `fer_sim.repos` | `mujoco_ros2_control`, `mujoco_vendor` |
 
 `fer_core.repos` is always imported. Add the real profile, the simulation
@@ -37,8 +37,8 @@ The Orin runs the real robot only; do not import the simulation profile there.
 `fer_ros2_bringup` serves both backends and is selected at launch time:
 
 ```bash
-ros2 launch fer_ros2_bringup fer_moveit_skills_bt.launch.py hardware:=mujoco
-ros2 launch fer_ros2_bringup fer_moveit_skills_bt.launch.py hardware:=real robot_ip:=<FCI address>
+ros2 launch fer_ros2_bringup fer_manipulation_bt.launch.py hardware:=mujoco
+ros2 launch fer_ros2_bringup fer_manipulation_bt.launch.py hardware:=real robot_ip:=<FCI address>
 ```
 
 ## Build and run
@@ -76,8 +76,7 @@ The settings are volatile and are lost on reboot or driver reload.
 docker/     Dockerfile, build_image.sh, run_container.sh
 env/        cyclone_dds.xml, dds_profile.xml
 config/     nic_orin_config.sh
-docs/       consolidation plan, review, handoff, robotics stack,
-            DDS profiles, legacy READMEs
+docs/       consolidation plan, status, DDS profiles, legacy READMEs
 deps/       ignored; libfranka
 ros2_ws/    ignored; imported component repos
 ```

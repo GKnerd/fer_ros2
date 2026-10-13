@@ -1,15 +1,17 @@
 # Status
 
-Updated: 2026-10-12
+Updated: 2026-10-13
 
 ## Current step
 
-Phase 8.6 done (2026-10-12): `fer_manipulation.launch.py` and `fer_manipulation_bt.launch.py`,
-PickPlace in MuJoCo and on the real robot (mock perception), speed from the goal payload,
-`colcon test` green for the manipulation packages. Next: Phase 8.7 (removal).
+Phase 8.7 implemented and committed (2026-10-12): old stack removed (`fer_skills`, old BT
+server, skills launch levels, MTC capability), `fer_moveit_config` renamed `fer_moveit`,
+`fer_ros2` renamed `fer_ros2_driver`, MoveIt level `fer_moveit_and_control.launch.py` forwards
+every argument. `colcon test` green for `fer_behavior_trees`, `fer_moveit`, `fer_ros2_bringup`;
+PickPlace SUCCESS in MuJoCo. Next: the real-robot check, then the GitHub renames.
 
 All own C++ code is formatted with clang-format 18 (braces on their own line) since
-2026-10-12: one `.clang-format` in `fer_behavior_trees`, `fer_moveit_config` and `fer_ros2`.
+2026-10-12: one `.clang-format` in `fer_behavior_trees`, `fer_moveit` and `fer_ros2_driver`.
 
 ## Phase 8
 
@@ -22,27 +24,37 @@ All own C++ code is formatted with clang-format 18 (braces on their own line) si
 | 8.4 `fer_grasp_planner` | grasp and place candidates done, committed |
 | 8.5 `fer_behavior_trees` | implemented, committed, PickPlace runs in MuJoCo; a failed grasp followed by a successful retry not yet seen |
 | 8.6 Bringup | done |
-| 8.7 Removal | not started |
+| 8.7 Removal and renames | implemented, committed, MuJoCo verified; real-robot check and GitHub renames open |
 
-Not committed: `fer_ros2/Repo_Hotfixes.md` (kept local).
+Not committed: `fer_ros2_driver/Repo_Hotfixes.md` (kept local).
 
 ## Next
 
-1. Commit 8.6 and the clang-format switch (`fer_behavior_trees`, `fer_moveit_config`,
-   `fer_ros2`, `fer_ros2_bringup`, this repo's docs).
-2. `fer_ros2` driver packages: `colcon test` still fails on `copyright` (8 files in
+1. Real robot: `PickPlace` with mock perception at `speed_scaling` 0.1 on
+   `fer_manipulation_bt.launch.py`; `fer_moveit_and_control.launch.py` alone (controller
+   switched on by hand, plan and execute in RViz); `fer_sanity_check.py` from
+   `fer_ros2_bringup/scripts/`.
+2. GitHub: rename `fer_moveit_config` → `fer_moveit` and `fer_ros2` → `fer_ros2_driver`;
+   archive `fer_skills` and `fer_ros2_mjc_bringup`. Update the local remotes, rename the two
+   checkouts, remove the `fer_skills` and `fer_ros2_mjc_bringup` checkouts, push this repo,
+   rebuild from scratch (`--packages-ignore multi_mode_controller multi_mode_controller_impl
+   panda_motion_generators`, `-DFranka_DIR:PATH=/home/fer_ros2/deps/libfranka/build`), and
+   check a fresh `vcs import` of the profiles. Then 8.7 is done.
+3. `fer_ros2_driver` packages: `colcon test` still fails on `copyright` (8 files in
    `franka_hardware`, 1 in `franka_semantic_components` without a license header) and
    `lint_cmake` (trailing space, `franka_gripper/CMakeLists.txt:43`). Both predate the
    reformat.
-3. Phase 8.7.
 4. Open items, at the end of the migration. The three reviews of 2026-10-12 (code issues,
    tests and CI, reuse from `multipanda_ros2`) are not yet in the list below.
 
 ## Open items
 
-- **Execution duration monitoring is off** in `fer_moveit_launch.py` (joint 7 lags its plan by
-  up to 0.28 rad). The motion server watchdog (2×T + 7 s) is the only time limit. Options:
-  re-enable with scaling 1.5; `FindReachableGrasp` prefers the least joint-7 travel.
+- **Execution duration monitoring is off** in `fer_move_group.launch.py` (joint 7 lags its
+  plan by up to 0.28 rad). The motion server watchdog (2×T + 7 s) is the only time limit. With
+  MoveIt's defaults (on, 1.1×T + 0.5 s) PickPlace failed in MuJoCo on 2026-10-12: pre-grasp
+  moves stopped at the limit. Options: a per-controller `allowed_goal_duration_margin` (about
+  1.0 s) in `moveit_controllers_mujoco.yaml`, so only MuJoCo gets slack; global scaling 1.5;
+  `FindReachableGrasp` prefers the least joint-7 travel.
 - **Catalog `box: {force: 5.0}`** is shared with the real robot. Alternative: stiffer object
   contacts in `pick_place_world.xml` (solref 0.004 1, solimp 0.95 0.99 0.001), back to 15 N.
 - Grasp closing speed is tied to force (finger trajectory controller later).
@@ -53,21 +65,20 @@ Not committed: `fer_ros2/Repo_Hotfixes.md` (kept local).
 - `Gripper` in `core/grasp.py` is a `typing.Protocol`; switching to an ABC is undecided.
 - `MultiThreadedExecutor(num_threads=…)` fixed in both servers; named constant for the
   0.05 s / 0.1 s stop-poll intervals.
-- `fer_moveit_config/src/motion_server.cpp` puts braces on their own line and has trailing
-  spaces, unlike the rest of the package; the `ament_uncrustify` check may fail on it.
-- Old stack (`fer_skills`) not yet checked against the changed `fer_moveit_launch.py`.
 - Real robot: 8.3 checks, `is_grasped`.
 - magic numbers on the polling interval in `fer_gripper_server` and in `fer_world_model`. 
 - Protocol used for the Gripper instead of ABC, check if is worth to change it up.
 - Fixed executor thread count
 - grasp-versus-world-model mismatch - needs to be watched at runtime
 - MuJoCo scene objects and how they are added to the world_model when sim is used
-- `fer_moveit_config` `test_contract` failed 2 of 17 once when its tests ran in the same
+- `fer_moveit` `test_contract` failed 2 of 17 once when its tests ran in the same
   container together with `fer_behavior_trees`, and passed in every separate run (2026-10-12).
   Likely tests of different packages sharing a DDS domain; not yet investigated.
 - Speed and separation monitoring: `speed_scaling` is fixed per motion when it is planned and
   cannot change during execution, so SSM (speed depending on the distance to a person) needs a
   mechanism that scales a running motion. How `speed_and_separation_monitoring` fits is open.
+- RViz logs `trajectory_visualization: No robot state or robot model loaded` repeatedly in the
+  MuJoCo run of 2026-10-12; not known whether it appeared before 8.7.
 
 ## Known limits
 
@@ -91,3 +102,7 @@ Not committed: `fer_ros2/Repo_Hotfixes.md` (kept local).
 | 2026-10-12 | Trees take `speed_scaling` from the goal payload, default a BT server parameter (0.3) | Slower runs (first real-robot runs) without editing trees |
 | 2026-10-12 | A top-level launch file declares and forwards every argument of what it includes | The top level has authority over all lower levels |
 | 2026-10-12 | C++ formatting by clang-format 18, `{` on its own line everywhere | Formatting comes from the editor (format on save) and matches the `colcon test` check |
+| 2026-10-12 | `fer_moveit_config` → `fer_moveit`; `fer_moveit_launch.py` → `fer_move_group.launch.py` | The package holds the MoveIt configuration and the MoveIt motion backend, not only configuration |
+| 2026-10-12 | Bringup MoveIt level → `fer_moveit_and_control.launch.py`, kept as its own level | Hardware and `move_group` without servers or automatic controller activation, for manual planning and first controller runs |
+| 2026-10-12 | `move_group` loads no MTC capability | Only `fer_skills` used it |
+| 2026-10-12 | Execution duration monitoring stays off in 8.7 | MoveIt's defaults failed PickPlace in MuJoCo on the joint-7 lag; changing it is an open item |

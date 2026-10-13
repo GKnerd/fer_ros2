@@ -31,12 +31,10 @@ x86_64.
 - Per-package repos plus `.repos` profiles; one meta-repo; one Dockerfile for both
   architectures; one bringup (`fer_ros2_bringup`, `hardware:=real|mujoco`).
 - Robot description is upstream `franka_description`, never an own package.
-- Renames, removals and archiving (`fer_skills`, `fer_ros2_mjc_bringup`, `fer_ros2` →
-  `fer_ros2_driver`, …) happen only in 8.7, after the migration. Never propose them earlier.
 - Servers never switch controllers. The user activates them (launch or
   `ros2 control switch_controllers`); a server waits for its controller and fails with a hint.
 - Motion backend is a client of `move_group` (`fer_moveit_motion_server` in
-  `fer_moveit_config`), not MoveItCpp; straight paths through Pilz LIN.
+  `fer_moveit`), not MoveItCpp; straight paths through Pilz LIN.
 - Servers depend only on `fer_interfaces`. World-model clients are written per package.
 - Objects are boxes only.
 - Controller names: `<interface>_<type>_controller`.
