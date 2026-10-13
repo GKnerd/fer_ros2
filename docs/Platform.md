@@ -30,7 +30,7 @@ one hardware overlay.
 
 | Check | MuJoCo (x86_64) | Real FER (Orin) |
 |---|---|---|
-| Fresh clone, `vcs import`, build from scratch | core + real + sim, 2026-10-13 | core + real, 2026-10-13 |
+| Fresh clone, image build from scratch | `fer_ros2`, 2026-10-13 | separate repositories, 2026-10-13; `fer_ros2` open |
 | Full stack starts (`fer_manipulation_bt.launch.py`) | yes | yes |
 | `PickPlace` with mock perception | SUCCESS (2026-10-12, 2026-10-13) | SUCCESS (2026-10-12; stack run 2026-10-13) |
 | `speed_scaling` from the goal payload | tested | default speed (0.3) tested |
@@ -45,37 +45,43 @@ Not yet verified: see §8.1.
 
 ## 3. Repository layout
 
-`fer_ros2_docker` is the meta-repository: Docker image, DDS configuration, profile manifests
-and documentation, no ROS packages. Component repositories are imported into `ros2_ws/src`
-with `vcs import . < <profile>`.
+`fer_ros2` is one repository: the ROS packages in `ros2_ws/src`, the Docker image, DDS
+configuration and documentation. Until 2026-10-13 each package folder was a repository of its
+own; it was merged with its full history, and that state is tag `jazzy-0.1.0`.
 
-| Profile | Contents | Imported on |
+| Folder (`ros2_ws/src/`) | Packages | Role |
 |---|---|---|
-| `fer_core.repos` | own packages below, `franka_description` @ `72baf5b`, `BehaviorTree.ROS2` @ `6c6aa07` | every host |
-| `fer_real.repos` | `fer_ros2_driver`, libfranka 0.9.2 into `deps/` | x86_64, Orin |
-| `fer_sim.repos` | `mujoco_ros2_control` @ `375a5db`, `mujoco_vendor` @ `26187d6` | x86_64 only |
+| `fer_interfaces` | `fer_interfaces` | contract: actions, services, messages |
+| `fer_world_model` | `fer_world_model` | world model server, mock perception |
+| `fer_gripper_server` | `fer_gripper_server` | gripper server, real and MuJoCo adapters |
+| `fer_grasp_planner` | `fer_grasp_planner` | grasp and place candidates |
+| `fer_moveit` | `fer_moveit` | MoveIt configuration and the MoveIt motion backend |
+| `fer_behavior_trees` | `fer_behavior_trees` | BT server `fer_bt_server`, trees |
+| `fer_ros2_bringup` | `fer_ros2_bringup` | description overlays, controllers, launch levels, scenes |
+| `fer_ros2_driver` | `franka_hardware`, `franka_gripper`, `franka_msgs`, `franka_semantic_components`, `franka_robot_state_broadcaster` | real-robot driver, Jazzy port of multipanda_ros2 |
 
-| Repository | Branch | Packages | Role |
+Externals are not part of the repository. `docker/Dockerfile` clones them at pinned versions
+(`ARG` lines):
+
+| External | Pin | Into | Built |
 |---|---|---|---|
-| `fer_interfaces` | `jazzy_devel` | `fer_interfaces` | contract: actions, services, messages |
-| `fer_world_model` | `main` | `fer_world_model` | world model server, mock perception |
-| `fer_gripper_server` | `jazzy_devel` | `fer_gripper_server` | gripper server, real and MuJoCo adapters |
-| `fer_grasp_planner` | `jazzy_devel` | `fer_grasp_planner` | grasp and place candidates |
-| `fer_moveit` | `jazzy-devel` | `fer_moveit` | MoveIt configuration and the MoveIt motion backend |
-| `fer_behavior_trees` | `main` | `fer_behavior_trees` | BT server `fer_bt_server`, trees |
-| `fer_ros2_bringup` | `main` | `fer_ros2_bringup` | description overlays, controllers, launch levels, scenes |
-| `fer_ros2_driver` | `jazzy` | `franka_hardware`, `franka_gripper`, `franka_msgs`, `franka_semantic_components`, `franka_robot_state_broadcaster` | real-robot driver, Jazzy port of multipanda_ros2 |
+| libfranka | `0.9.2` | `~/deps` | always |
+| `franka_description` | `72baf5b` | `~/deps_ws` | always |
+| `BehaviorTree.ROS2` | `6c6aa07` | `~/deps_ws` | always |
+| `mujoco_vendor` | `26187d6` | `~/deps_ws` | `WITH_MUJOCO=1` |
+| `mujoco_ros2_control` | `375a5db` | `~/deps_ws` | `WITH_MUJOCO=1` |
 
-Externals carry pins only in the profiles; own repositories track their branch. Dependencies
-point one way: every server depends on `fer_interfaces` and standard messages only;
-`fer_moveit` additionally on MoveIt and `franka_description`; `fer_ros2_bringup` sits on top
-and nothing depends on it. `franka_msgs` is used only for `hardware:=real` and is not needed
-to build a core + sim import.
+Dependencies point one way: every server depends on `fer_interfaces` and standard messages
+only; `fer_moveit` additionally on MoveIt and `franka_description`; `fer_ros2_bringup` sits on
+top and nothing depends on it. `franka_msgs` is used only for `hardware:=real`; `fer_moveit`
+builds without it. All C++ is formatted with `ros2_ws/src/.clang-format`.
 
-**Image.** One `docker/Dockerfile` for x86_64 and aarch64, tag
-`fer_ros2_docker/ros:jazzy_<arch>`. It builds libfranka from `deps/libfranka` when present,
-runs `rosdep install` and `colcon build` over `ros2_ws/src`. `docker/run_container.sh` sets
-real-time limits on every host and mounts `ros2_ws`, `env` and `data`. In the container:
+**Image.** One `docker/Dockerfile` for x86_64 and aarch64, tag `fer_ros2/ros:jazzy_<arch>`. It
+builds libfranka, then the externals in `~/deps_ws`, then `ros2_ws` on top of them.
+`build_image.sh` sets `WITH_MUJOCO` to 1 on x86_64 and 0 on aarch64 and copies the built
+`ros2_ws` back to the host. `rosdep` skips the keys of the externals, so their apt releases are
+not installed. `docker/run_container.sh` sets real-time limits on every host and mounts
+`ros2_ws`, `env` and `data`. In the container:
 
 ```bash
 colcon build --symlink-install --merge-install --cmake-args -DFranka_DIR:PATH=/home/fer_ros2/deps/libfranka/build
@@ -232,15 +238,15 @@ Named poses `home` and `view` in `config/poses.yaml`.
 
 ### 8.3 Infrastructure
 
-- **Repository structure:** decided 2026-10-13 to move back to a single repository; layout
-  and migration to be planned.
-- **CI:** only `fer_ros2_bringup` has a workflow (description invariants). Missing: build and
-  test of the whole stack, a `hardware:=mock` backend for launch tests without MuJoCo or the
-  robot, checks for duplicate package names and dependency direction.
-- **Conventions:** branch names differ (`main`, `jazzy`, `jazzy-devel`, `jazzy_devel`); no
-  version tags; only the driver has a CHANGELOG.
-- **Releases:** no pinned snapshot yet. Providing the code outside needs public repositories,
-  `https` URLs in every manifest.
+- **CI:** one workflow, `.github/workflows/fer_description.yml` (description invariants).
+  Missing: build and test of the whole stack, a `hardware:=mock` backend for launch tests
+  without MuJoCo or the robot, checks for duplicate package names and dependency direction.
+- **Conventions:** `main` holds releases tagged `jazzy-<version>`, `jazzy_devel` takes pull
+  requests. Package versions and a CHANGELOG for the platform are not settled; only the
+  driver has a CHANGELOG.
+- **Releases:** `jazzy-0.1.0` freezes the state before the merge. The first `fer_ros2`
+  release, `jazzy-0.2.0`, follows the check on the Orin. Providing the code outside needs a
+  public repository.
 - **Driver lint:** `copyright` (9 files without a license header) and `lint_cmake`.
 
 ### 8.4 Deferred features

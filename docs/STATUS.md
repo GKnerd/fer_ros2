@@ -4,15 +4,15 @@ Updated: 2026-10-13
 
 ## Current step
 
-Phase 8.7 implemented and committed (2026-10-12): old stack removed (`fer_skills`, old BT
-server, skills launch levels, MTC capability), `fer_moveit_config` renamed `fer_moveit`,
-`fer_ros2` renamed `fer_ros2_driver`, MoveIt level `fer_moveit_and_control.launch.py` forwards
-every argument. `colcon test` green for `fer_behavior_trees`, `fer_moveit`, `fer_ros2_bringup`;
-PickPlace SUCCESS in MuJoCo. First stage of migration finished. 
-Next Step: Monorepo discussion.
+Single repository `fer_ros2` (2026-10-13): the eight package repositories are merged with
+their full history into `ros2_ws/src`; the state before the merge is tag `jazzy-0.1.0`. The
+Dockerfile clones libfranka and the externals at their pins into `~/deps` and `~/deps_ws`;
+MuJoCo is built with `WITH_MUJOCO=1` (default on x86_64). The description CI runs from the
+repository root. Image built from scratch on x86_64; PickPlace SUCCESS in MuJoCo.
+Next step: the same check on the Orin, then release `jazzy-0.2.0`.
 
 All own C++ code is formatted with clang-format 18 (braces on their own line) since
-2026-10-12: one `.clang-format` in `fer_behavior_trees`, `fer_moveit` and `fer_ros2_driver`.
+2026-10-12: one `.clang-format` in `ros2_ws/src`.
 
 ## Phase 8
 
@@ -31,16 +31,17 @@ Not committed: `fer_ros2_driver/Repo_Hotfixes.md` (kept local).
 
 ## Next
 
-1. Monorepo: decide the layout of the single repository and how to move the component
-   repositories into it (history, branches, profiles, image build). `docs/Platform.md`
-   describes the current layout.
-2. After the move: CI, conventions (branch names, versions, changelog) and a first release.
-   Open points in `docs/Platform.md` §8.3.
-3. `fer_ros2_driver` packages: `colcon test` still fails on `copyright` (8 files in
+1. Orin: fresh clone of `fer_ros2`, `build_image.sh` (MuJoCo off), real stack, PickPlace.
+2. Release `jazzy-0.2.0`: `main` at the verified commit and default branch on GitHub; rules
+   for `jazzy_devel` (pull request, review, CI), `main` (Georg only) and `jazzy-*` tags;
+   archive the eight old repositories.
+3. After the release: CI for the whole stack, package versions and changelog. Open points in
+   `docs/Platform.md` §8.3.
+4. `fer_ros2_driver` packages: `colcon test` still fails on `copyright` (8 files in
    `franka_hardware`, 1 in `franka_semantic_components` without a license header) and
    `lint_cmake` (trailing space, `franka_gripper/CMakeLists.txt:43`). Both predate the
    reformat.
-4. Refinements observed in sim and real runs (`docs/Platform.md` §8.2) and the open items
+5. Refinements observed in sim and real runs (`docs/Platform.md` §8.2) and the open items
    below. The three reviews of 2026-10-12 (code issues, tests and CI, reuse from
    `multipanda_ros2`) are not yet in the list below.
 
@@ -103,3 +104,7 @@ Not committed: `fer_ros2_driver/Repo_Hotfixes.md` (kept local).
 | 2026-10-12 | Bringup MoveIt level → `fer_moveit_and_control.launch.py`, kept as its own level | Hardware and `move_group` without servers or automatic controller activation, for manual planning and first controller runs |
 | 2026-10-12 | `move_group` loads no MTC capability | Only `fer_skills` used it |
 | 2026-10-12 | Execution duration monitoring stays off in 8.7 | MoveIt's defaults failed PickPlace in MuJoCo on the joint-7 lag; changing it is an open item |
+| 2026-10-13 | One repository `fer_ros2` with all own packages, driver included; histories merged | The packages always change together; one place for CI, review and releases; the driver can be split out again with its history |
+| 2026-10-13 | Externals cloned by the Dockerfile at pinned commits into `~/deps_ws`; no vcs, no submodules | A pin changes in the same commit as the code that needs it; code changes do not rebuild the externals |
+| 2026-10-13 | `main` = releases tagged `jazzy-<version>`; `jazzy_devel` = development through pull requests | A plain clone gets verified code; one branch for all work |
+| 2026-10-13 | One `.clang-format` in `ros2_ws/src` | The container sees only `ros2_ws`; the clang-format tests read it by path |
