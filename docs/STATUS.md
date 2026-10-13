@@ -8,7 +8,8 @@ Phase 8.7 implemented and committed (2026-10-12): old stack removed (`fer_skills
 server, skills launch levels, MTC capability), `fer_moveit_config` renamed `fer_moveit`,
 `fer_ros2` renamed `fer_ros2_driver`, MoveIt level `fer_moveit_and_control.launch.py` forwards
 every argument. `colcon test` green for `fer_behavior_trees`, `fer_moveit`, `fer_ros2_bringup`;
-PickPlace SUCCESS in MuJoCo. Next: the real-robot check, then the GitHub renames.
+PickPlace SUCCESS in MuJoCo. First stage of migration finished. 
+Next Step: Monorepo discussion.
 
 All own C++ code is formatted with clang-format 18 (braces on their own line) since
 2026-10-12: one `.clang-format` in `fer_behavior_trees`, `fer_moveit` and `fer_ros2_driver`.
@@ -24,7 +25,7 @@ All own C++ code is formatted with clang-format 18 (braces on their own line) si
 | 8.4 `fer_grasp_planner` | grasp and place candidates done, committed |
 | 8.5 `fer_behavior_trees` | implemented, committed, PickPlace runs in MuJoCo; a failed grasp followed by a successful retry not yet seen |
 | 8.6 Bringup | done |
-| 8.7 Removal and renames | implemented, committed, MuJoCo verified; real-robot check and GitHub renames open |
+| 8.7 Removal and renames | implemented, committed, MuJoCo verified; real-robot check and GitHub renames done, Fresh import verified on PC and Orin |
 
 Not committed: `fer_ros2_driver/Repo_Hotfixes.md` (kept local).
 

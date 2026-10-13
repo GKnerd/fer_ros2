@@ -7,7 +7,7 @@ x86_64.
 ## Start of every session
 
 - Read `docs/STATUS.md`: current step, open items, recent decisions.
-- The plan is `docs/FER_ROS2_Consolidation_Plan.md`. Copies outside `docs/` are stale.
+- The plan is `docs/Platform.md`. Copies outside `docs/` are stale.
 
 ## Layout
 
@@ -28,8 +28,7 @@ x86_64.
 
 ## Fixed decisions — do not reopen
 
-- Per-package repos plus `.repos` profiles; one meta-repo; one Dockerfile for both
-  architectures; one bringup (`fer_ros2_bringup`, `hardware:=real|mujoco`).
+- one meta-repo; one Dockerfile for both architectures; one bringup (`fer_ros2_bringup`, `hardware:=real|mujoco`).
 - Robot description is upstream `franka_description`, never an own package.
 - Servers never switch controllers. The user activates them (launch or
   `ros2 control switch_controllers`); a server waits for its controller and fails with a hint.
@@ -38,7 +37,6 @@ x86_64.
 - Servers depend only on `fer_interfaces`. World-model clients are written per package.
 - Objects are boxes only.
 - Controller names: `<interface>_<type>_controller`.
-- SSM (`speed_and_separation_monitoring`) stays separate.
 - C++ is formatted with clang-format 18 using the repo's .clang-format, with { on its own line everywhere.
 - A top-level launch file declares and forwards every argument of what it includes.
 

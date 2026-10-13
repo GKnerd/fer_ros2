@@ -1147,7 +1147,7 @@ profiles after the GitHub renames.
 **Deferred** — the interfaces already allow them: grasp network, D405 perception node,
 grasp monitor (§11 wrench, drops → LOST), continuous perception, handover and a
 streaming motion contract (§10), MPC backend, compliant control.
-
+[Done]
 ---
 
 ## 5. Sequencing

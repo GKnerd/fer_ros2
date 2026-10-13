@@ -8,9 +8,9 @@ work is tracked in [`STATUS.md`](STATUS.md).
 ## 1. What the platform is
 
 A ROS 2 Jazzy stack for the Franka Emika Robot (FER / Panda, libfranka 0.9.2) that picks and
-places objects with behavior trees. The same packages run on the real robot and in MuJoCo;
-the hardware is a launch argument, `hardware:=real|mujoco`. The real robot is driven from a
-Jetson Orin AGX (aarch64); the simulation runs on x86_64.
+places objects with behavior trees. The same packages run on the real robot and in MuJoCo.
+The hardware is a launch argument, `hardware:=real|mujoco`. The real robot is driven from a
+Jetson Orin AGX (aarch64). The simulation runs on x86_64.
 
 ```
 fer_behavior_trees        order, choices, retries (PickPlace, Pick, Place)
@@ -39,8 +39,7 @@ one hardware overlay.
 `fer_grasp_planner`, `fer_moveit`, `fer_behavior_trees` and `fer_ros2_bringup` (unit tests,
 contract tests against fake neighbours, `move_group` launch test, description invariants,
 `ament_flake8` / `ament_pep257` / clang-format). The driver packages build and run but fail
-`colcon test` on `copyright` and `lint_cmake`. `speed_and_separation_monitoring` is not
-part of the tested stack.
+`colcon test` on `copyright` and `lint_cmake`.
 
 Not yet verified: see §8.1.
 
@@ -66,7 +65,6 @@ with `vcs import . < <profile>`.
 | `fer_behavior_trees` | `main` | `fer_behavior_trees` | BT server `fer_bt_server`, trees |
 | `fer_ros2_bringup` | `main` | `fer_ros2_bringup` | description overlays, controllers, launch levels, scenes |
 | `fer_ros2_driver` | `jazzy` | `franka_hardware`, `franka_gripper`, `franka_msgs`, `franka_semantic_components`, `franka_robot_state_broadcaster` | real-robot driver, Jazzy port of multipanda_ros2 |
-| `speed_and_separation_monitoring` | `main` | `speed_and_separation_monitoring` | safety prototype, not integrated |
 
 Externals carry pins only in the profiles; own repositories track their branch. Dependencies
 point one way: every server depends on `fer_interfaces` and standard messages only;
@@ -201,7 +199,6 @@ Named poses `home` and `view` in `config/poses.yaml`.
 - **Sim/real parity ends at joint level:** the real driver also exports Cartesian interfaces
   and the robot model; MuJoCo does not. No wrench (force/torque) path yet.
 - **Driver** is frozen on libfranka 0.9.2 (FER only, no FR3).
-- **SSM is not a safety function**; protective stops go through the Franka safety system.
 
 ## 8. Open
 
@@ -243,8 +240,7 @@ Named poses `home` and `view` in `config/poses.yaml`.
 - **Conventions:** branch names differ (`main`, `jazzy`, `jazzy-devel`, `jazzy_devel`); no
   version tags; only the driver has a CHANGELOG.
 - **Releases:** no pinned snapshot yet. Providing the code outside needs public repositories,
-  `https` URLs in every manifest (`speed_and_separation_monitoring` uses `git@`) and a
-  release snapshot per profile.
+  `https` URLs in every manifest.
 - **Driver lint:** `copyright` (9 files without a license header) and `lint_cmake`.
 
 ### 8.4 Deferred features

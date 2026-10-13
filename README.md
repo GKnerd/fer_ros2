@@ -11,7 +11,7 @@ Supported hosts: x86_64 workstations and the Jetson Orin AGX (aarch64).
 
 | Manifest | Contents |
 |---|---|
-| `fer_core.repos` | `franka_description`, `BehaviorTree.ROS2`, `fer_ros2_bringup`, `fer_moveit`, `fer_behavior_trees`, `fer_world_model`, `speed_and_separation_monitoring`, `fer_interfaces`, `fer_gripper_server`, `fer_grasp_planner` |
+| `fer_core.repos` | `franka_description`, `BehaviorTree.ROS2`, `fer_ros2_bringup`, `fer_moveit`, `fer_behavior_trees`, `fer_world_model`, `fer_interfaces`, `fer_gripper_server`, `fer_grasp_planner` |
 | `fer_real.repos` | `libfranka` 0.9.2 (`deps/`), `fer_ros2_driver` (driver) |
 | `fer_sim.repos` | `mujoco_ros2_control`, `mujoco_vendor` |
 
@@ -74,9 +74,9 @@ The settings are volatile and are lost on reboot or driver reload.
 
 ```
 docker/     Dockerfile, build_image.sh, run_container.sh
-env/        cyclone_dds.xml, dds_profile.xml
+env/        cyclone_dds.xml
 config/     nic_orin_config.sh
-docs/       consolidation plan, status, DDS profiles, legacy READMEs
+docs/       platform description, status, DDS profiles, legacy READMEs
 deps/       ignored; libfranka
 ros2_ws/    ignored; imported component repos
 ```
