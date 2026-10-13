@@ -4,8 +4,9 @@
 #    This Dockerfile is derived from internal Docker tooling developed at
 #    Proximity Robotics & Automation GmbH. It has been adapted for the
 #    Franka Emika Robot (FER) platform: dependency set, user-creation block,
-#    CycloneDDS configuration, optional libfranka build, colcon build stage,
-#    and a single image for x86_64 and aarch64 have been modified. The
+#    CycloneDDS configuration, libfranka and pinned external packages built
+#    from source, colcon build stage, and a single image for x86_64 and
+#    aarch64 have been modified. The
 #    original layering pattern is retained.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
@@ -93,6 +94,7 @@ RUN echo "%sudo ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/sudogrp && \
     chmod 0440 /etc/sudoers.d/sudogrp
 
 RUN echo "source /opt/ros/$ROS_DISTRO/setup.bash" >> /etc/bash.bashrc
+RUN echo "source /home/$USER/deps_ws/install/setup.bash" >> /etc/bash.bashrc
 RUN echo "source /home/$USER/$PROJECT_WS/install/setup.bash" >> /etc/bash.bashrc
 RUN echo "export ROS_DOMAIN_ID=${ROS_DOMAIN_ID}" >> /etc/bash.bashrc
 RUN echo "source /usr/share/colcon_argcomplete/hook/colcon-argcomplete.bash" >> /etc/bash.bashrc
@@ -104,6 +106,7 @@ ENV CYCLONEDDS_URI=file:///home/${USER}/env/cyclone_dds.xml
 USER ${USER}
 RUN mkdir -p /home/${USER}/${PROJECT_WS}/src
 RUN mkdir -p /home/${USER}/deps
+RUN mkdir -p /home/${USER}/deps_ws/src
 ##############################################################################
 ##                                 Dependencies                             ##
 ##############################################################################
@@ -128,22 +131,60 @@ USER ${USER}
 ##############################################################################
 ##                                 User Dependecies                         ##
 ##############################################################################
-COPY --chown=${USER}:${USER} deps /home/${USER}/deps
-
-# deps/libfranka is only present when fer_real.repos was imported.
+ARG LIBFRANKA_VERSION=0.9.2
 WORKDIR /home/${USER}/deps
-RUN if [ -d libfranka ]; then \
-        cd libfranka && \
-        git submodule update --init --recursive && \
-        cmake -S . \
-        -B build \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
-        -DBUILD_EXAMPLES=ON \
-        -DBUILD_TESTS=OFF \
-        && cmake --build build -j"$(nproc)"; \
+RUN git clone --recursive --branch ${LIBFRANKA_VERSION} https://github.com/frankarobotics/libfranka.git && \
+    cd libfranka && \
+    cmake -S . \
+    -B build \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+    -DBUILD_EXAMPLES=ON \
+    -DBUILD_TESTS=OFF \
+    && cmake --build build -j"$(nproc)"
+
+##############################################################################
+##                                 External ROS Packages                    ##
+##############################################################################
+# Pinned upstream packages, built once into ~/deps_ws as an underlay of
+# ros2_ws. Each ARG sits right before its step --> change of ARG rebuilds from that step on.
+
+WORKDIR /home/${USER}/deps_ws
+ARG FRANKA_DESCRIPTION_COMMIT=72baf5bf4e88eaec27f0eb61be1b20a001abf2ab
+# PR #122 (issue #121): fixes a thread crash on ROS 2 Jazzy, not yet in the
+# 0.3.0 release.
+ARG BT_ROS2_COMMIT=6c6aa078ee7bc52fec98984bed4964556abf5beb
+RUN git clone https://github.com/frankarobotics/franka_description.git src/franka_description && \
+    git -C src/franka_description checkout ${FRANKA_DESCRIPTION_COMMIT} && \
+    git clone https://github.com/BehaviorTree/BehaviorTree.ROS2.git src/BehaviorTree.ROS2 && \
+    git -C src/BehaviorTree.ROS2 checkout ${BT_ROS2_COMMIT}
+
+RUN sudo apt-get update && \
+    rosdep update && \
+    rosdep install --from-paths src --ignore-src -r -y
+
+RUN . /opt/ros/$ROS_DISTRO/setup.sh && \
+    colcon build --merge-install \
+    --cmake-args -DCMAKE_BUILD_TYPE=Release \
+    -DBUILD_TESTING=OFF
+
+# MuJoCo simulation backend, only with --build-arg WITH_MUJOCO=1.
+ARG WITH_MUJOCO=0
+ARG MUJOCO_VENDOR_COMMIT=26187d69dd239adc45c121af780d57590d189686
+ARG MUJOCO_ROS2_CONTROL_COMMIT=375a5db49d2c92fcfdd8f88c1376c4fb3eee3a70
+RUN if [ "$WITH_MUJOCO" = "1" ]; then \
+        git clone https://github.com/pal-robotics/mujoco_vendor.git src/mujoco_vendor && \
+        git -C src/mujoco_vendor checkout ${MUJOCO_VENDOR_COMMIT} && \
+        git clone https://github.com/ros-controls/mujoco_ros2_control.git src/mujoco_ros2_control && \
+        git -C src/mujoco_ros2_control checkout ${MUJOCO_ROS2_CONTROL_COMMIT} && \
+        sudo apt-get update && \
+        rosdep install --from-paths src --ignore-src -r -y && \
+        . /opt/ros/$ROS_DISTRO/setup.sh && \
+        colcon build --merge-install --packages-skip-build-finished \
+        --cmake-args -DCMAKE_BUILD_TYPE=Release \
+        -DBUILD_TESTING=OFF; \
     else \
-        echo "deps/libfranka not found, skipping libfranka build (simulation-only import)"; \
+        echo "WITH_MUJOCO=${WITH_MUJOCO}, skipping the MuJoCo packages"; \
     fi
 
 ##############################################################################
@@ -151,12 +192,16 @@ RUN if [ -d libfranka ]; then \
 ##############################################################################
 WORKDIR /home/${USER}/${PROJECT_WS}
 COPY --chown=${USER}:${USER} ${PROJECT_WS}/src /home/$USER/${PROJECT_WS}/src
-  
+
+# The external packages come from ~/deps_ws; keep rosdep from installing
+# their apt releases.
 RUN sudo apt-get update && \
     rosdep update && \
-    rosdep install --from-paths src --ignore-src -r -y
+    rosdep install --from-paths src --ignore-src -r -y \
+    --skip-keys "franka_description behaviortree_ros2 mujoco_vendor mujoco_ros2_control"
 
 RUN . /opt/ros/$ROS_DISTRO/setup.sh && \
+    . /home/${USER}/deps_ws/install/setup.sh && \
     colcon build --symlink-install \
     --merge-install \
     --cmake-clean-cache \
