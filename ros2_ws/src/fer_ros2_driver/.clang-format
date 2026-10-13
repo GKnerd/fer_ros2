@@ -1,0 +1,26 @@
+---
+# ament's ROS 2 style (ament_clang_format default), except: every block, function and
+# lambda opens with { on its own line, and else and catch start their own line.
+Language: Cpp
+BasedOnStyle: Google
+
+AccessModifierOffset: -2
+AlignAfterOpenBracket: AlwaysBreak
+BraceWrapping:
+  AfterClass: true
+  AfterFunction: true
+  AfterNamespace: true
+  AfterStruct: true
+  AfterEnum: true
+  AfterControlStatement: Always
+  BeforeElse: true
+  BeforeCatch: true
+  BeforeLambdaBody: true
+BreakBeforeBraces: Custom
+ColumnLimit: 100
+ConstructorInitializerIndentWidth: 0
+ContinuationIndentWidth: 2
+DerivePointerAlignment: false
+PointerAlignment: Middle
+ReflowComments: false
+...
