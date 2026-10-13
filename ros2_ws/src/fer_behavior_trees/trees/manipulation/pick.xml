@@ -1,0 +1,34 @@
+<root BTCPP_format="4">
+  <!-- Picks object_id: refine from the view pose, first reachable top-down grasp,
+       straight approach and lift. A failed grasp backs out to the pre-grasp and fails. -->
+  <BehaviorTree ID="Pick">
+    <Sequence>
+      <MoveToJoints joints="{@view}" speed_scaling="{@speed_scaling}"/>
+      <MoveGripper width="0.08"/>
+      <RefineObject object_id="{object_id}"/>
+      <GetGraspCandidates object_id="{object_id}" candidates="{grasp_candidates}"/>
+      <FindReachableGrasp object_id="{object_id}" candidates="{grasp_candidates}"
+                          pregrasp_joints="{pregrasp_joints}" pregrasp_pose="{pregrasp_pose}"
+                          grasp_pose="{grasp_pose}" lift_pose="{lift_pose}"
+                          width="{grasp_width}" force="{grasp_force}"
+                          speed_scaling="{@speed_scaling}"/>
+      <MoveToJoints joints="{pregrasp_joints}" speed_scaling="{@speed_scaling}"/>
+      <MoveToPose pose="{grasp_pose}" path="straight" may_touch="{object_id}"
+                  speed_scaling="{@speed_scaling}"/>
+      <Fallback>
+        <Grasp object_id="{object_id}" width="{grasp_width}" force="{grasp_force}"/>
+        <ForceFailure>
+          <MoveToPose pose="{pregrasp_pose}" path="straight" may_touch="{object_id}"
+                      speed_scaling="{@speed_scaling}"/>
+        </ForceFailure>
+      </Fallback>
+      <MoveToPose pose="{lift_pose}" path="straight" speed_scaling="{@speed_scaling}"/>
+    </Sequence>
+  </BehaviorTree>
+
+  <TreeNodesModel>
+    <SubTree ID="Pick">
+      <input_port name="object_id">FREE object to pick</input_port>
+    </SubTree>
+  </TreeNodesModel>
+</root>
