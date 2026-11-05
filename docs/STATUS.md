@@ -1,8 +1,27 @@
 # Status
 
-Updated: 2026-10-13
+Updated: 2026-11-05
 
 ## Current step
+
+Real-robot repeat runs (2026-11-05): PickPlace repeated with a box put back by hand
+between cycles, mock perception. Two failures fixed; with both fixes the real-robot repeat run
+succeeded:
+- **Stale object after a hand reset.** The placed box stayed FREE at the place spot (pick
+  target and collision object for 30 s) while the box put back became a new id; the next place
+  then failed in planning. Fix: a FREE object missed by `lost_after_misses` snapshots in a row
+  (default 1) becomes LOST, leaves the planning scene, and an unmatched detection of its class
+  takes it over under the same id (`fer_world_model`). The workarounds (`Sleep 3000`,
+  `world_model_repeat.yaml` with `removal_timeout: 1.0`) are gone.
+- **Lift after the grasp failed** with `CheckStartStateCollision: box_1 - table` (diagnosed in
+  `docs/2026-10-26_Observations.md`). Fix: MoveToPose/MoveToJoints plan from one sample of
+  the measured joints, so the held-contact allowance and the start-state check see the same
+  state; `held_contacts` logs the allowed pairs (`fer_moveit`).
+- `PickPlace` places from (0.40, 0.40), 0.12 m apart in x.
+
+`colcon test` passes for `fer_world_model`, `fer_behavior_trees` and `fer_moveit`. The
+`PickPlaceRepeat` tree needs fixing: `reset_delay_ms` must be sent as a JSON string, and the
+delay is fixed.
 
 Single repository `fer_ros2` (2026-10-13): the eight package repositories are merged with
 their full history into `ros2_ws/src`; the state before the merge is tag `jazzy-0.1.0`. The
@@ -48,6 +67,10 @@ All own C++ code is formatted with clang-format 18 (braces on their own line) si
 
 ## Next
 
+0. Open items of the 2026-11-05 repeat runs (`docs/Platform.md` §8.2 item 10): payload
+   integers vs `unsigned` ports (blocks `PickPlaceRepeat`); recovery while holding an object;
+   place checked before the grasp and `may_touch` per segment as executed; success rules
+   (not-seen object, no objects); `planner_id` and workspace bounds in requests.
 1. CI follow-up: add `build-and-test (x86_64)` and `build-and-test (aarch64)` as required
    checks on `jazzy_devel`; watch the first GitHub runs of the mock launch test (the motion
    server waits 10 s for `move_group`, see `docs/Platform.md` §8.2 item 3); later remove
@@ -70,7 +93,12 @@ All own C++ code is formatted with clang-format 18 (braces on their own line) si
 - **Catalog `box: {force: 5.0}`** is shared with the real robot. Alternative: stiffer object
   contacts in `pick_place_world.xml` (solref 0.004 1, solimp 0.95 0.99 0.001), back to 15 N.
 - Grasp closing speed is tied to force (finger trajectory controller later).
-- A failed lift leaves the box attached (no release fallback).
+- A failed lift leaves the box attached (no release fallback). The start-state cause of
+  2026-10-26 is fixed; other lift failures still end with the box in the hand.
+- No occupancy map: a missed object becomes LOST and is no obstacle. Accepted with mock
+  perception; a real camera needs a visibility check and `lost_after_misses` > 1.
+- Mock perception: a LOST box is never found again (put it back at its file pose); a box put
+  back by hand must be in place before the next detection (fixed `reset_delay_ms`).
 - A failed Release makes the watch mark the object LOST.
 - World model can disagree with the physical grasp if `SetObjectStatus` fails or a Grasp is
   cancelled after closing.
@@ -129,4 +157,8 @@ All own C++ code is formatted with clang-format 18 (braces on their own line) si
 | 2026-10-13 | CI tests run with Cyclone defaults (`CYCLONEDDS_URI` unset) | `env/` is not in the image, and the config's 10 MB minimum receive buffer needs a raised `net.core.rmem_max` that GitHub runners do not have |
 | 2026-10-13 | Driver license headers by origin: Franka where the file or its header already names it, Seongjin Bien (multipanda_ros2) otherwise | `ament_copyright` passes; credit follows the upstream history |
 | 2026-10-13 | Own packages carry no per-file license headers; the always-skipped `test_copyright.py` removed from the Python packages | The repository `LICENSE` covers them; the CMake packages already switch the check off |
+| 2026-11-05 | A FREE object missed `lost_after_misses` snapshots in a row becomes LOST; default 1 | Negative evidence, as real perception stacks do: a stale copy blocked the place and was picked; LOST already leaves the scene and is taken over by an unmatched detection. A counter, so a camera can require several misses |
+| 2026-11-05 | Object ids stay owned by the world model; no ids from perception | Identical boxes cannot be told apart by any detector; tasks select by class and properties |
+| 2026-11-05 | No occupancy layer for now; one miss suffices with mock perception | The mock sees every object; the occupancy map (collision safety independent of recognition) comes with a real camera |
+| 2026-11-05 | MoveToPose/MoveToJoints plan from one sample of the measured joints | The held-contact allowance and `move_group`'s start-state check must see the same state |
 | 2026-10-13 | `hardware:=mock` with an own overlay (`mock_components/GenericSystem`, position only) | Launch tests without MuJoCo or the robot; upstream's `use_fake_hardware` block has no finger joint, so no gripper controller could run |

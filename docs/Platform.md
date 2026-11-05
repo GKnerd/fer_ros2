@@ -164,10 +164,15 @@ model; the blackboard holds object ids only.
 
 **World model.** Takes `vision_msgs/Detection3DArray` on `/perception/detections`, associates
 detections with known objects (same class, centre within 0.05 m), owns object ids, tracks
-status FREE / GRASPED / LOST, removes objects missing for 30 s. A fixed table (top at `base`
-z = 0) is loaded from `fixtures.yaml`. Perception is a mock: `mock_perception` publishes the
-objects of `config/mock_objects.yaml` at 5 Hz. On the real robot the objects must stand at
-those poses.
+status FREE / GRASPED / LOST, removes objects missing for 30 s. A FREE object missed by
+`lost_after_misses` snapshots in a row (detection or refine; default 1, as the mock sees every
+object) becomes LOST: it leaves the planning scene and the tree's object list, and an unmatched
+detection of its class, also in the same snapshot, takes it over under the same id. So a box
+moved by hand keeps its id and leaves no stale copy behind. Ids are owned by the world model;
+detections carry none, and identical objects are told apart by pose only. A fixed table (top
+at `base` z = 0) is loaded from `fixtures.yaml`. Perception is a mock: `mock_perception`
+publishes the objects of `config/mock_objects.yaml` at 5 Hz. On the real robot the objects
+must stand at those poses.
 
 **Gripper server.** One adapter per hardware. Real: `franka_gripper` `Move` / `Grasp` on
 `/fer_gripper`, grasp evidence from `is_grasped`. MuJoCo: `GripperCommand` on
@@ -184,11 +189,13 @@ world model into `move_group`'s planning scene, plans plan-only (OMPL `RRTConnec
 paths and joint targets, Pilz `LIN` for straight paths), executes through `ExecuteTrajectory`,
 and stops a replaced or cancelled motion with `"stop"` on `/trajectory_execution_event`;
 `CANCELLED` is reported once the arm rests. `may_touch` allows contact with named objects for
-one plan. `ROBOT_ERROR` (reflex, user stop) on the real robot only.
+one plan. A straight path with a held object also allows the held object's contacts at the
+start state (a box resting on the table), checked on the same joint sample as `move_group`'s
+start-state check. `ROBOT_ERROR` (reflex, user stop) on the real robot only.
 
 **Behavior trees.** `PickPlace` (`trees/manipulation/`): detect, query objects of
 `target_class`, per object `Pick` (retried `pick_attempts` times; not picked → next object),
-`Place` in a row of slots, then home. SUCCESS only if every object was placed. Payload keys:
+`Place` in a row of slots (first at (0.40, 0.40) in `base`, 0.12 m apart in x), then home. SUCCESS only if every object was placed. Payload keys:
 `target_class`, `pick_attempts`, optional `speed_scaling` (default 0.3, BT server parameter).
 Named poses `home` and `view` in `config/poses.yaml`.
 
@@ -205,8 +212,15 @@ Named poses `home` and `view` in `config/poses.yaml`.
 
 ## 7. Known limitations
 
-- **Perception** is a mock: fixed detections from a file. An object outside the camera's view
-  would count as missed and be removed after 30 s; there is no real perception node yet.
+- **Perception** is a mock: fixed detections from a file; there is no real perception node
+  yet. It cannot find a LOST (dropped) object; that object must be put back at its file pose.
+  A box put back by hand must be in place before the next detection, otherwise the mock
+  reports it at its file pose while it still stands at the place spot.
+- **No occupancy map:** only world-model objects are obstacles. A missed object becomes LOST
+  and is no longer an obstacle. A real camera needs a visibility check (count a miss only
+  where the object should have been seen) and `lost_after_misses` > 1.
+- **Collision checks happen at planning time only:** every Pilz LIN waypoint (about every
+  0.1 s) is checked by `ValidateSolution`; nothing is checked during execution.
 - **Planning failures** are always reported as `NO_PATH`: `move_group`'s plan-only path
   replaces planner error codes, so `UNREACHABLE` is never seen.
 - **Straight paths** (Pilz LIN) are checked against the quarter-datasheet joint limits; near
@@ -260,6 +274,16 @@ Named poses `home` and `view` in `config/poses.yaml`.
    start-up only but not declared read-only; fixed executor thread counts and polling
    intervals; `Gripper` is a `typing.Protocol` (ABC undecided).
 9. RViz logs `trajectory_visualization: No robot state or robot model loaded`.
+10. Real-robot repeat run (2026-11-05), still open:
+    - No recovery while holding an object: a failed lift or place leaves it in the hand
+      (put back, go home, or ask the operator; undecided).
+    - The place is checked only after the grasp; `FindReachable*` allows `may_touch` on
+      other segments than the trees execute.
+    - Payload integers become `int` blackboard entries, so `unsigned` ports (`Delay`,
+      `Sleep`) fail at tree creation; send such values as JSON strings for now.
+    - Success rules: a not-seen object is still retried `pick_attempts` times and counts as
+      a failure; no objects at all is SUCCESS.
+    - `move_group` warns that `planner_id` and the workspace bounds are not set in requests.
 
 ### 8.3 Infrastructure
 
