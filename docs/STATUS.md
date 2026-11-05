@@ -23,8 +23,9 @@ succeeded:
 - Mock objects per setup: `mock_objects_sim.yaml` (MuJoCo scene) and
   `mock_objects_real.yaml`, chosen by `hardware`.
 
-`colcon test` passed for `fer_world_model`, `fer_behavior_trees` and `fer_moveit` before the
-last two changes; they need a test run, and `PickPlaceRepeat` and MuJoCo a run each. The
+`colcon test` passes for `fer_world_model`, `fer_behavior_trees`, `fer_moveit` and
+`fer_ros2_bringup`; CI passes. `PickPlace` runs in MuJoCo with `mock_objects_sim.yaml`. Not
+yet run: `PickPlaceRepeat` on the real robot with integer `cycles` and `reset_delay_ms`. The
 `PickPlaceRepeat` delay is fixed: the robot moves again when it runs out, whether the
 workspace is clear or not.
 
