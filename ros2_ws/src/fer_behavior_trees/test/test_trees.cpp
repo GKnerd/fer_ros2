@@ -61,7 +61,7 @@ protected:
       QueryObjectsNode::providedPorts());
 
     // Registered in reverse, as the server's directory scan has no order.
-    for (const auto * file : {"pick_place.xml", "place.xml", "pick.xml"})
+    for (const auto * file : {"pick_place_repeat.xml", "pick_place.xml", "place.xml", "pick.xml"})
     {
       factory_.registerBehaviorTreeFromFile(std::string(TREES_DIR) + "/" + file);
     }
@@ -187,8 +187,8 @@ TEST_F(Trees, PickPlacePlacesEveryObjectInARow)
 {
   ids_ = {"box_1", "box_2"};
   EXPECT_EQ(run("PickPlace"), NodeStatus::SUCCESS);
-  EXPECT_EQ(count("GetPlaceCandidates box_1 0.35 0.30"), 1u);
-  EXPECT_EQ(count("GetPlaceCandidates box_2 0.47 0.30"), 1u);
+  EXPECT_EQ(count("GetPlaceCandidates box_1 0.40 0.40"), 1u);
+  EXPECT_EQ(count("GetPlaceCandidates box_2 0.52 0.40"), 1u);
   EXPECT_EQ(log_.back(), "MoveToJoints {@home}");
 }
 
@@ -239,5 +239,26 @@ TEST_F(Trees, NoObjectsIsSuccess)
   EXPECT_EQ(run("PickPlace"), NodeStatus::SUCCESS);
   EXPECT_EQ(count("Grasp box_1"), 0u);
   EXPECT_EQ(log_.back(), "MoveToJoints {@home}");
+}
+
+TEST_F(Trees, PickPlaceRepeatRunsEveryCycle)
+{
+  global_->set("cycles", 2);
+  global_->set("reset_delay_ms", std::string("0"));
+  ids_ = {"box_1"};
+  EXPECT_EQ(run("PickPlaceRepeat"), NodeStatus::SUCCESS);
+  EXPECT_EQ(count("DetectObjects"), 2u);
+  EXPECT_EQ(count("Release box_1"), 2u);
+  EXPECT_EQ(count("MoveToJoints {@home}"), 2u);
+}
+
+TEST_F(Trees, PickPlaceRepeatStopsAtTheFirstFailedCycle)
+{
+  global_->set("cycles", 3);
+  global_->set("reset_delay_ms", std::string("0"));
+  ids_ = {"box_1"};
+  results_["Release"] = {NodeStatus::SUCCESS, NodeStatus::FAILURE};
+  EXPECT_EQ(run("PickPlaceRepeat"), NodeStatus::FAILURE);
+  EXPECT_EQ(count("Release box_1"), 2u);
 }
 }  // namespace fer_behavior_trees

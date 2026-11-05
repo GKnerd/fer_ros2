@@ -1,7 +1,6 @@
 #include "fer_behavior_trees/payload.hpp"
 
 #include <algorithm>
-#include <limits>
 #include <map>
 #include <set>
 #include <string>
@@ -18,7 +17,7 @@ std::vector<std::string> apply_payload(
   const std::vector<std::string> & previous_keys, const std::set<std::string> & reserved,
   const std::map<std::string, double> & defaults)
 {
-  std::vector<std::pair<std::string, std::variant<std::string, int, double>>> entries;
+  std::vector<std::pair<std::string, std::variant<std::string, double>>> entries;
   if (!payload.empty())
   {
     nlohmann::json json;
@@ -50,15 +49,12 @@ std::vector<std::string> apply_payload(
       {
         entries.emplace_back(key, value.get<double>());
       }
-      else if (
-        value.is_number_integer() && value.get<double>() >= std::numeric_limits<int>::min() &&
-        value.get<double>() <= std::numeric_limits<int>::max())
+      else if (value.is_number())
       {
-        entries.emplace_back(key, value.get<int>());
-      }
-      else if (value.is_number_float())
-      {
-        entries.emplace_back(key, value.get<double>());
+        // As text, like an XML attribute: a string entry passes BT.CPP's port type check at
+        // tree creation and is converted by the port that reads it (int, unsigned, double).
+        // A typed int entry would fail on an unsigned port (Delay, Sleep, Timeout).
+        entries.emplace_back(key, value.dump());
       }
       else
       {

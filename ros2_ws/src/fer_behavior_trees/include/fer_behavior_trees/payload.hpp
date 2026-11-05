@@ -19,8 +19,9 @@ public:
 };
 
 /// \brief Replace the previous goal's payload keys on \p blackboard with those of \p payload.
-/// \param payload JSON object with string, integer or floating-point values; empty means no
-///   keys. Integers are set as int, floating-point numbers as double.
+/// \param payload JSON object with string or number values; empty means no keys. Numbers are
+///   set as their JSON text (3 → "3"), so the port that reads one converts it to its own type,
+///   as for an XML attribute.
 /// \param previous_keys Keys set by the previous goal; removed first.
 /// \param reserved Keys a payload must not set.
 /// \param defaults Keys set to these values when the payload lacks them; a payload value for

@@ -1,0 +1,20 @@
+<root BTCPP_format="4">
+  <!-- Payload: the keys of PickPlace, plus {"cycles": <n>, "reset_delay_ms": <ms>}.
+       Runs PickPlace cycles times. Each cycle first waits reset_delay_ms, so the objects
+       can be put back by hand while the robot is at home. The delay is fixed: the robot
+       moves again when it runs out, whether the workspace is clear or not.
+       The box placed last cycle and put back by hand is missed at the place spot by
+       PickPlace's DetectObjects, becomes LOST (world model lost_after_misses) and is taken
+       over by the detection where it now stands, under the same id.
+       Stops at the first failed cycle; SUCCESS only if every cycle succeeded. -->
+  <BehaviorTree ID="PickPlaceRepeat">
+    <Repeat num_cycles="{@cycles}">
+      <Sequence>
+        <Delay delay_msec="{@reset_delay_ms}">
+          <AlwaysSuccess/>
+        </Delay>
+        <SubTree ID="PickPlace"/>
+      </Sequence>
+    </Repeat>
+  </BehaviorTree>
+</root>

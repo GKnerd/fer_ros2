@@ -43,8 +43,11 @@ Used (one tree node each, default name in the node's `action_name` port):
 ## Behaviour
 
 - **Goal payload:** a flat JSON object of strings and numbers, written to the global
-  blackboard. `PickPlace` reads `target_class`, `pick_attempts` and the optional
-  `speed_scaling`; without it the parameter `speed_scaling` applies. Keys of the previous
+  blackboard. Numbers are stored as their text, like an XML attribute, and converted by the
+  port that reads them, so an integer fits `int` and `unsigned` ports alike (`Repeat`,
+  `Delay`); `speed_scaling` is stored as a double. `PickPlace` reads `target_class`,
+  `pick_attempts` and the optional `speed_scaling`; without it the parameter
+  `speed_scaling` applies. Keys of the previous
   goal are removed first. A payload that is not a flat object, or that sets `home` or
   `view`, rejects the goal.
 - **Outcome:** every node writes the `Outcome` of its call to its `outcome` port. `OK` is
