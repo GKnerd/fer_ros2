@@ -171,8 +171,9 @@ detection of its class, also in the same snapshot, takes it over under the same 
 moved by hand keeps its id and leaves no stale copy behind. Ids are owned by the world model;
 detections carry none, and identical objects are told apart by pose only. A fixed table (top
 at `base` z = 0) is loaded from `fixtures.yaml`. Perception is a mock: `mock_perception`
-publishes the objects of `config/mock_objects.yaml` at 5 Hz. On the real robot the objects
-must stand at those poses.
+publishes a fixed object list at 5 Hz, `config/mock_objects_sim.yaml` (the MuJoCo scene) or
+`config/mock_objects_real.yaml` (hardware:=real), chosen by the bringup. On the real robot
+the objects must stand at those poses.
 
 **Gripper server.** One adapter per hardware. Real: `franka_gripper` `Move` / `Grasp` on
 `/fer_gripper`, grasp evidence from `is_grasped`. MuJoCo: `GripperCommand` on
@@ -279,8 +280,6 @@ Named poses `home` and `view` in `config/poses.yaml`.
       (put back, go home, or ask the operator; undecided).
     - The place is checked only after the grasp; `FindReachable*` allows `may_touch` on
       other segments than the trees execute.
-    - Payload integers become `int` blackboard entries, so `unsigned` ports (`Delay`,
-      `Sleep`) fail at tree creation; send such values as JSON strings for now.
     - Success rules: a not-seen object is still retried `pick_attempts` times and counts as
       a failure; no objects at all is SUCCESS.
     - `move_group` warns that `planner_id` and the workspace bounds are not set in requests.

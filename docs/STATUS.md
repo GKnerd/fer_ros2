@@ -18,10 +18,15 @@ succeeded:
   the measured joints, so the held-contact allowance and the start-state check see the same
   state; `held_contacts` logs the allowed pairs (`fer_moveit`).
 - `PickPlace` places from (0.40, 0.40), 0.12 m apart in x.
+- Goal payload numbers go to the blackboard as text and are converted by the reading port,
+  so an integer fits `unsigned` ports (`Delay` in `PickPlaceRepeat`) as well as `int` ones.
+- Mock objects per setup: `mock_objects_sim.yaml` (MuJoCo scene) and
+  `mock_objects_real.yaml`, chosen by `hardware`.
 
-`colcon test` passes for `fer_world_model`, `fer_behavior_trees` and `fer_moveit`. The
-`PickPlaceRepeat` tree needs fixing: `reset_delay_ms` must be sent as a JSON string, and the
-delay is fixed.
+`colcon test` passed for `fer_world_model`, `fer_behavior_trees` and `fer_moveit` before the
+last two changes; they need a test run, and `PickPlaceRepeat` and MuJoCo a run each. The
+`PickPlaceRepeat` delay is fixed: the robot moves again when it runs out, whether the
+workspace is clear or not.
 
 Single repository `fer_ros2` (2026-10-13): the eight package repositories are merged with
 their full history into `ros2_ws/src`; the state before the merge is tag `jazzy-0.1.0`. The
@@ -67,8 +72,8 @@ All own C++ code is formatted with clang-format 18 (braces on their own line) si
 
 ## Next
 
-0. Open items of the 2026-11-05 repeat runs (`docs/Platform.md` §8.2 item 10): payload
-   integers vs `unsigned` ports (blocks `PickPlaceRepeat`); recovery while holding an object;
+0. Open items of the 2026-11-05 repeat runs (`docs/Platform.md` §8.2 item 10): recovery
+   while holding an object;
    place checked before the grasp and `may_touch` per segment as executed; success rules
    (not-seen object, no objects); `planner_id` and workspace bounds in requests.
 1. CI follow-up: add `build-and-test (x86_64)` and `build-and-test (aarch64)` as required
@@ -161,4 +166,6 @@ All own C++ code is formatted with clang-format 18 (braces on their own line) si
 | 2026-11-05 | Object ids stay owned by the world model; no ids from perception | Identical boxes cannot be told apart by any detector; tasks select by class and properties |
 | 2026-11-05 | No occupancy layer for now; one miss suffices with mock perception | The mock sees every object; the occupancy map (collision safety independent of recognition) comes with a real camera |
 | 2026-11-05 | MoveToPose/MoveToJoints plan from one sample of the measured joints | The held-contact allowance and `move_group`'s start-state check must see the same state |
+| 2026-11-05 | Goal payload numbers go to the blackboard as text | BT.CPP checks a typed entry against the port type at tree creation, so an `int` entry failed `unsigned` ports (`Delay`); text is converted by each port, as an XML attribute is |
+| 2026-11-05 | Mock objects split into `mock_objects_sim.yaml` and `mock_objects_real.yaml`, selected by `hardware` | The real setup (one 7 cm box) and the MuJoCo scene differ; one file broke MuJoCo |
 | 2026-10-13 | `hardware:=mock` with an own overlay (`mock_components/GenericSystem`, position only) | Launch tests without MuJoCo or the robot; upstream's `use_fake_hardware` block has no finger joint, so no gripper controller could run |
