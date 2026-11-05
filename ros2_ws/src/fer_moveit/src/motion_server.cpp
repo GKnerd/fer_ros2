@@ -105,8 +105,11 @@ void MotionServer::execute(
     const auto objects = world_model_.snapshot();
     check_ids(objects, target.may_touch);
     move_group_.sync_scene(objects);
+    // One sample of the start state for the whole request: the held-contact allowance and
+    // move_group's start-state check must see the same state (a held object resting on a
+    // surface touches it by micrometres or not, depending on when the state is read).
     const auto trajectory =
-      move_group_.plan(target, goal->speed_scaling, std::nullopt, interrupted);
+      move_group_.plan(target, goal->speed_scaling, current_joints(), interrupted);
 
     feedback->phase = ActionT::Feedback::EXECUTING;
     moving = true;

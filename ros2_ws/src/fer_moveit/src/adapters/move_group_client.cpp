@@ -124,7 +124,8 @@ MoveGroupClient::MoveGroupClient(
   validity_client_(node->create_client<moveit_msgs::srv::GetStateValidity>(
     "/check_state_validity", rclcpp::ServicesQoS(), group)),
   stop_publisher_(node->create_publisher<std_msgs::msg::String>(
-    "/trajectory_execution_event", rclcpp::ServicesQoS()))
+    "/trajectory_execution_event", rclcpp::ServicesQoS())),
+  logger_(node->get_logger())
 {
 }
 
@@ -253,6 +254,14 @@ std::vector<MoveGroupClient::Contact> MoveGroupClient::held_contacts(
       contacts.emplace_back(contact.contact_body_2, contact.contact_body_1);
     }
   }
+  std::string pairs;
+  for (const auto & contact : contacts)
+  {
+    pairs += " " + contact.first + "-" + contact.second;
+  }
+  RCLCPP_INFO(
+    logger_, "held contacts allowed at the start state:%s",
+    pairs.empty() ? " none" : pairs.c_str());
   return contacts;
 }
 

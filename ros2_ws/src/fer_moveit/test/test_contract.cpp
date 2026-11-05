@@ -101,6 +101,23 @@ TEST_F(Contract, FreeAndStraightPosesUseTheirPipelines)
   EXPECT_NEAR(position.constraint_region.primitive_poses.at(0).position.z, 1.0, 1e-9);
 }
 
+TEST_F(Contract, MotionIsPlannedFromTheMeasuredJoints)
+{
+  start();
+  const auto before = arm_->positions();
+  ASSERT_EQ(
+    run<MoveToPose>(pose_client_, pose_goal(PoseTarget::PATH_STRAIGHT)).result->outcome.code,
+    Outcome::OK);
+
+  std::lock_guard<std::mutex> lock(move_group_fake_->mutex);
+  ASSERT_EQ(move_group_fake_->plan_goals.size(), 1u);
+  const auto & start_state = move_group_fake_->plan_goals[0].request.start_state;
+  // A diff: the attached objects of move_group's current state are kept.
+  EXPECT_TRUE(start_state.is_diff);
+  ASSERT_EQ(start_state.joint_state.position.size(), 7u);
+  EXPECT_NEAR(start_state.joint_state.position.at(0), before[0], 1e-6);
+}
+
 TEST_F(Contract, SceneFollowsTheWorldModel)
 {
   start();

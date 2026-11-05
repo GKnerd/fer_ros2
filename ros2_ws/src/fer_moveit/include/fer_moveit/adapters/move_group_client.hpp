@@ -100,6 +100,7 @@ private:
   rclcpp::Client<moveit_msgs::srv::GetPlanningScene>::SharedPtr get_client_;
   rclcpp::Client<moveit_msgs::srv::GetStateValidity>::SharedPtr validity_client_;
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr stop_publisher_;
+  rclcpp::Logger logger_;
 
   std::mutex scene_mutex_;
   std::set<std::string> world_ids_;
