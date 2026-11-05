@@ -1,0 +1,112 @@
+#!/bin/bash
+#    Copyright 2025 Proximity Robotics & Automation GmbH
+#    Modifications copyright 2026 Georgios Katranis
+#
+#    This script is derived from internal Docker tooling developed at
+#    Proximity Robotics & Automation GmbH. It has been adapted for the
+#    Franka Emika Robot (FER) platform: architecture-specific image tag,
+#    real-time container limits, optional X authority mount, and the
+#    persistent Claude session directory.
+
+#    Licensed under the Apache License, Version 2.0 (the "License");
+#    you may not use this file except in compliance with the License.
+#    You may obtain a copy of the License at
+
+#        http://www.apache.org/licenses/LICENSE-2.0
+
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS,
+#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#    See the License for the specific language governing permissions and
+#    limitations under the License.
+
+uid=$(eval "id -u")
+gid=$(eval "id -g")
+
+# ANSI escape codes
+RED_BOLD="\033[1;31m"
+YELLOW_BOLD="\033[1;33m"
+GREEN_BOLD="\033[1;32m"
+PURPLE_BOLD="\033[1;35m"
+RESET="\033[0m"
+
+PACKAGE_NAME="fer_ros2"
+CONTAINER_USER="fer_ros2"
+IMAGE="$PACKAGE_NAME/ros:jazzy_$(uname -m)"
+
+# Set Package root
+if [[ "$(pwd)" == *"/$PACKAGE_NAME/"* ]]; then
+    # Case A: Inside a subdirectory
+    echo -e "${YELLOW_BOLD}Inside subdirectory. Navigating to root...${RESET}"
+    # Strip everything after the package name to find the root
+    _cwd="$(pwd)"
+    PACKAGE_ROOT="${_cwd%%/$PACKAGE_NAME/*}/$PACKAGE_NAME"
+    cd "$PACKAGE_ROOT" || exit 1
+elif [[ "$(pwd)" == *"/$PACKAGE_NAME" ]]; then
+    # Case B: Already at the root
+    echo -e "${GREEN_BOLD}Already at package root.${RESET}"
+    PACKAGE_ROOT="$(pwd)"
+else
+    # Case C: Not in the package at all
+    echo -e "${RED_BOLD}Error: You are not inside the directory '$PACKAGE_NAME'.${RESET}"
+    echo "Current path: $(pwd)"
+    exit 1
+fi
+
+# Check if DISPLAY is set
+if [ "$DISPLAY" ]; then
+    xhost + local:root
+fi
+
+# Check and create necessary folders
+for FOLDER in ros2_ws/src env log data; do
+    HOST_PATH="$PACKAGE_ROOT/$FOLDER"
+    if [ ! -d "$HOST_PATH" ]; then
+        echo -e "${YELLOW_BOLD}Warning: $HOST_PATH does not exist. Creating it...${RESET}"
+        mkdir -p "$HOST_PATH"
+    fi
+done
+
+# Create the .claude_container, so sessions with claude inside docker persist
+for FOLDER in .claude_container; do 
+    HOST_PATH="$PACKAGE_ROOT/$FOLDER"
+    if [ ! -d "$HOST_PATH" ]; then
+        echo -e "${YELLOW_BOLD}Warning: $HOST_PATH does not exist. Creating it...${RESET}"
+        mkdir -p "$HOST_PATH"
+    fi
+done
+
+# Mount the X authority file only where one exists
+XAUTH_MOUNT=()
+if [ -f "$HOME/.Xauthority" ]; then
+    XAUTH_MOUNT=(-v "$HOME/.Xauthority:/home/${CONTAINER_USER}/.Xauthority")
+fi
+
+echo -e "${PURPLE_BOLD}Running network configuration script...${RESET}"
+sudo /home/cognisafe/franka_ws/fer_ros2/config/nic_orin_config.sh
+echo -e "${GREEN_BOLD}Success!${RESET}"
+
+echo -e "${PURPLE_BOLD}Running driver now...${RESET}"
+docker run \
+    --name $PACKAGE_NAME \
+    -it \
+    --privileged \
+    --net host \
+    --ipc host \
+    --cap-add=sys_nice \
+    --ulimit rtprio=99 \
+    --ulimit memlock=-1 \
+    -e DISPLAY=$DISPLAY \
+    -e ROS_LOG_DIR=/home/${CONTAINER_USER}/logs \
+    -e FASTRTPS_DEFAULT_PROFILES_FILE=/home/${CONTAINER_USER}/env/fast_dds_2.xml \
+    -v $PACKAGE_ROOT/log:/home/${CONTAINER_USER}/logs \
+    -v /tmp/.X11-unix:/tmp/.X11-unix \
+    "${XAUTH_MOUNT[@]}" \
+    -v $PACKAGE_ROOT/ros2_ws:/home/${CONTAINER_USER}/ros2_ws \
+    -v $PACKAGE_ROOT/env:/home/${CONTAINER_USER}/env \
+    -v $PACKAGE_ROOT/data:/home/${CONTAINER_USER}/data \
+    -v $PACKAGE_ROOT/.claude_container:/home/${CONTAINER_USER}/.claude \
+    --entrypoint /bin/bash \
+    --rm \
+    $IMAGE \
+    -c "source /opt/ros/jazzy/setup.bash && source /home/${CONTAINER_USER}/ros2_ws/install/setup.bash && ros2 launch fer_ros2_bringup fer_manipulation_bt.launch.py hardware:=real robot_ip:=172.16.0.2 use_rviz:=false"

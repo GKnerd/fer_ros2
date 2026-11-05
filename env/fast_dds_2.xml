@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<profiles xmlns="http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles" >
+    <transport_descriptors>
+        <transport_descriptor>
+            <transport_id>CustomShmTransport</transport_id>
+            <type>SHM</type>
+            <!-- Must comfortably exceed one serialized pointcloud. -->
+            <segment_size>67108864</segment_size>
+            <maxMessageSize>16777216</maxMessageSize>
+        </transport_descriptor>
+
+        <transport_descriptor>
+            <transport_id>CustomUdpTransport</transport_id>
+            <type>UDPv4</type>
+            <sendBufferSize>16777216</sendBufferSize>
+            <receiveBufferSize>16777216</receiveBufferSize>
+            <maxMessageSize>65000</maxMessageSize>
+            <non_blocking_send>true</non_blocking_send>
+            <!-- Loopback and the direct cable to the Jetson only, so no DDS traffic goes over Wi-Fi. -->
+            <interfaceWhiteList>
+                <address>127.0.0.1</address>
+                <address>192.168.50.2</address>
+            </interfaceWhiteList>
+        </transport_descriptor>
+    </transport_descriptors>
+
+    <participant profile_name="participant_profile" is_default_profile="true">
+        <rtps>
+            <userTransports>
+                <transport_id>CustomShmTransport</transport_id>
+                <transport_id>CustomUdpTransport</transport_id>
+            </userTransports>
+
+            <useBuiltinTransports>false</useBuiltinTransports>
+        </rtps>
+    </participant>
+</profiles>

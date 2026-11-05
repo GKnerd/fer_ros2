@@ -92,6 +92,7 @@ docker run \
     --ulimit memlock=-1 \
     -e DISPLAY=$DISPLAY \
     -e ROS_LOG_DIR=/home/${CONTAINER_USER}/logs \
+    -e FASTRTPS_DEFAULT_PROFILES_FILE=/home/${CONTAINER_USER}/env/fast_dds_2.xml \
     -v $PACKAGE_ROOT/log:/home/${CONTAINER_USER}/logs \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
     "${XAUTH_MOUNT[@]}" \
