@@ -6,7 +6,7 @@
        SUCCESS only if every object was placed. -->
   <BehaviorTree ID="PickPlace">
     <Sequence>
-      <Script code="all_placed := true; place_x := 0.35; place_y := 0.30"/>
+      <Script code="all_placed := true; place_x := 0.40; place_y := 0.40"/>
       <DetectObjects class_id="{@target_class}"/>
       <QueryObjects class_id="{@target_class}" ids="{ids}"/>
       <LoopString queue="{ids}" value="{object_id}">

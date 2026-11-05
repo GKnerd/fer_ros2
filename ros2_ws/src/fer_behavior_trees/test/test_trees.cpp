@@ -200,7 +200,7 @@ TEST_F(Trees, FailedPickIsRetriedThenTheNextObjectFollows)
   EXPECT_EQ(run("PickPlace"), NodeStatus::FAILURE);
   EXPECT_EQ(count("Grasp box_1"), 2u);
   EXPECT_EQ(count("Release box_1"), 0u);
-  EXPECT_EQ(count("GetPlaceCandidates box_2 0.35 0.30"), 1u);
+  EXPECT_EQ(count("GetPlaceCandidates box_2 0.40 0.40"), 1u);
   EXPECT_EQ(count("Release box_2"), 1u);
   EXPECT_EQ(count("MoveToJoints {@home}"), 1u);
 }
