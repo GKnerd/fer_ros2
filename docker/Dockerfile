@@ -169,9 +169,13 @@ RUN . /opt/ros/$ROS_DISTRO/setup.sh && \
     -DBUILD_TESTING=OFF
 
 # MuJoCo simulation backend, only with --build-arg WITH_MUJOCO=1.
+# The URDF-to-MJCF converter installs its Python packages into ~/.ros/ros2_control/.venv
+# on first use; they are installed here instead, together with pycollada, which trimesh
+# needs for .dae meshes and upstream does not install (still missing at 6838a7f).
 ARG WITH_MUJOCO=0
 ARG MUJOCO_VENDOR_COMMIT=26187d69dd239adc45c121af780d57590d189686
 ARG MUJOCO_ROS2_CONTROL_COMMIT=375a5db49d2c92fcfdd8f88c1376c4fb3eee3a70
+ARG PYCOLLADA_VERSION=0.9.3
 RUN if [ "$WITH_MUJOCO" = "1" ]; then \
         git clone https://github.com/pal-robotics/mujoco_vendor.git src/mujoco_vendor && \
         git -C src/mujoco_vendor checkout ${MUJOCO_VENDOR_COMMIT} && \
@@ -182,7 +186,10 @@ RUN if [ "$WITH_MUJOCO" = "1" ]; then \
         . /opt/ros/$ROS_DISTRO/setup.sh && \
         colcon build --merge-install --packages-skip-build-finished \
         --cmake-args -DCMAKE_BUILD_TYPE=Release \
-        -DBUILD_TESTING=OFF; \
+        -DBUILD_TESTING=OFF && \
+        install/lib/mujoco_ros2_control/robot_description_to_mjcf.sh --install-only && \
+        ~/.ros/ros2_control/.venv/bin/pip3 install --no-input --no-cache-dir \
+        --disable-pip-version-check pycollada==${PYCOLLADA_VERSION}; \
     else \
         echo "WITH_MUJOCO=${WITH_MUJOCO}, skipping the MuJoCo packages"; \
     fi

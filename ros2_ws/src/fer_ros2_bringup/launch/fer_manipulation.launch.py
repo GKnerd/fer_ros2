@@ -10,8 +10,7 @@ Includes:
 
 The hardware launch loads the motion and gripper controllers inactive. Once that spawner
 exits, this launch activates <arm_control_type>_trajectory_controller and, for
-hardware:=mujoco|mock, gripper_<hand_control_type>_controller. The gripper server starts after
-the switch, because a gripper controller only offers its action while active.
+hardware:=mujoco|mock, gripper_<hand_control_type>_controller.
 """
 from typing import Dict, List
 
@@ -118,14 +117,13 @@ def launch_setup(context, *args, **kwargs):
 
     def after_activation(event, context):
         if event.returncode == 0:
-            return [gripper_server_launch]
+            return [motion_server_launch, gripper_server_launch]
         return None
 
     return [
         moveit_launch,
         world_model_launch,
         grasp_planner_launch,
-        motion_server_launch,
         RegisterEventHandler(OnProcessExit(on_exit=after_inactive_spawner)),
         RegisterEventHandler(
             OnProcessExit(target_action=activate_controllers, on_exit=after_activation)),
