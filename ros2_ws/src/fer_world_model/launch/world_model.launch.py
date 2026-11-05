@@ -64,7 +64,7 @@ def generate_declared_arguments() -> List[DeclareLaunchArgument]:
         DeclareLaunchArgument(
             'mock_objects_file',
             default_value=PathJoinSubstitution(
-                [FindPackageShare('fer_world_model'), 'config', 'mock_objects.yaml']),
+                [FindPackageShare('fer_world_model'), 'config', 'mock_objects_sim.yaml']),
             description='Detections published by mock_perception (perception:=mock).'),
         DeclareLaunchArgument(
             'params_file',

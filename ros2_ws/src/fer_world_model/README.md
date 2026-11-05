@@ -57,7 +57,7 @@ ros2 launch fer_world_model world_model.launch.py perception:=mock
 | Argument | Default | Meaning |
 |---|---|---|
 | `perception` | `none` | `mock` also starts `mock_perception` |
-| `mock_objects_file` | `config/mock_objects.yaml` | detections published by the mock |
+| `mock_objects_file` | `config/mock_objects_sim.yaml` | detections published by the mock |
 | `fixtures_file` | `config/fixtures.yaml` | fixed objects; `''` for none |
 | `params_file` | `config/world_model.yaml` | node parameters |
 | `use_sim_time` | `true` | simulated clock |
@@ -84,8 +84,10 @@ Fixtures are never matched, changed or removed.
 
 ## Mock perception
 
-`mock_perception` publishes `config/mock_objects.yaml` as `Detection3DArray` at 5 Hz:
-class, score, center pose and size, no ids. Parameters: `objects_file` (required),
+`mock_perception` publishes a list of objects as `Detection3DArray` at 5 Hz: class, score,
+center pose and size, no ids. `config/mock_objects_sim.yaml` matches the MuJoCo scene
+`pick_place_world.xml`; `config/mock_objects_real.yaml` is the setup on the real robot.
+`fer_manipulation.launch.py` picks one by `hardware`. Parameters: `objects_file` (required),
 `frame_id` (`base`), `rate` (5.0 Hz), `detection_topic`.
 
 ## Layout

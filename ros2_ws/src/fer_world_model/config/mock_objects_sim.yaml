@@ -1,0 +1,29 @@
+# Detections published by mock_perception in simulation (hardware:=mujoco|mock). Pose =
+# bounding-box center in the node's frame_id, size = bounding box [x, y, z] in m. No ids: the
+# world model assigns them. Must match the free bodies of
+# fer_ros2_bringup/scenes/pick_place_world.xml.
+
+detections:
+  - class_id: cylinder
+    score: 0.95
+    size: [0.04, 0.04, 0.10]
+    pose:
+      position: {x: 0.5, y: -0.25, z: 0.05}
+
+  - class_id: box
+    score: 0.95
+    size: [0.05, 0.05, 0.05]
+    pose:
+      position: {x: 0.4, y: 0.10, z: 0.025}
+
+  - class_id: box
+    score: 0.95
+    size: [0.05, 0.05, 0.05]
+    pose:
+      position: {x: 0.4, y: -0.10, z: 0.025}
+
+  - class_id: sphere
+    score: 0.95
+    size: [0.06, 0.06, 0.06]
+    pose:
+      position: {x: 0.55, y: 0.10, z: 0.03}

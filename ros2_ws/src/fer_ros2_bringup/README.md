@@ -98,7 +98,7 @@ MuJoCo scenes live in `scenes/`; select one with `scene:=<path>` on
 `fer_mujoco_ros2_control.launch.py` or `fer_moveit_and_control.launch.py`. `base_world.xml`
 (default) is the floor only. `pick_place_world.xml` puts the robot on a table
 (top at `base` z = 0, as `fer_world_model/config/fixtures.yaml`) with free
-objects at the poses of `fer_world_model/config/mock_objects.yaml`.
+objects at the poses of `fer_world_model/config/mock_objects_sim.yaml`.
 
 ## Tests
 

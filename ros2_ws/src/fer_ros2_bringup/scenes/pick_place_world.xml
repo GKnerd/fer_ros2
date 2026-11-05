@@ -1,5 +1,5 @@
 <mujoco model="pick_place_world">
-    <!-- Table matches fer_world_model/config/fixtures.yaml, objects match fer_world_model/config/mock_objects.yaml. -->
+    <!-- Table matches fer_world_model/config/fixtures.yaml, objects match fer_world_model/config/mock_objects_sim.yaml. -->
     <option timestep="0.001" gravity="0 0 -9.81"/>
 
     <size memory="100M"/>

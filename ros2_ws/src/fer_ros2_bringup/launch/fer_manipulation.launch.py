@@ -59,6 +59,11 @@ def launch_setup(context, *args, **kwargs):
     server_log_level = LaunchConfiguration('server_log_level')
     arm_control_type = LaunchConfiguration('arm_control_type').perform(context)
     hand_control_type = LaunchConfiguration('hand_control_type').perform(context)
+    mock_objects_file = LaunchConfiguration('mock_objects_file').perform(context)
+    if not mock_objects_file:
+        mock_objects_file = PathJoinSubstitution([
+            FindPackageShare('fer_world_model'), 'config',
+            f"mock_objects_{'real' if hardware == 'real' else 'sim'}.yaml"])
 
     # Hardware + MoveIt
     moveit_launch = include('fer_ros2_bringup', 'fer_moveit_and_control.launch.py', {
@@ -73,7 +78,7 @@ def launch_setup(context, *args, **kwargs):
         'use_sim_time': use_sim_time,
         'log_level': server_log_level,
         'perception': LaunchConfiguration('perception'),
-        'mock_objects_file': LaunchConfiguration('mock_objects_file'),
+        'mock_objects_file': mock_objects_file,
         'params_file': LaunchConfiguration('world_model_params_file'),
         'fixtures_file': LaunchConfiguration('fixtures_file'),
     })
@@ -275,8 +280,10 @@ def generate_declared_arguments() -> List[DeclareLaunchArgument]:
         ),
         DeclareLaunchArgument(
             'mock_objects_file',
-            default_value=share('fer_world_model', 'config', 'mock_objects.yaml'),
-            description='Detections published by mock_perception (perception:=mock).'
+            default_value='',
+            description="Detections published by mock_perception (perception:=mock); '' "
+                        'selects mock_objects_real.yaml for hardware:=real, else '
+                        'mock_objects_sim.yaml.'
         ),
         DeclareLaunchArgument(
             'world_model_params_file',

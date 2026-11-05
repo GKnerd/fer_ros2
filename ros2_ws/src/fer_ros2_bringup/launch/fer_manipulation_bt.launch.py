@@ -204,8 +204,10 @@ def generate_declared_arguments() -> List[DeclareLaunchArgument]:
         ),
         DeclareLaunchArgument(
             'mock_objects_file',
-            default_value=share('fer_world_model', 'config', 'mock_objects.yaml'),
-            description='Detections published by mock_perception (perception:=mock).'
+            default_value='',
+            description="Detections published by mock_perception (perception:=mock); '' "
+                        'selects mock_objects_real.yaml for hardware:=real, else '
+                        'mock_objects_sim.yaml.'
         ),
         DeclareLaunchArgument(
             'world_model_params_file',
