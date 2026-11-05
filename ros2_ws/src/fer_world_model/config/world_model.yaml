@@ -6,6 +6,9 @@ fer_world_model:
     association_gate: 0.05         # m, largest center distance for the same object
     refine_gate: 0.10              # m, search radius around the object for RefineObject
     min_score: 0.5                 # detections below are ignored
+    lost_after_misses: 1           # snapshots in a row that miss a FREE object before it is
+                                   # LOST (out of the planning scene); 1 for mock perception,
+                                   # more for a camera; 0 = never
     detection_timeout: 5.0         # s, DetectObjects/RefineObject wait for a snapshot
     tf_timeout: 0.1                # s
     removal_timeout: 30.0          # s, missing objects are removed after this

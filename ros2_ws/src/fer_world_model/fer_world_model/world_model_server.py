@@ -61,6 +61,7 @@ def build_world_model(node: Node) -> WorldModel:
     node.declare_parameter('association_gate', 0.05)
     node.declare_parameter('refine_gate', 0.10)
     node.declare_parameter('min_score', 0.5)
+    node.declare_parameter('lost_after_misses', 1)
     node.declare_parameter('fixtures_file', '')
 
     model = WorldModel(
@@ -68,6 +69,7 @@ def build_world_model(node: Node) -> WorldModel:
         association_gate=float(node.get_parameter('association_gate').value),
         refine_gate=float(node.get_parameter('refine_gate').value),
         min_score=float(node.get_parameter('min_score').value),
+        lost_after_misses=int(node.get_parameter('lost_after_misses').value),
     )
     fixtures_file = node.get_parameter('fixtures_file').value
     if fixtures_file:
@@ -257,10 +259,11 @@ class WorldModelServer:
                 return self._end(goal_handle, result, snapshot)
             grasped_positions = self._grasped_positions(snapshot.stamp)
             with self._lock:
+                revision = self._model.revision
                 update = self._model.apply_detections(
                     snapshot.detections, list(goal_handle.request.class_ids),
                     grasped_positions, snapshot.stamp.nanoseconds * 1e-9, self._source)
-                if update.added or update.updated:
+                if self._model.revision != revision:
                     self._publish_locked()
                 result.revision = self._model.revision
             result.added = update.added
@@ -294,10 +297,11 @@ class WorldModelServer:
             if isinstance(snapshot, _Stop):
                 return self._end(goal_handle, result, snapshot)
             with self._lock:
+                revision = self._model.revision
                 refined = self._model.refine(
                     object_id, snapshot.detections, snapshot.stamp.nanoseconds * 1e-9,
                     self._source)
-                if refined.ok:
+                if self._model.revision != revision:
                     self._publish_locked()
                 result.revision = self._model.revision
             result.outcome = outcome_from_result(refined)

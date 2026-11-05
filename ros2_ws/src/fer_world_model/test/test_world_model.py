@@ -72,7 +72,8 @@ def test_class_filter(model):
     assert update.updated == ['ball_1'] and update.not_seen == []
 
 
-def test_not_seen_keeps_the_object_unchanged(model):
+def test_not_seen_keeps_the_object_unchanged_without_a_miss_limit():
+    model = WorldModel(min_score=0.5, lost_after_misses=0)
     detect(model, [detection('box', 0.4)], stamp=1.0)
     revision = model.revision
     update = detect(model, [], stamp=2.0)
@@ -122,6 +123,56 @@ def test_lost_object_is_adopted_by_an_unmatched_detection(model):
     assert box.status is ObjectStatus.FREE and box.pose.position.x == pytest.approx(0.7)
 
 
+def test_missed_object_becomes_lost(model):
+    detect(model, [detection('box', 0.4)], stamp=1.0)
+    revision = model.revision
+    update = detect(model, [], stamp=2.0)
+    assert update.not_seen == ['box_1']
+    box = model.query(['box_1'], [], [], False)[0]
+    assert box.status is ObjectStatus.LOST and box.missing_since == 2.0
+    assert model.query([], [], [int(ObjectStatus.FREE)], False) == []
+    assert model.revision == revision + 1
+
+
+def test_released_box_found_elsewhere_keeps_its_id(model):
+    detect(model, [detection('box', 0.4, -0.4)], stamp=1.0)
+    model.set_status('box_1', ObjectStatus.GRASPED, 'fer_hand_tcp', pose(0.0),
+                     'fer_hand_tcp', 2.0)
+    model.set_status('box_1', ObjectStatus.FREE, '', pose(0.4, 0.4), 'base', 3.0)
+    update = detect(model, [detection('box', 0.4, -0.4)], stamp=4.0)
+    assert update.added == [] and update.updated == ['box_1'] and update.not_seen == []
+    objects = model.query([], [], [], False)
+    assert [o.object_id for o in objects] == ['box_1']
+    assert objects[0].status is ObjectStatus.FREE
+    assert objects[0].pose.position.y == pytest.approx(-0.4)
+    assert objects[0].missing_since is None and objects[0].misses == 0
+
+
+def test_lost_only_after_misses_in_a_row():
+    model = WorldModel(min_score=0.5, lost_after_misses=3)
+    detect(model, [detection('box', 0.4)], stamp=1.0)
+    detect(model, [], stamp=2.0)
+    detect(model, [], stamp=3.0)
+    detect(model, [detection('box', 0.4)], stamp=4.0)
+    detect(model, [], stamp=5.0)
+    detect(model, [], stamp=6.0)
+    assert model.query(['box_1'], [], [], False)[0].status is ObjectStatus.FREE
+    detect(model, [], stamp=7.0)
+    box = model.query(['box_1'], [], [], False)[0]
+    assert box.status is ObjectStatus.LOST and box.missing_since == 5.0
+
+
+def test_release_resets_the_misses():
+    model = WorldModel(min_score=0.5, lost_after_misses=2)
+    detect(model, [detection('box', 0.4)], stamp=1.0)
+    detect(model, [], stamp=2.0)
+    model.set_status('box_1', ObjectStatus.GRASPED, 'fer_hand_tcp', pose(0.0),
+                     'fer_hand_tcp', 3.0)
+    model.set_status('box_1', ObjectStatus.FREE, '', pose(0.6), 'base', 4.0)
+    detect(model, [], stamp=5.0)
+    assert model.query(['box_1'], [], [], False)[0].status is ObjectStatus.FREE
+
+
 def test_set_status_invariants(model):
     detect(model, [detection('box', 0.4)], stamp=1.0)
     assert model.set_status('nope', ObjectStatus.FREE, '', pose(0.4), 'base', 2.0).status \
@@ -167,6 +218,15 @@ def test_refine_miss_starts_the_removal_clock(model):
     assert model.refine('box_1', [detection('box', 0.6)], 2.0, 'test').status \
         is WMStatus.NOT_FOUND
     assert model.sweep(now=33.0, removal_timeout=30.0) == ['box_1']
+
+
+def test_refine_miss_makes_the_object_lost(model):
+    detect(model, [detection('box', 0.4)], stamp=1.0)
+    revision = model.revision
+    result = model.refine('box_1', [], 2.0, 'test')
+    assert result.status is WMStatus.NOT_FOUND
+    assert model.query(['box_1'], [], [], False)[0].status is ObjectStatus.LOST
+    assert model.revision == revision + 1
 
 
 def test_refine_on_grasped_is_a_conflict(model):

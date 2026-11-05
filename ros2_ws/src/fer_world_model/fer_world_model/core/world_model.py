@@ -42,11 +42,22 @@ class WorldModel:
         association_gate: float = 0.05,
         refine_gate: float = 0.10,
         min_score: float = 0.0,
+        lost_after_misses: int = 1,
     ) -> None:
+        """
+        Create an empty world model.
+
+        :param lost_after_misses: A FREE object missed by this many snapshots in a row
+            (detection or refine) becomes LOST: it leaves the planning scene and an
+            unmatched detection of its class can take it over. 1 for mock perception, which
+            sees every object; more for a real camera, so one bad frame does not drop a real
+            object. 0: never LOST from misses; a missed object stays FREE until the sweep.
+        """
         self.base_frame = base_frame
         self.association_gate = association_gate
         self.refine_gate = refine_gate
         self.min_score = min_score
+        self.lost_after_misses = lost_after_misses
         self._objects: Dict[str, WorldObject] = {}
         self._next_index: Dict[str, int] = {}
         self._revision = 0
@@ -80,7 +91,10 @@ class WorldModel:
         """
         Fold one detection snapshot into the model.
 
-        Returns the ids added, updated (matched or adopted from LOST) and not seen.
+        Returns the ids added, updated (matched or adopted from LOST) and not seen. A FREE
+        object not seen counts a miss and becomes LOST after `lost_after_misses`; it can
+        then be taken over by an unmatched detection of the same snapshot (reported as
+        updated, not as not seen).
 
         :param detections: Detections in the base frame.
         :param class_ids: Only these classes are considered; empty means all.
@@ -107,6 +121,15 @@ class WorldModel:
         for index, object_id in matches:
             self._observe(self._objects[object_id], usable[index], stamp, source)
             updated.append(object_id)
+
+        # Before the takeover below, so an object found elsewhere in this snapshot keeps its id.
+        not_seen = []
+        went_lost = False
+        for obj in candidates:
+            if obj.object_id in matched_ids:
+                continue
+            not_seen.append(obj.object_id)
+            went_lost = self._miss(obj, stamp) or went_lost
 
         lost = sorted(
             (o for o in self._objects.values()
@@ -135,15 +158,8 @@ class WorldModel:
             self._objects[obj.object_id] = obj
             added.append(obj.object_id)
 
-        not_seen = []
-        for obj in candidates:
-            if obj.object_id in matched_ids:
-                continue
-            not_seen.append(obj.object_id)
-            if obj.missing_since is None:
-                obj.missing_since = stamp
-
-        if added or updated:
+        not_seen = [object_id for object_id in not_seen if object_id not in updated]
+        if added or updated or went_lost:
             self._revision += 1
         return DetectionUpdate(added=added, updated=updated, not_seen=not_seen)
 
@@ -157,7 +173,8 @@ class WorldModel:
         """
         Update one object from a close-up snapshot.
 
-        A miss counts like a miss in `apply_detections`: it starts the removal clock.
+        A miss counts like a miss in `apply_detections`: it starts the removal clock and
+        counts towards `lost_after_misses`.
         Returns OK; NOT_FOUND for an unknown or unseen object; CONFLICT for a fixed or
         GRASPED one.
 
@@ -178,8 +195,10 @@ class WorldModel:
             if distance(d.pose.position, obj.pose.position) <= self.refine_gate
         ]
         if not same_class:
-            if obj.missing_since is None:
-                obj.missing_since = stamp
+            if self._miss(obj, stamp):
+                self._revision += 1
+                return WMResult(
+                    WMStatus.NOT_FOUND, f"'{object_id}' not seen, now LOST", object_id)
             return WMResult(WMStatus.NOT_FOUND, f"'{object_id}' not seen", object_id)
 
         nearest = min(same_class, key=lambda d: distance(d.pose.position, obj.pose.position))
@@ -247,10 +266,12 @@ class WorldModel:
         if status is ObjectStatus.FREE:
             changed.source = 'release_estimate'
             changed.missing_since = None
+            changed.misses = 0
         elif status is ObjectStatus.LOST:
             changed.missing_since = stamp
         else:
             changed.missing_since = None
+            changed.misses = 0
 
         self._objects[object_id] = changed
         self._revision += 1
@@ -296,6 +317,18 @@ class WorldModel:
         obj.source = source
         obj.last_observed = stamp
         obj.missing_since = None
+        obj.misses = 0
+
+    def _miss(self, obj: WorldObject, stamp: float) -> bool:
+        """Count a snapshot that missed `obj`; return True if it became LOST."""
+        if obj.missing_since is None:
+            obj.missing_since = stamp
+        obj.misses += 1
+        if (self.lost_after_misses > 0 and obj.misses >= self.lost_after_misses
+                and obj.status is ObjectStatus.FREE):
+            obj.status = ObjectStatus.LOST
+            return True
+        return False
 
     def _new_id(self, class_id: str) -> str:
         index = self._next_index.get(class_id, 0)

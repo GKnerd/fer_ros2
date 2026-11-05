@@ -178,6 +178,21 @@ def test_detect_reports_not_seen(harness):
     result = harness.detect()
     assert result.outcome.code == Outcome.OK and result.not_seen == ['box_1']
     assert [o.id for o in harness.query().objects] == ['box_1']
+    assert harness.query(statuses=[WorldObject.FREE]).objects == []
+    assert result.revision > 0
+
+
+def test_released_box_found_elsewhere_keeps_its_id(harness):
+    harness.detections = [('box', 0.4, -0.4, 0.025)]
+    harness.detect()
+    harness.set_status('box_1', WorldObject.GRASPED, 'fer_hand_tcp', 'fer_hand_tcp')
+    harness.set_status('box_1', WorldObject.FREE, '', 'base', x=0.6)
+    result = harness.detect()
+    assert result.added == [] and result.updated == ['box_1'] and result.not_seen == []
+    objects = harness.query().objects
+    assert [o.id for o in objects] == ['box_1']
+    assert objects[0].status == WorldObject.FREE
+    assert objects[0].pose.pose.position.y == pytest.approx(-0.4)
 
 
 def test_set_status_contract(harness):

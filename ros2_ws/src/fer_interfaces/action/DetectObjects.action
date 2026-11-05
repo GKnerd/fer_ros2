@@ -8,6 +8,6 @@ Outcome outcome                     # OK, CANCELLED, TIMEOUT (no detections arri
 uint64 revision
 string[] added
 string[] updated                    # matched, or LOST objects found again
-string[] not_seen                   # known FREE objects not matched; status NOT changed,
+string[] not_seen                   # known FREE objects not matched; LOST after lost_after_misses snapshots in a row, 
                                     # removed if still missing after the removal timeout
 ---

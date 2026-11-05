@@ -60,6 +60,8 @@ class WorldObject:
     last_observed: float | None = None
     # First snapshot that missed the object; cleared when it is matched again.
     missing_since: float | None = None
+    # Snapshots in a row that missed the object; reset when it is observed or its pose set.
+    misses: int = 0
 
     def validate(self, base_frame: str) -> None:
         """
