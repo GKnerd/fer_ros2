@@ -117,6 +117,10 @@ All own C++ code is formatted with clang-format 18 (braces on their own line) si
 - Fixed executor thread count
 - grasp-versus-world-model mismatch - needs to be watched at runtime
 - MuJoCo scene objects and how they are added to the world_model when sim is used
+- **MuJoCo bump:** `mujoco_ros2_control` (pin `375a5db`, 2026-03-08; HEAD `6838a7f`,
+  release 0.1.4) and `mujoco_vendor` move together. Upstream still does not install
+  `pycollada` (needed for `.dae` meshes); the Dockerfile installs it (`PYCOLLADA_VERSION`)
+  until upstream does.
 - `fer_moveit` `test_contract` failed 2 of 17 once when its tests ran in the same
   container together with `fer_behavior_trees`, and passed in every separate run (2026-10-12).
   Likely tests of different packages sharing a DDS domain; not yet investigated. CI tests

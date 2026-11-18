@@ -263,8 +263,11 @@ Named poses `home` and `view` in `config/poses.yaml`.
 1. At `speed_scaling` 0.6 planning runs into joint limits and produces odd arm motions.
 2. After two failed grasps on the first object the tree moves on to the next object. This is
    the current policy; aborting instead is a decision still to make.
-3. Start-up race between the simulation and the gripper server on the first start; the motion
-   server is also not ordered after controller activation (10 s startup timeout).
+3. Start-up: the motion and gripper servers start after controller activation. The MJCF
+   converter's Python packages and `pycollada` are installed in the image (`~/.ros`), so the
+   first MuJoCo start is as fast as later ones. Bump `mujoco_ros2_control` and
+   `mujoco_vendor` together (HEAD `6838a7f` uses new variables of `mujoco_vendor`); upstream
+   still does not install `pycollada` at `6838a7f`, so the image keeps installing it.
 4. Pilz LIN hits joint acceleration limits at `speed_scaling` 1.0 (quarter-datasheet limits).
 5. Planned trajectories work but are often far from optimal (long joint-7 turns to the
    pre-grasp; `FindReachableGrasp` takes the first reachable candidate).
